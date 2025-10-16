@@ -40,15 +40,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     result.fold(
       (error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error)));
       },
       (response) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Login berhasil")));
-
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("Login berhasil")));
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -62,90 +59,135 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFF0098F8), // biru terang seperti di gambar
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 60),
-                const Text(
-                  "Selamat Datang 👋",
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Silakan login untuk melanjutkan",
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                const SizedBox(height: 40),
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Gambar ilustrasi
+                  SizedBox(
+                    height: 180,
+                    child: Image.asset(
+                      'assets/ibu_bayi.png', 
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Masukkan username'
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _isObscure,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isObscure ? Icons.visibility_off : Icons.visibility,
-                      ),
-                      onPressed: () => setState(() => _isObscure = !_isObscure),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 16),
+
+                  // Judul aplikasi
+                  const Text(
+                    'Aplikasi Pencatatan\nPosyandu',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Masukkan password'
-                      : null,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+
+                  const SizedBox(height: 32),
+
+                  // Field username
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      hintText: 'Username',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Login',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
+                    validator: (value) =>
+                        value == null || value.isEmpty ? 'Masukkan username' : null,
                   ),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/register');
-                    },
-                    child: const Text("Belum punya akun? Daftar di sini"),
+                  const SizedBox(height: 16),
+
+                  // Field password
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _isObscure,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      hintText: 'Kata Sandi',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isObscure
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                        onPressed: () =>
+                            setState(() => _isObscure = !_isObscure),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    validator: (value) =>
+                        value == null || value.isEmpty ? 'Masukkan kata sandi' : null,
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 12),
+
+                  // Checkbox "ingat kata sandi"
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: false,
+                        onChanged: (_) {},
+                        activeColor: Colors.white,
+                        checkColor: Colors.blue,
+                        side: const BorderSide(color: Colors.white),
+                      ),
+                      const Text(
+                        "Ingat kata sandi",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Tombol Masuk
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _handleLogin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.blue,
+                            )
+                          : const Text(
+                              "Masuk",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0098F8), // biru terang seperti di gambar
+      backgroundColor: const Color(0xFF0098F8), 
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(
                     height: 180,
                     child: Image.asset(
-                      'assets/ibu_bayi.png', 
+                      'lib/assets/ibu_bayi.png', 
                       fit: BoxFit.contain,
                     ),
                   ),

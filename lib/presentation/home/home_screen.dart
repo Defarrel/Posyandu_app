@@ -1,5 +1,6 @@
-import '/core/components/button.dart';
 import 'package:flutter/material.dart';
+import '../../core/components/buttons.dart';
+import '../../core/components/custom_dropdown_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'Desember',
   ];
 
-  String _bulanDipilih = 'Januari';
+  String? _bulanDipilih;
 
   @override
   Widget build(BuildContext context) {
@@ -112,27 +113,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 7),
-                        DropdownButton<String>(
-                          value: _bulanDipilih,
-                          dropdownColor: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          style: const TextStyle(
-                            color: Color.fromARGB(255, 0, 0, 0),
-                            fontWeight: FontWeight.bold,
-                          ),
-                          underline: const SizedBox(),
-                          icon: const Icon(
-                            Icons.arrow_drop_down,
-                            color: Colors.white,
-                          ),
-                          items: _bulanList
-                              .map(
-                                (bulan) => DropdownMenuItem<String>(
-                                  value: bulan,
-                                  child: Text(bulan),
-                                ),
-                              )
-                              .toList(),
+                        CustomDropdownButton(
+                          value: _bulanDipilih ?? _bulanList.first,
+                          items: _bulanList,
+                          isCompact: true,
+                          textColor: Colors.white,
                           onChanged: (value) {
                             setState(() {
                               _bulanDipilih = value!;
@@ -141,8 +126,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 16),
 
                     // ======== GRAFIK (placeholder) ========
                     Container(
@@ -153,7 +136,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          'Grafik bulan $_bulanDipilih akan ditampilkan di sini',
+                          _bulanDipilih == null
+                              ? 'Silakan pilih bulan untuk menampilkan grafik'
+                              : 'Grafik bulan $_bulanDipilih akan ditampilkan di sini',
                           style: const TextStyle(color: Colors.grey),
                         ),
                       ),
@@ -163,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
 
             // ======== MENU ========
             const Text(
@@ -176,7 +161,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ======== GRID MENU BUTTON ========
             Wrap(
               spacing: 20,
               runSpacing: 20,

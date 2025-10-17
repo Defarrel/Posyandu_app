@@ -17,7 +17,7 @@ class MenuButton extends StatefulWidget {
 }
 
 class _MenuButtonState extends State<MenuButton> {
-  bool _isHovered = false; // Status hover
+  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +47,8 @@ class _MenuButtonState extends State<MenuButton> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                widget.imagePath,
-                width: 45,
-                height: 45,
-                color: Colors.white,
-              ),
+              // Jangan tambahkan "color: Colors.white"
+              Image.asset(widget.imagePath, width: 45, height: 45),
               const SizedBox(height: 8),
               Text(
                 widget.title,

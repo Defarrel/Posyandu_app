@@ -1,3 +1,4 @@
+import '/core/components/button.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -8,6 +9,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final List<String> _bulanList = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ];
+
+  String _bulanDipilih = 'Januari';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ======== HEADER BIRU DENGAN PROFIL ========
+            // ======== HEADER ========
             Container(
               width: double.infinity,
               decoration: const BoxDecoration(
@@ -28,23 +46,17 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Row(
                 children: [
-                  // Foto profil
                   const CircleAvatar(
                     radius: 30,
-                    backgroundImage: AssetImage('lib/core/assets/profile.jpg'), // ganti sesuai aset kamu
+                    backgroundImage: AssetImage('lib/core/assets/profile.jpg'),
                   ),
                   const SizedBox(width: 16),
-
-                  // Teks halo dan info kader
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
                       Text(
                         'Halo,',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
+                        style: TextStyle(fontSize: 18, color: Colors.white),
                       ),
                       Text(
                         'Kader 02',
@@ -55,11 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Text(
-                        'Posyandu Dahlia X RT 2',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
+                        'Posyandu Dahlia RW 11',
+                        style: TextStyle(fontSize: 14, color: Colors.white70),
                       ),
                     ],
                   ),
@@ -69,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 20),
 
-            // ======== KARTU GRAFIK BALITA ========
+            // ======== KARTU GRAFIK ========
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
@@ -85,38 +94,67 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Judul kartu
+                    // ======== TITLE + DROPDOWN ========
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          'Grafik Balita bulan Juni',
+                      children: [
+                        const Text(
+                          'Grafik Balita Bulan',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Icon(Icons.arrow_drop_down, color: Colors.white),
+                        const SizedBox(width: 7),
+                        DropdownButton<String>(
+                          value: _bulanDipilih,
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          style: const TextStyle(
+                            color: Color.fromARGB(255, 0, 0, 0),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          underline: const SizedBox(),
+                          icon: const Icon(
+                            Icons.arrow_drop_down,
+                            color: Colors.white,
+                          ),
+                          items: _bulanList
+                              .map(
+                                (bulan) => DropdownMenuItem<String>(
+                                  value: bulan,
+                                  child: Text(bulan),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _bulanDipilih = value!;
+                            });
+                          },
+                        ),
                       ],
                     ),
+
                     const SizedBox(height: 16),
 
-                    // Placeholder grafik (belum ada Chart)
+                    // ======== GRAFIK (placeholder) ========
                     Container(
                       height: 100,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'Grafik akan ditampilkan di sini',
-                          style: TextStyle(color: Colors.grey),
+                          'Grafik bulan $_bulanDipilih akan ditampilkan di sini',
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ),
                     ),
@@ -127,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 30),
 
-            // ======== JUDUL MENU ========
+            // ======== MENU ========
             const Text(
               'Menu',
               style: TextStyle(
@@ -135,6 +173,44 @@ class _HomeScreenState extends State<HomeScreen> {
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
+            ),
+            const SizedBox(height: 16),
+
+            // ======== GRID MENU BUTTON ========
+            Wrap(
+              spacing: 20,
+              runSpacing: 20,
+              alignment: WrapAlignment.center,
+              children: [
+                MenuButton(
+                  title: "Tambah Balita\nBaru",
+                  imagePath: "lib/core/assets/tambahbalita.png",
+                  onTap: () {
+                    print("Tambah Balita Baru diklik");
+                  },
+                ),
+                MenuButton(
+                  title: "Tambah Data\nPerkembangan",
+                  imagePath: "lib/core/assets/perkembangan.png",
+                  onTap: () {
+                    print("Tambah Data Perkembangan diklik");
+                  },
+                ),
+                MenuButton(
+                  title: "Grafik Bulanan\nBalita",
+                  imagePath: "lib/core/assets/grafik.png",
+                  onTap: () {
+                    print("Grafik Bulanan Balita diklik");
+                  },
+                ),
+                MenuButton(
+                  title: "Cari Data\nBalita",
+                  imagePath: "lib/core/assets/caridata.png",
+                  onTap: () {
+                    print("Cari Data Balita diklik");
+                  },
+                ),
+              ],
             ),
           ],
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/components/buttons.dart';
 import '../../core/components/custom_dropdown_button.dart';
 import '../../core/components/custom_navbar_bot.dart';
+import '../home/tambah_balita.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   String? _bulanDipilih;
-  int _currentIndex = 1; // Home default aktif
+  int _currentIndex = 1;
 
   void _onNavbarTap(int index) {
     setState(() {
@@ -43,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: IndexedStack(
           index: _currentIndex,
           children: [
-            // ======== MENU TAMBAH BALITA ========
             Center(child: Text("Halaman Tambah Balita Baru")),
 
             // ======== HALAMAN HOME ========
@@ -59,40 +59,79 @@ class _HomeScreenState extends State<HomeScreen> {
                       bottomRight: Radius.circular(50),
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 20,
+                  padding: const EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 12,
+                    bottom: 20,
                   ),
-                  child: Row(
+                  child: Column(
                     children: [
-                      const CircleAvatar(
-                        radius: 30,
-                        backgroundImage: AssetImage(
-                          'lib/core/assets/profile.jpg',
-                        ),
+                      // ======== HAMBURGER & LOGOUT ========
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.menu, color: Colors.white),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Menu ditekan"),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.logout, color: Colors.white),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Logout ditekan"),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Halo,',
-                            style: TextStyle(fontSize: 18, color: Colors.white),
-                          ),
-                          Text(
-                            'Kader 02',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+
+                      // ======== PROFIL PENGGUNA ========
+                      Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 30,
+                            backgroundImage: AssetImage(
+                              'lib/core/assets/profile.jpg',
                             ),
                           ),
-                          Text(
-                            'Posyandu Dahlia RW 11',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white70,
-                            ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Halo,',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                'Kader 02',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                'Posyandu Dahlia RW 11',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -197,7 +236,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: "Tambah Balita\nBaru",
                           imagePath: "lib/core/assets/tambahbalita.png",
                           onTap: () {
-                            print("Tambah Balita Baru diklik");
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const TambahDataBalitaPage(),
+                              ),
+                            );
                           },
                         ),
                         MenuButton(
@@ -228,7 +273,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
 
-            // ======== MENU DATA BALITA ========
             Center(child: Text("Halaman Data Balita")),
           ],
         ),

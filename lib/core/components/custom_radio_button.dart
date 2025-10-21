@@ -1,54 +1,84 @@
 import 'package:flutter/material.dart';
 
-class CustomRadioButton extends StatefulWidget {
+class CustomRadioBalita extends StatelessWidget {
   final String? groupValue;
   final ValueChanged<String?> onChanged;
 
-  const CustomRadioButton({
-    Key? key,
+  const CustomRadioBalita({
+    super.key,
     required this.groupValue,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
-  @override
-  State<CustomRadioButton> createState() => _CustomRadioButtonState();
-}
-
-class _CustomRadioButtonState extends State<CustomRadioButton> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Jenis Kelamin",
-          style: TextStyle(
-            color: Color(0xFF0085FF),
-            fontWeight: FontWeight.bold,
-          ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          color: const Color(0xFFD9D9D9),
         ),
-        const SizedBox(height: 4),
-        Row(
+        clipBehavior: Clip.antiAlias,
+        child: Row(
           children: [
-            Expanded(
-              child: RadioListTile<String>(
-                value: "Laki-laki",
-                groupValue: widget.groupValue,
-                onChanged: widget.onChanged,
-                title: const Text("Laki - laki"),
+            // === Label kiri biru ===
+            Container(
+              width: 110,
+              height: 100,
+              alignment: Alignment.center,
+              color: const Color(0xFF0098F8),
+              child: const Text(
+                "Jenis Kelamin",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
             ),
+
+            // === Radio button kanan ===
             Expanded(
-              child: RadioListTile<String>(
-                value: "Perempuan",
-                groupValue: widget.groupValue,
-                onChanged: widget.onChanged,
-                title: const Text("Perempuan"),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Wrap(
+                  alignment: WrapAlignment.start,
+                  spacing: 12, // jarak antar radio
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Radio<String>(
+                          value: "Laki-laki",
+                          groupValue: groupValue,
+                          onChanged: onChanged,
+                          activeColor: const Color(0xFF0098F8),
+                        ),
+                        const Text("Laki - laki"),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Radio<String>(
+                          value: "Perempuan",
+                          groupValue: groupValue,
+                          onChanged: onChanged,
+                          activeColor: const Color(0xFF0098F8),
+                        ),
+                        const Text("Perempuan"),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }

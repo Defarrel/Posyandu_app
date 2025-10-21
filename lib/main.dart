@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posyandu_app/presentation/auth/login_screen.dart';
+import 'package:posyandu_app/presentation/home/home_root.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: LoginScreen(),
+      home: HomeRoot(),
     );
   }
 }

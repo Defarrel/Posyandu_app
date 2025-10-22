@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:posyandu_app/presentation/auth/login_screen.dart';
+import 'presentation/auth/login_screen.dart';
 
 void main() {
   runApp(const MyApp());

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 
 class CustomTextFieldBalita extends StatelessWidget {
   final String label;
@@ -37,7 +38,7 @@ class CustomTextFieldBalita extends StatelessWidget {
                   width: 110,
                   height: maxLines > 1 ? 70 : 48,
                   alignment: Alignment.center,
-                  color: const Color(0xFF0098F8),
+                  color: AppColors.primary,
                   child: Text(
                     label,
                     textAlign: TextAlign.center,

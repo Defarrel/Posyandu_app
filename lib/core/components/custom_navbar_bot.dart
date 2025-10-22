@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
 
 class CustomNavbarBot extends StatelessWidget {
@@ -14,7 +15,7 @@ class CustomNavbarBot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color backgroundColor = Color(0xFF0098F8);
+    const Color backgroundColor = AppColors.primary;
 
     return Container(
       height: 70,
@@ -65,7 +66,7 @@ class CustomNavbarBot extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return SizedBox(
-      width: 70, 
+      width: 70,
       height: 70,
       child: Center(
         child: GestureDetector(
@@ -74,11 +75,7 @@ class CustomNavbarBot extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOut,
-            transform: Matrix4.translationValues(
-              0,
-              isActive ? -12 : 0,
-              0,
-            ), 
+            transform: Matrix4.translationValues(0, isActive ? -12 : 0, 0),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -97,7 +94,7 @@ class CustomNavbarBot extends StatelessWidget {
             child: Icon(
               icon,
               size: 32,
-              color: isActive ? const Color(0xFF0098F8) : Colors.white,
+              color: isActive ? AppColors.primaryDark : Colors.white,
             ),
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_radio_button.dart';
 import 'package:posyandu_app/core/components/custom_textfield.dart';
+import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/data/models/request/balita/balita_request_model.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
@@ -131,7 +132,10 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => TambahPerkembanganBalita(nikBalita: _nikBalitaController.text)),
+          MaterialPageRoute(
+            builder: (_) =>
+                TambahPerkembanganBalita(nikBalita: _nikBalitaController.text),
+          ),
         );
       },
     );
@@ -171,7 +175,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             Text(
               "Tambah Data Balita Baru",
               style: TextStyle(
-                color: Color(0xFF0085FF),
+                color: AppColors.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
@@ -186,7 +190,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios,
-            color: Color(0xFF0085FF),
+            color: AppColors.primary,
             size: 18,
           ),
           onPressed: () => HomeRoot.navigateToTab(context, 1),
@@ -337,15 +341,13 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             const SizedBox(height: 30),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0085FF),
+                backgroundColor: AppColors.primary,
                 minimumSize: const Size(double.infinity, 48),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              onPressed: _isLoading
-                  ? null
-                  : _submitForm, 
+              onPressed: _isLoading ? null : _submitForm,
               child: Text(
                 _isLoading ? "Menyimpan..." : "Selanjutnya",
                 style: const TextStyle(color: Colors.white),

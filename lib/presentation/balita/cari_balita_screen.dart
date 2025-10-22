@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
@@ -62,7 +63,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
         title: const Text(
           "Cari Data Balita",
           style: TextStyle(
-            color: Color(0xFF0085FF),
+            color: AppColors.primary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -70,7 +71,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios,
-            color: Color(0xFF0085FF),
+            color: AppColors.primary,
             size: 18,
           ),
           onPressed: () => HomeRoot.navigateToTab(context, 1),
@@ -78,13 +79,13 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.menu, color: Color(0xFF0085FF)),
+            child: Icon(Icons.menu, color: AppColors.primary),
           ),
         ],
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF0085FF)),
+              child: CircularProgressIndicator(color: AppColors.primary),
             )
           : Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -95,7 +96,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                     decoration: InputDecoration(
                       prefixIcon: const Icon(
                         Icons.search,
-                        color: Color(0xFF0085FF),
+                        color: AppColors.primary,
                       ),
                       hintText: "Masukkan Nama atau NIK Balita",
                       filled: true,
@@ -148,7 +149,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                             ),
                           )
                         : RefreshIndicator(
-                            color: const Color(0xFF0085FF),
+                            color: AppColors.primary,
                             onRefresh: _fetchBalita,
                             child: ListView.builder(
                               itemCount: filteredList.length,

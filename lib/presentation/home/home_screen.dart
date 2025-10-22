@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:posyandu_app/core/components/buttons.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
 import 'package:posyandu_app/core/components/custom_appbar_home.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -53,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFFEFF7FF),
       appBar: CustomAppBarHome(
         nama: _namaKader, // ← tampil nama kader login
-        posyandu: "Posyandu Dahlia", 
+        posyandu: "Posyandu Dahlia",
       ),
       body: SafeArea(
         top: false,
@@ -79,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: const Color(0xFF0098F8),
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(

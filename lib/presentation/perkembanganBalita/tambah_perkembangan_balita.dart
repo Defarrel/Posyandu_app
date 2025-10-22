@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 
 class TambahPerkembanganBalita extends StatefulWidget {
   final String nikBalita;
@@ -88,7 +89,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
             Container(
               width: 100,
               decoration: const BoxDecoration(
-                color: Color(0xFF0085FF),
+                color: AppColors.primary,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   bottomLeft: Radius.circular(20),
@@ -158,7 +159,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         title: const Text(
           "Tambah Data Perkembangan Balita",
           style: TextStyle(
-            color: Color(0xFF0085FF),
+            color: AppColors.primary,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -274,7 +275,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _submitForm,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0085FF),
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),

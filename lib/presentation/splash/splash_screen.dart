@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/presentation/auth/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -56,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0098F8),
+      backgroundColor: AppColors.primary,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,

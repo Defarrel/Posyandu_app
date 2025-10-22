@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/constants.dart';
 
 class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
   final String nama;
@@ -26,7 +27,7 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0098F8), Color(0xFF00B0FF)],
+            colors: [AppColors.primary, AppColors.accent,],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

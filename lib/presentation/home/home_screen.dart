@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:posyandu_app/core/components/buttons.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
 import 'package:posyandu_app/core/components/custom_appbar_home.dart';
@@ -28,15 +29,31 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   String? _bulanDipilih;
+  String _namaKader = "Memuat...";
+
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNamaKader();
+  }
+
+  Future<void> _loadNamaKader() async {
+    final nama = await _storage.read(key: 'username');
+    setState(() {
+      _namaKader = nama ?? "Kader";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: const Color(0xFFEFF7FF),
-      appBar: const CustomAppBarHome(
-        nama: "Kader 02",
-        posyandu: "Posyandu Dahlia X RT 2",
+      appBar: CustomAppBarHome(
+        nama: _namaKader, // ← tampil nama kader login
+        posyandu: "Posyandu Dahlia", 
       ),
       body: SafeArea(
         top: false,

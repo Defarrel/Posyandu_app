@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/request/auth/login_request_model.dart';
 import 'package:posyandu_app/data/repository/auth_repository.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
@@ -19,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   late AuthRepository _authRepository;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -44,11 +47,16 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text(error)));
       },
-      (response) {
+      (response) async {
+        await _storage.write(key: 'token', value: response.token ?? '');
+        await _storage.write(key: 'username', value: _usernameController.text);
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text("Login berhasil")));
 
+        // Pindah ke HomeRoot
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeRoot()),
@@ -62,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0098F8),
+      backgroundColor: AppColors.primary,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -72,35 +80,30 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Hero Animation - Logo dan Judul
-                  Hero(
-                    tag: 'logo_posyandu',
+                  // Gambar ilustrasi
+                  SizedBox(
+                    height: 180,
                     child: Image.asset(
                       'lib/core/assets/ibu_bayi.png',
-                      height: 150,
                       fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Hero(
-                    tag: 'judul_posyandu',
-                    child: Material(
-                      color: Colors.transparent,
-                      child: const Text(
-                        'Aplikasi Pencatatan\nPosyandu',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+
+                  // Judul aplikasi
+                  const Text(
+                    'Aplikasi Pencatatan\nPosyandu',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
 
                   const SizedBox(height: 32),
 
-                  // Field Username
+                  // Field username
                   TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(
@@ -122,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Field Password
+                  // Field password
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _isObscure,
@@ -152,9 +155,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? 'Masukkan kata sandi'
                         : null,
                   ),
+
                   const SizedBox(height: 12),
 
-                  // Checkbox
+                  // Checkbox "ingat kata sandi"
                   Row(
                     children: [
                       Checkbox(

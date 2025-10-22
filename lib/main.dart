@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/presentation/splash/splash_screen.dart';
 
 void main() {
@@ -11,11 +12,50 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'PosyanduApp',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF0098F8)),
+        useMaterial3: true,
+        scaffoldBackgroundColor: AppColors.background,
+        colorScheme: ColorScheme(
+          brightness: Brightness.light,
+          primary: AppColors.primary,
+          onPrimary: Colors.white,
+          secondary: AppColors.accent,
+          onSecondary: Colors.white,
+          error: Colors.redAccent,
+          onError: Colors.white,
+          background: AppColors.background,
+          onBackground: AppColors.textPrimary,
+          surface: AppColors.surface,
+          onSurface: AppColors.textPrimary,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          ),
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+          bodyMedium: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          titleLarge: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
-      home: SplashScreen(),
+      home: const SplashScreen(),
     );
   }
 }

@@ -6,7 +6,7 @@ class CustomDropdownButton extends StatelessWidget {
   final ValueChanged<String?> onChanged;
   final Color textColor;
   final double fontSize;
-  final bool isCompact; // 🔹 Tambahan: untuk mode simple (tanpa box)
+  final bool isCompact; 
 
   const CustomDropdownButton({
     Key? key,
@@ -20,7 +20,6 @@ class CustomDropdownButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔹 Jika mode compact aktif (untuk grafik card)
     if (isCompact) {
       return DropdownButton<String>(
         value: value,
@@ -47,7 +46,6 @@ class CustomDropdownButton extends StatelessWidget {
       );
     }
 
-    // 🔹 Jika mode normal (tampilan dengan box putih misalnya)
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(

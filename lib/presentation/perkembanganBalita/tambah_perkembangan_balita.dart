@@ -1,8 +1,4 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:dartz/dartz.dart' hide State;
-import 'package:posyandu_app/data/models/request/perkembangan_balita/perkembangan_request_model.dart';
-import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
 
 class TambahPerkembanganBalita extends StatefulWidget {
   final String nikBalita;
@@ -14,222 +10,280 @@ class TambahPerkembanganBalita extends StatefulWidget {
 }
 
 class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
+  String? _selectedBulan;
+  String? _caraUkur = "Berdiri";
+  String? _kms;
+  String? _imd;
+  String? _vitaminA;
+  String? _asiEks;
+  final _beratController = TextEditingController();
+  final _tinggiController = TextEditingController();
   final _lingkarLenganController = TextEditingController();
   final _lingkarKepalaController = TextEditingController();
-  final _tinggiBadanController = TextEditingController();
-  final _beratBadanController = TextEditingController();
-  final _caraUkurController = TextEditingController();
-  final _vitaminAController = TextEditingController();
-  final _kmsController = TextEditingController();
-  final _imdController = TextEditingController();
-  final _asiEksController = TextEditingController();
 
-  DateTime? _selectedDate;
   bool _isLoading = false;
 
-  String? _lingkarLenganError;
-  String? _lingkarKepalaError;
-  String? _tinggiBadanError;
-  String? _beratBadanError;
-  String? _caraUkurError;
-  String? _vitaminAError;
-  String? _kmsError;
-  String? _imdError;
-  String? _asiEksError;
-  String? _tanggalPerubahanError;
+  final List<String> bulanList = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
 
-  final PerkembanganBalitaRepository _repository =
-      PerkembanganBalitaRepository();
+  bool get isSpecialMonth =>
+      _selectedBulan == "Februari" || _selectedBulan == "Agustus";
 
-  void _pickDate() async {
-    DateTime now = DateTime.now();
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: DateTime(now.year - 5),
-      lastDate: now,
+  Widget _buildDropdownTile({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    bool enabled = true,
+  }) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: enabled ? Colors.grey[300] : Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            hint: Text(label),
+            isExpanded: true,
+            onChanged: enabled ? onChanged : null,
+            items: items
+                .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+                .toList(),
+          ),
+        ),
+      ),
     );
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-        _tanggalPerubahanError = null;
-      });
-    }
+  }
+
+  Widget _buildInputTile(
+    String label,
+    TextEditingController controller, {
+    String? suffix,
+  }) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 100,
+              decoration: const BoxDecoration(
+                color: Color(0xFF0085FF),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: suffix != null ? "0 $suffix" : "Isi data",
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _submitForm() async {
-    setState(() {
-      _lingkarLenganError = _lingkarLenganController.text.isEmpty
-          ? "Lingkar lengan wajib diisi"
-          : null;
-      _lingkarKepalaError = _lingkarKepalaController.text.isEmpty
-          ? "Lingkar kepala wajib diisi"
-          : null;
-      _tinggiBadanError = _tinggiBadanController.text.isEmpty
-          ? "Tinggi badan wajib diisi"
-          : null;
-      _beratBadanError = _beratBadanController.text.isEmpty
-          ? "Berat badan wajib diisi"
-          : null;
-      _caraUkurError = _caraUkurController.text.isEmpty
-          ? "Cara ukur wajib diisi"
-          : null;
-      _vitaminAError = _vitaminAController.text.isEmpty
-          ? "Vitamin A wajib diisi"
-          : null;
-      _kmsError = _kmsController.text.isEmpty ? "KMS wajib diisi" : null;
-      _imdError = _imdController.text.isEmpty ? "IMD wajib diisi" : null;
-      _asiEksError = _asiEksController.text.isEmpty
-          ? "ASI Eks wajib diisi"
-          : null;
-      _tanggalPerubahanError = _selectedDate == null
-          ? "Tanggal perubahan wajib diisi"
-          : null;
-    });
-
-    if (_lingkarLenganError != null ||
-        _lingkarKepalaError != null ||
-        _tinggiBadanError != null ||
-        _beratBadanError != null ||
-        _caraUkurError != null ||
-        _vitaminAError != null ||
-        _kmsError != null ||
-        _imdError != null ||
-        _asiEksError != null ||
-        _tanggalPerubahanError != null)
+    if (_selectedBulan == null ||
+        _beratController.text.isEmpty ||
+        _tinggiController.text.isEmpty ||
+        _lingkarLenganController.text.isEmpty ||
+        _lingkarKepalaController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Harap isi semua data terlebih dahulu")),
+      );
       return;
+    }
 
     setState(() => _isLoading = true);
-
-    final perkembangan = PerkembanganBalitaRequestModel(
-      nikBalita: widget.nikBalita,
-      lingkarLengan: double.parse(_lingkarLenganController.text),
-      lingkarKepala: double.parse(_lingkarKepalaController.text),
-      tinggiBadan: double.parse(_tinggiBadanController.text),
-      beratBadan: double.parse(_beratBadanController.text),
-      caraUkur: _caraUkurController.text,
-      vitaminA: _vitaminAController.text,
-      kms: _kmsController.text,
-      imd: _imdController.text,
-      asiEks: _asiEksController.text,
-      tanggalPerubahan:
-          "${_selectedDate!.year.toString().padLeft(4, '0')}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}",
-    );
-
-    Either<String, String> result = await _repository.tambahPerkembangan(
-      perkembangan,
-    );
-
-    result.fold(
-      (error) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal: $error'))),
-      (message) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
-        Navigator.pop(context); // kembali ke halaman sebelumnya
-      },
-    );
-
+    await Future.delayed(const Duration(seconds: 1)); // simulasi
     setState(() => _isLoading = false);
-  }
 
-  Widget _buildTextField(
-    String label,
-    TextEditingController controller,
-    String? errorText, {
-    TextInputType? keyboardType,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            hintText: label,
-            errorText: errorText,
-          ),
-        ),
-        const SizedBox(height: 12),
-      ],
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Data perkembangan berhasil disimpan!")),
     );
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFDF9F9),
       appBar: AppBar(
-        title: const Text("Tambah Perkembangan Balita"),
-        backgroundColor: const Color(0xFF0085FF),
+        backgroundColor: const Color(0xFFFDF9F9),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF0085FF)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Tambah Data Perkembangan Balita",
+          style: TextStyle(
+            color: Color(0xFF0085FF),
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextField(
-              "Lingkar Lengan (cm)",
-              _lingkarLenganController,
-              _lingkarLenganError,
-              keyboardType: TextInputType.number,
-            ),
-            _buildTextField(
-              "Lingkar Kepala (cm)",
-              _lingkarKepalaController,
-              _lingkarKepalaError,
-              keyboardType: TextInputType.number,
-            ),
-            _buildTextField(
-              "Tinggi Badan (cm)",
-              _tinggiBadanController,
-              _tinggiBadanError,
-              keyboardType: TextInputType.number,
-            ),
-            _buildTextField(
-              "Berat Badan (kg)",
-              _beratBadanController,
-              _beratBadanError,
-              keyboardType: TextInputType.number,
-            ),
-            _buildTextField("Cara Ukur", _caraUkurController, _caraUkurError),
-            _buildTextField("Vitamin A", _vitaminAController, _vitaminAError),
-            _buildTextField("KMS", _kmsController, _kmsError),
-            _buildTextField("IMD", _imdController, _imdError),
-            _buildTextField("ASI Eks", _asiEksController, _asiEksError),
-            GestureDetector(
-              onTap: _pickDate,
-              child: AbsorbPointer(
-                child: TextField(
-                  decoration: InputDecoration(
-                    labelText: "Tanggal Perubahan",
-                    hintText: _selectedDate == null
-                        ? "Pilih tanggal"
-                        : "${_selectedDate!.day}-${_selectedDate!.month}-${_selectedDate!.year}",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    errorText: _tanggalPerubahanError,
-                  ),
-                ),
-              ),
+            const Text(
+              "Silahkan lengkapi data sesuai dengan kolom.",
+              style: TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submitForm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0085FF),
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+
+            // Bulan
+            _buildDropdownTile(
+              label: "Bulan",
+              value: _selectedBulan,
+              items: bulanList,
+              onChanged: (val) => setState(() => _selectedBulan = val),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Berat dan Tinggi
+            Row(
+              children: [
+                _buildInputTile("Berat Badan", _beratController, suffix: "kg"),
+                const SizedBox(width: 10),
+                _buildInputTile(
+                  "Tinggi Badan",
+                  _tinggiController,
+                  suffix: "cm",
                 ),
-              ),
-              child: Text(
-                _isLoading ? "Menyimpan..." : "Simpan",
-                style: const TextStyle(color: Colors.white),
+              ],
+            ),
+
+            Row(
+              children: [
+                _buildInputTile(
+                  "Lingkar Lengan",
+                  _lingkarLenganController,
+                  suffix: "cm",
+                ),
+                const SizedBox(width: 10),
+                _buildInputTile(
+                  "Lingkar Kepala",
+                  _lingkarKepalaController,
+                  suffix: "cm",
+                ),
+              ],
+            ),
+
+            // Cara ukur
+            _buildDropdownTile(
+              label: "Cara Ukur",
+              value: _caraUkur,
+              items: ["Berdiri", "Berbaring"],
+              onChanged: (val) => setState(() => _caraUkur = val),
+            ),
+
+            const SizedBox(height: 10),
+
+            // KMS & IMD
+            Row(
+              children: [
+                _buildDropdownTile(
+                  label: "KMS",
+                  value: _kms,
+                  enabled: isSpecialMonth,
+                  items: ["Merah", "Kuning", "Hijau"],
+                  onChanged: (val) => setState(() => _kms = val),
+                ),
+                const SizedBox(width: 10),
+                _buildDropdownTile(
+                  label: "IMD",
+                  value: _imd,
+                  enabled: isSpecialMonth,
+                  items: ["Ya", "Tidak"],
+                  onChanged: (val) => setState(() => _imd = val),
+                ),
+              ],
+            ),
+
+            // Vitamin A & ASI Eksklusif
+            Row(
+              children: [
+                _buildDropdownTile(
+                  label: "Vitamin A",
+                  value: _vitaminA,
+                  enabled: isSpecialMonth,
+                  items: ["Sudah", "Belum"],
+                  onChanged: (val) => setState(() => _vitaminA = val),
+                ),
+                const SizedBox(width: 10),
+                _buildDropdownTile(
+                  label: "ASI Eksklusif",
+                  value: _asiEks,
+                  enabled: isSpecialMonth,
+                  items: ["Ya", "Tidak"],
+                  onChanged: (val) => setState(() => _asiEks = val),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Tombol Simpan
+            Center(
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0085FF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+                child: Text(
+                  _isLoading ? "Menyimpan..." : "Simpan",
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
             ),
           ],

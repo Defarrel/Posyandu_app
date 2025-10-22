@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
+import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
+import 'package:dartz/dartz.dart' hide State;
 
 class CariBalitaScreen extends StatefulWidget {
   const CariBalitaScreen({Key? key}) : super(key: key);
@@ -10,44 +13,45 @@ class CariBalitaScreen extends StatefulWidget {
 
 class _CariBalitaScreenState extends State<CariBalitaScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final BalitaRepository _repository = BalitaRepository();
 
-  final List<Map<String, String>> _balitaList = [
-    {
-      "nama": "Aisyah Putri R.",
-      "nik": "3174092301120001",
-      "ortu": "Rina Siregar",
-    },
-    {
-      "nama": "Muhammad Alfarizi",
-      "nik": "3275081409210002",
-      "ortu": "Ahmad Fauzan",
-    },
-    {
-      "nama": "Farel Rizky M.",
-      "nik": "3301061608200003",
-      "ortu": "Siti Aminah",
-    },
-    {
-      "nama": "Nayla Syakira",
-      "nik": "3202091010200004",
-      "ortu": "Dedi Mulyadi",
-    },
-    {
-      "nama": "Raka Prasetya",
-      "nik": "3374062003210005",
-      "ortu": "Indah Permatasari",
-    },
-  ];
-
+  List<BalitaResponseModel> _balitaList = [];
   String _searchQuery = "";
-  int? _expandedIndex; 
+  int? _expandedIndex;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBalita();
+  }
+
+  Future<void> _fetchBalita() async {
+    final Either<String, List<BalitaResponseModel>> result = await _repository
+        .getBalita();
+
+    result.fold(
+      (error) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Gagal memuat data: $error")));
+      },
+      (data) {
+        setState(() {
+          _balitaList = data;
+          _isLoading = false;
+        });
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final filteredList = _balitaList.where((balita) {
       final query = _searchQuery.toLowerCase();
-      return balita["nama"]!.toLowerCase().contains(query) ||
-          balita["nik"]!.toLowerCase().contains(query);
+      return balita.namaBalita.toLowerCase().contains(query) ||
+          balita.nikBalita.toLowerCase().contains(query);
     }).toList();
 
     return Scaffold(
@@ -55,18 +59,13 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Cari Data Balita",
-              style: TextStyle(
-                color: Color(0xFF0085FF),
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ],
+        title: const Text(
+          "Cari Data Balita",
+          style: TextStyle(
+            color: Color(0xFF0085FF),
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(
@@ -83,134 +82,147 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF0085FF)),
-                hintText: "Masukkan Nama atau NIK Balita",
-                filled: true,
-                fillColor: Colors.grey[200],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onChanged: (value) => setState(() => _searchQuery = value),
-            ),
-
-            const SizedBox(height: 7),
-
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              child: Row(
-                children: const [
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      "Nama",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0085FF)),
+            )
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Color(0xFF0085FF),
+                      ),
+                      hintText: "Masukkan Nama atau NIK Balita",
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (value) => setState(() => _searchQuery = value),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 8,
+                    ),
+                    child: Row(
+                      children: const [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            "Nama",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: Text(
+                            "NIK",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            "Nama Ortu",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Expanded(
-                    flex: 4,
-                    child: Text(
-                      "NIK",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      "Nama Ortu",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    child: filteredList.isEmpty
+                        ? const Center(
+                            child: Text(
+                              "Data balita tidak ditemukan",
+                              style: TextStyle(color: Colors.black54),
+                            ),
+                          )
+                        : RefreshIndicator(
+                            color: const Color(0xFF0085FF),
+                            onRefresh: _fetchBalita,
+                            child: ListView.builder(
+                              itemCount: filteredList.length,
+                              itemBuilder: (context, index) {
+                                final balita = filteredList[index];
+                                final isExpanded = _expandedIndex == index;
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _expandedIndex = isExpanded
+                                          ? null
+                                          : index;
+                                    });
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                      horizontal: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 3,
+                                          child: Text(
+                                            balita.namaBalita,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                            ),
+                                            overflow: isExpanded
+                                                ? TextOverflow.visible
+                                                : TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 4,
+                                          child: Text(
+                                            balita.nikBalita,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                            ),
+                                            overflow: isExpanded
+                                                ? TextOverflow.visible
+                                                : TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 3,
+                                          child: Text(
+                                            balita.namaOrtu,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                            ),
+                                            overflow: isExpanded
+                                                ? TextOverflow.visible
+                                                : TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                   ),
                 ],
               ),
             ),
-
-            // List Balita
-            Expanded(
-              child: ListView.builder(
-                itemCount: filteredList.length,
-                itemBuilder: (context, index) {
-                  final balita = filteredList[index];
-                  final isExpanded = _expandedIndex == index;
-
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _expandedIndex = isExpanded
-                            ? null
-                            : index; 
-                      });
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          // Nama
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              balita["nama"]!,
-                              style: const TextStyle(
-                                fontSize: 13,
-                              ),
-                              overflow: isExpanded
-                                  ? TextOverflow.visible
-                                  : TextOverflow.ellipsis,
-                            ),
-                          ),
-                          // NIK
-                          Expanded(
-                            flex: 4,
-                            child: Text(
-                              balita["nik"]!,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.normal,
-                                fontSize: 13,
-                              ),
-                              overflow: isExpanded
-                                  ? TextOverflow.visible
-                                  : TextOverflow.ellipsis,
-                            ),
-                          ),
-                          // Nama Ortu
-                          Expanded(
-                            flex: 3,
-                            child: Text(
-                              balita["ortu"]!,
-                              style: const TextStyle(
-                                fontSize: 13,
-                              ),
-                              overflow: isExpanded
-                                  ? TextOverflow.visible
-                                  : TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

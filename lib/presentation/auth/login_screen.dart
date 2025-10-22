@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/data/models/request/auth/login_request_model.dart';
 import 'package:posyandu_app/data/repository/auth_repository.dart';
-import 'package:posyandu_app/presentation/home/home_screen.dart';
+import 'package:posyandu_app/presentation/home/home_root.dart';
 import 'package:posyandu_app/services/services_http_client.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -40,15 +40,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     result.fold(
       (error) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error)));
       },
       (response) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("Login berhasil")));
-        Navigator.push(
+        ScaffoldMessenger.of(
           context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        ).showSnackBar(const SnackBar(content: Text("Login berhasil")));
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeRoot()),
         );
       },
     );
@@ -59,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0098F8), 
+      backgroundColor: const Color(0xFF0098F8),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -69,30 +72,35 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Gambar ilustrasi
-                  SizedBox(
-                    height: 180,
+                  // Hero Animation - Logo dan Judul
+                  Hero(
+                    tag: 'logo_posyandu',
                     child: Image.asset(
-                      'lib/core/assets/ibu_bayi.png', 
+                      'lib/core/assets/ibu_bayi.png',
+                      height: 150,
                       fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Judul aplikasi
-                  const Text(
-                    'Aplikasi Pencatatan\nPosyandu',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  Hero(
+                    tag: 'judul_posyandu',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: const Text(
+                        'Aplikasi Pencatatan\nPosyandu',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
 
                   const SizedBox(height: 32),
 
-                  // Field username
+                  // Field Username
                   TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(
@@ -101,17 +109,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'Username',
                       prefixIcon: const Icon(Icons.person_outline),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Masukkan username' : null,
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Masukkan username'
+                        : null,
                   ),
                   const SizedBox(height: 16),
 
-                  // Field password
+                  // Field Password
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _isObscure,
@@ -130,18 +141,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             setState(() => _isObscure = !_isObscure),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    validator: (value) =>
-                        value == null || value.isEmpty ? 'Masukkan kata sandi' : null,
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Masukkan kata sandi'
+                        : null,
                   ),
-
                   const SizedBox(height: 12),
 
-                  // Checkbox "ingat kata sandi"
+                  // Checkbox
                   Row(
                     children: [
                       Checkbox(
@@ -173,9 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.blue,
-                            )
+                          ? const CircularProgressIndicator(color: Colors.blue)
                           : const Text(
                               "Masuk",
                               style: TextStyle(

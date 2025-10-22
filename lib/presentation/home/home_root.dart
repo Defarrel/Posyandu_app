@@ -34,7 +34,9 @@ class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
   );
 
   late final List<Animation<double>> _fadeAnimations = _fadeControllers
-      .map((controller) => Tween<double>(begin: 0.0, end: 1.0).animate(controller))
+      .map(
+        (controller) => Tween<double>(begin: 0.0, end: 1.0).animate(controller),
+      )
       .toList();
 
   @override

@@ -13,7 +13,6 @@ class AuthRepository {
 
   AuthRepository(this._serviceHttpClient);
 
-  // Login
   Future<Either<String, AuthResponseModel>> login(
     LoginRequestModel requestModel,
   ) async {

@@ -22,7 +22,7 @@ class CustomRadioBalita extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
-            // === Label kiri biru ===
+            
             Container(
               width: 110,
               height: 100,
@@ -39,13 +39,13 @@ class CustomRadioBalita extends StatelessWidget {
               ),
             ),
 
-            // === Radio button kanan ===
+            
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Wrap(
                   alignment: WrapAlignment.start,
-                  spacing: 12, // jarak antar radio
+                  spacing: 12, 
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Row(

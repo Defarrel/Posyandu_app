@@ -51,17 +51,19 @@ class BalitaRequestModel {
   String toJson() => json.encode(toMap());
 
   Map<String, dynamic> toMap() => {
-        "nik_balita": nikBalita,
-        "nama_balita": namaBalita,
-        "jenis_kelamin": jenisKelamin,
-        "tanggal_lahir": tanggalLahir,
-        "anak_ke_berapa": anakKeBerapa,
-        "nomor_kk": nomorKk,
-        "nama_ortu": namaOrtu,
-        "nik_ortu": nikOrtu,
-        "nomor_telp_ortu": nomorTelpOrtu,
-        "alamat": alamat,
-        "rt": rt,
-        "rw": rw,
-      };
+    "nik_balita": nikBalita,
+    "nama_balita": namaBalita,
+    "jenis_kelamin": jenisKelamin == 'Laki-laki'
+        ? 'L'
+        : 'P',
+    "tanggal_lahir": tanggalLahir,
+    "anak_ke_berapa": anakKeBerapa,
+    "nomor_kk": nomorKk,
+    "nama_ortu": namaOrtu,
+    "nik_ortu": nikOrtu,
+    "nomor_telp_ortu": nomorTelpOrtu,
+    "alamat": alamat,
+    "rt": rt,
+    "rw": rw,
+  };
 }

@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import '../../core/components/buttons.dart';
 import '../../core/components/custom_dropdown_button.dart';
 import '../../core/components/custom_navbar_bot.dart';
 import '../home/tambah_balita.dart';
+=======
+import 'package:posyandu_app/core/components/button.dart';
+import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
+import 'package:posyandu_app/core/components/custom_appbar_home.dart';
+import 'package:posyandu_app/presentation/home/home_root.dart';
+>>>>>>> 524c3a52ff6372901ea53b1f98968b6984643fe1
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,7 +19,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<String> _bulanList = [
+  final List<String> _bulanList = const [
     'Januari',
     'Februari',
     'Maret',
@@ -28,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   String? _bulanDipilih;
+<<<<<<< HEAD
   int _currentIndex = 1;
 
   void _onNavbarTap(int index) {
@@ -35,15 +43,57 @@ class _HomeScreenState extends State<HomeScreen> {
       _currentIndex = index;
     });
   }
+=======
+>>>>>>> 524c3a52ff6372901ea53b1f98968b6984643fe1
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true, // ✅ Biar appbar meluber ke atas tanpa putih
       backgroundColor: const Color(0xFFEFF7FF),
+      appBar: const CustomAppBarHome(
+        nama: "Kader 02",
+        posyandu: "Posyandu Dahlia X RT 2",
+      ),
       body: SafeArea(
-        child: IndexedStack(
-          index: _currentIndex,
+        top: false, // ✅ Biar area atas tidak jadi putih
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            children: [
+              const SizedBox(height: 240), // ✅ Jarak dari AppBar melengkung
+              _buildGrafikCard(),
+              const SizedBox(height: 20),
+              _buildMenuSection(context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGrafikCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFF0098F8),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+<<<<<<< HEAD
             Center(child: Text("Halaman Tambah Balita Baru")),
 
             // ======== HALAMAN HOME ========
@@ -215,14 +265,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 20),
 
                 // ======== MENU ========
+=======
+            Row(
+              children: [
+>>>>>>> 524c3a52ff6372901ea53b1f98968b6984643fe1
                 const Text(
-                  'Menu',
+                  'Grafik Balita Bulan',
                   style: TextStyle(
-                    fontSize: 20,
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
                   ),
                 ),
+<<<<<<< HEAD
                 const SizedBox(height: 16),
 
                 Expanded(
@@ -274,14 +328,85 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             Center(child: Text("Halaman Data Balita")),
+=======
+                const SizedBox(width: 8),
+                CustomDropdownButton(
+                  value: _bulanDipilih ?? _bulanList.first,
+                  items: _bulanList,
+                  isCompact: true,
+                  textColor: Colors.white,
+                  onChanged: (value) {
+                    setState(() => _bulanDipilih = value);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  _bulanDipilih == null
+                      ? 'Silakan pilih bulan untuk menampilkan grafik'
+                      : 'Grafik bulan $_bulanDipilih akan ditampilkan di sini',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ),
+            ),
+>>>>>>> 524c3a52ff6372901ea53b1f98968b6984643fe1
           ],
         ),
       ),
+    );
+  }
 
-      // ======== Navbar ========
-      bottomNavigationBar: CustomNavbarBot(
-        currentIndex: _currentIndex,
-        onTap: _onNavbarTap,
+  Widget _buildMenuSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          const Text(
+            'Menu',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            alignment: WrapAlignment.center,
+            children: [
+              MenuButton(
+                title: "Tambah Balita\nBaru",
+                imagePath: "lib/core/assets/tambahbalita.png",
+                onTap: () => HomeRoot.navigateToTab(context, 0),
+              ),
+              MenuButton(
+                title: "Tambah Data\nPerkembangan",
+                imagePath: "lib/core/assets/perkembangan.png",
+                onTap: () {},
+              ),
+              MenuButton(
+                title: "Grafik Bulanan\nBalita",
+                imagePath: "lib/core/assets/grafik.png",
+                onTap: () {},
+              ),
+              MenuButton(
+                title: "Cari Data\nBalita",
+                imagePath: "lib/core/assets/caridata.png",
+                onTap: () => HomeRoot.navigateToTab(context, 2),
+              ),
+            ],
+          ),
+          const SizedBox(height: 30),
+        ],
       ),
     );
   }

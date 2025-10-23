@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 
-class CustomTextFieldBalita extends StatelessWidget {
+class CustomTextField2 extends StatelessWidget {
   final String label;
   final String hint;
   final TextEditingController? controller;
@@ -9,7 +9,7 @@ class CustomTextFieldBalita extends StatelessWidget {
   final TextInputType keyboardType;
   final String? errorText;
 
-  const CustomTextFieldBalita({
+  const CustomTextField2({
     super.key,
     required this.label,
     required this.hint,
@@ -35,7 +35,7 @@ class CustomTextFieldBalita extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 110,
+                  width: 70,
                   height: maxLines > 1 ? 70 : 48,
                   alignment: Alignment.center,
                   color: AppColors.primary,

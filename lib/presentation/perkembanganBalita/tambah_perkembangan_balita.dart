@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/components/custom_texfield2.dart';
+import 'package:posyandu_app/core/components/custom_dropdown_field.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 
 class TambahPerkembanganBalita extends StatefulWidget {
@@ -11,16 +13,17 @@ class TambahPerkembanganBalita extends StatefulWidget {
 }
 
 class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
+  final _beratController = TextEditingController();
+  final _tinggiController = TextEditingController();
+  final _lingkarLenganController = TextEditingController();
+  final _lingkarKepalaController = TextEditingController();
+
   String? _selectedBulan;
   String? _caraUkur = "Berdiri";
   String? _kms;
   String? _imd;
   String? _vitaminA;
   String? _asiEks;
-  final _beratController = TextEditingController();
-  final _tinggiController = TextEditingController();
-  final _lingkarLenganController = TextEditingController();
-  final _lingkarKepalaController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -42,87 +45,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   bool get isSpecialMonth =>
       _selectedBulan == "Februari" || _selectedBulan == "Agustus";
 
-  Widget _buildDropdownTile({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-    bool enabled = true,
-  }) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        decoration: BoxDecoration(
-          color: enabled ? Colors.grey[300] : Colors.grey[200],
-          borderRadius: BorderRadius.circular(20),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: value,
-            hint: Text(label),
-            isExpanded: true,
-            onChanged: enabled ? onChanged : null,
-            items: items
-                .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-                .toList(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInputTile(
-    String label,
-    TextEditingController controller, {
-    String? suffix,
-  }) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 100,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  bottomLeft: Radius.circular(20),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: TextField(
-                  controller: controller,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: suffix != null ? "0 $suffix" : "Isi data",
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _submitForm() async {
     if (_selectedBulan == null ||
         _beratController.text.isEmpty ||
@@ -136,12 +58,14 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1)); // simulasi
+    await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Data perkembangan berhasil disimpan!")),
     );
+
     Navigator.pop(context);
   }
 
@@ -153,7 +77,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         backgroundColor: const Color(0xFFFDF9F9),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF0085FF)),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -167,7 +91,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -177,101 +101,121 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
             ),
             const SizedBox(height: 20),
 
-            // Bulan
-            _buildDropdownTile(
+            CustomDropdownField(
               label: "Bulan",
               value: _selectedBulan,
               items: bulanList,
               onChanged: (val) => setState(() => _selectedBulan = val),
             ),
 
-            const SizedBox(height: 10),
-
-            // Berat dan Tinggi
             Row(
               children: [
-                _buildInputTile("Berat Badan", _beratController, suffix: "kg"),
+                Expanded(
+                  child: CustomTextField2(
+                    label: "Berat Badan",
+                    hint: "0 kg",
+                    controller: _beratController,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
                 const SizedBox(width: 10),
-                _buildInputTile(
-                  "Tinggi Badan",
-                  _tinggiController,
-                  suffix: "cm",
+                Expanded(
+                  child: CustomTextField2(
+                    label: "Tinggi Badan",
+                    hint: "0 cm",
+                    controller: _tinggiController,
+                    keyboardType: TextInputType.number,
+                  ),
                 ),
               ],
             ),
 
+            SizedBox(height: 10),
+
             Row(
               children: [
-                _buildInputTile(
-                  "Lingkar Lengan",
-                  _lingkarLenganController,
-                  suffix: "cm",
+                Expanded(
+                  child: CustomTextField2(
+                    label: "Lingkar Lengan",
+                    hint: "0 cm",
+                    controller: _lingkarLenganController,
+                    keyboardType: TextInputType.number,
+                  ),
                 ),
                 const SizedBox(width: 10),
-                _buildInputTile(
-                  "Lingkar Kepala",
-                  _lingkarKepalaController,
-                  suffix: "cm",
+                Expanded(
+                  child: CustomTextField2(
+                    label: "Lingkar Kepala",
+                    hint: "0 cm",
+                    controller: _lingkarKepalaController,
+                    keyboardType: TextInputType.number,
+                  ),
                 ),
               ],
             ),
 
-            // Cara ukur
-            _buildDropdownTile(
+            SizedBox(height: 10),
+
+            CustomDropdownField(
               label: "Cara Ukur",
               value: _caraUkur,
-              items: ["Berdiri", "Berbaring"],
+              items: ["Berdiri", "Telentang"],
               onChanged: (val) => setState(() => _caraUkur = val),
             ),
 
-            const SizedBox(height: 10),
-
-            // KMS & IMD
             Row(
               children: [
-                _buildDropdownTile(
-                  label: "KMS",
-                  value: _kms,
-                  enabled: isSpecialMonth,
-                  items: ["Merah", "Kuning", "Hijau"],
-                  onChanged: (val) => setState(() => _kms = val),
+                Expanded(
+                  child: CustomDropdownField2(
+                    label: "KMS",
+                    value: _kms,
+                    items: ["Merah", "Hijau"],
+                    onChanged: (val) => setState(() => _kms = val),
+                    enabled: isSpecialMonth,
+                  ),
                 ),
                 const SizedBox(width: 10),
-                _buildDropdownTile(
-                  label: "IMD",
-                  value: _imd,
-                  enabled: isSpecialMonth,
-                  items: ["Ya", "Tidak"],
-                  onChanged: (val) => setState(() => _imd = val),
+                Expanded(
+                  child: CustomDropdownField2(
+                    label: "IMD",
+                    value: _imd,
+                    items: ["Ya", "Tidak"],
+                    onChanged: (val) => setState(() => _imd = val),
+                    enabled: isSpecialMonth,
+                  ),
                 ),
               ],
             ),
 
-            // Vitamin A & ASI Eksklusif
             Row(
               children: [
-                _buildDropdownTile(
-                  label: "Vitamin A",
-                  value: _vitaminA,
-                  enabled: isSpecialMonth,
-                  items: ["Sudah", "Belum"],
-                  onChanged: (val) => setState(() => _vitaminA = val),
+                Expanded(
+                  child: CustomDropdownField2(
+                    label: "Vitamin A",
+                    value: _vitaminA,
+                    items: ["Sudah", "Belum"],
+                    onChanged: (val) => setState(() => _vitaminA = val),
+                    enabled: isSpecialMonth,
+                  ),
                 ),
                 const SizedBox(width: 10),
-                _buildDropdownTile(
-                  label: "ASI Eksklusif",
-                  value: _asiEks,
-                  enabled: isSpecialMonth,
-                  items: ["Ya", "Tidak"],
-                  onChanged: (val) => setState(() => _asiEks = val),
+                Expanded(
+                  child: CustomDropdownField2(
+                    label: "ASI Eksklusif",
+                    value: _asiEks,
+                    items: ["Ya", "Tidak"],
+                    onChanged: (val) => setState(() => _asiEks = val),
+                    enabled: isSpecialMonth,
+                  ),
                 ),
               ],
             ),
 
             const SizedBox(height: 20),
 
-            // Tombol Simpan
-            Center(
+            SizedBox(
+              width: double.infinity,
+              height: 48,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _submitForm,
                 style: ElevatedButton.styleFrom(
@@ -279,7 +223,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  minimumSize: const Size(double.infinity, 48),
                 ),
                 child: Text(
                   _isLoading ? "Menyimpan..." : "Simpan",

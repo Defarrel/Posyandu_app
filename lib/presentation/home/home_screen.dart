@@ -5,6 +5,7 @@ import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
 import 'package:posyandu_app/core/components/custom_appbar_home.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
+import 'package:posyandu_app/presentation/perkembanganBalita/cari_perkembangan_balita_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -52,10 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: const Color(0xFFEFF7FF),
-      appBar: CustomAppBarHome(
-        nama: _namaKader, // ← tampil nama kader login
-        posyandu: "Posyandu Dahlia",
-      ),
+      appBar: CustomAppBarHome(nama: _namaKader, posyandu: "Posyandu Dahlia"),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -164,7 +162,12 @@ class _HomeScreenState extends State<HomeScreen> {
               MenuButton(
                 title: "Tambah Data\nPerkembangan",
                 imagePath: "lib/core/assets/perkembangan.png",
-                onTap: () {},
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CariPerkembanganBalitaScreen(),
+                  ),
+                ),
               ),
               MenuButton(
                 title: "Grafik Bulanan\nBalita",

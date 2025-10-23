@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_radio_button.dart';
+import 'package:posyandu_app/core/components/custom_texfield2.dart';
 import 'package:posyandu_app/core/components/custom_textfield.dart';
 import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/data/models/request/balita/balita_request_model.dart';
@@ -318,7 +319,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             Row(
               children: [
                 Expanded(
-                  child: CustomTextFieldBalita(
+                  child: CustomTextField2(
                     label: "RT",
                     hint: "RT",
                     controller: _rtController,
@@ -328,7 +329,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: CustomTextFieldBalita(
+                  child: CustomTextField2(
                     label: "RW",
                     hint: "RW",
                     controller: _rwController,

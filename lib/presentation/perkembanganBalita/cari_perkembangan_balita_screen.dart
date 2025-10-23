@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
-import 'package:posyandu_app/presentation/home/home_root.dart';
+import 'package:posyandu_app/presentation/perkembanganBalita/tambah_perkembangan_balita.dart';
 import 'package:dartz/dartz.dart' hide State;
 
 class CariPerkembanganBalitaScreen extends StatefulWidget {
@@ -20,13 +20,17 @@ class _CariPerkembanganBalitaScreenState
 
   List<BalitaResponseModel> _balitaList = [];
   String _searchQuery = "";
-  int? _expandedIndex;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _fetchBalita();
+
+    // Mencegah keyboard muncul otomatis
+    Future.delayed(const Duration(milliseconds: 200), () {
+      FocusScope.of(context).unfocus();
+    });
   }
 
   Future<void> _fetchBalita() async {
@@ -63,7 +67,7 @@ class _CariPerkembanganBalitaScreenState
         elevation: 0,
         backgroundColor: Colors.white,
         title: const Text(
-          "Cari Data Balita",
+          "Cari Data Perkembangan Balita",
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
@@ -76,14 +80,8 @@ class _CariPerkembanganBalitaScreenState
             color: AppColors.primary,
             size: 18,
           ),
-          onPressed: () => HomeRoot.navigateToTab(context, 1),
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.menu, color: AppColors.primary),
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(
@@ -95,6 +93,7 @@ class _CariPerkembanganBalitaScreenState
                 children: [
                   TextField(
                     controller: _searchController,
+                    autofocus: false,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(
                         Icons.search,
@@ -111,43 +110,56 @@ class _CariPerkembanganBalitaScreenState
                     onChanged: (value) => setState(() => _searchQuery = value),
                   ),
                   const SizedBox(height: 12),
+
+                  // Header kolom
                   Container(
                     padding: const EdgeInsets.symmetric(
                       vertical: 10,
                       horizontal: 8,
                     ),
-                    child: Row(
-                      children: const [
+                    child: const Row(
+                      children: [
                         Expanded(
                           flex: 3,
                           child: Text(
                             "Nama",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                         Expanded(
                           flex: 4,
                           child: Text(
                             "NIK",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                         Expanded(
                           flex: 3,
                           child: Text(
-                            "Nama Ortu",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            "Aksi",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                  // Daftar data balita
                   Expanded(
                     child: filteredList.isEmpty
                         ? const Center(
                             child: Text(
                               "Data balita tidak ditemukan",
-                              style: TextStyle(color: Colors.black54),
+                              style: TextStyle(color: Colors.black),
                             ),
                           )
                         : RefreshIndicator(
@@ -157,66 +169,80 @@ class _CariPerkembanganBalitaScreenState
                               itemCount: filteredList.length,
                               itemBuilder: (context, index) {
                                 final balita = filteredList[index];
-                                final isExpanded = _expandedIndex == index;
-
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _expandedIndex = isExpanded
-                                          ? null
-                                          : index;
-                                    });
-                                  },
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                      horizontal: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 3,
-                                          child: Text(
-                                            balita.namaBalita,
-                                            style: const TextStyle(
-                                              fontSize: 13,
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: Text(
+                                          balita.namaBalita,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.black,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 4,
+                                        child: Text(
+                                          balita.nikBalita,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.black,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 3,
+                                        child: Align(
+                                          alignment: Alignment.centerRight,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              // Navigator.push(
+                                              //   context,
+                                              //   MaterialPageRoute(
+                                              //     builder: (_) =>
+                                              //         TambahPerkembanganBalita(
+                                              //           balita: balita,
+                                              //         ),
+                                              //   ),
+                                              // );
+                                            },
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 8,
+                                                    horizontal: 13,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF5AC05E),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: const Text(
+                                                "Perkembangan",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
-                                            overflow: isExpanded
-                                                ? TextOverflow.visible
-                                                : TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        Expanded(
-                                          flex: 4,
-                                          child: Text(
-                                            balita.nikBalita,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                            ),
-                                            overflow: isExpanded
-                                                ? TextOverflow.visible
-                                                : TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 3,
-                                          child: Text(
-                                            balita.namaOrtu,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                            ),
-                                            overflow: isExpanded
-                                                ? TextOverflow.visible
-                                                : TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 );
                               },

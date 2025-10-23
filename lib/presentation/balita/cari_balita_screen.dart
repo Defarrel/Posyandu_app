@@ -3,6 +3,7 @@ import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
+import 'package:posyandu_app/presentation/balita/detail_balita_screen.dart';
 import 'package:dartz/dartz.dart' hide State;
 
 class CariBalitaScreen extends StatefulWidget {
@@ -18,13 +19,17 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
 
   List<BalitaResponseModel> _balitaList = [];
   String _searchQuery = "";
-  int? _expandedIndex;
   bool _isLoading = true;
 
+  @override
   @override
   void initState() {
     super.initState();
     _fetchBalita();
+
+    Future.delayed(Duration(milliseconds: 100), () {
+      FocusScope.of(context).unfocus();
+    });
   }
 
   Future<void> _fetchBalita() async {
@@ -76,12 +81,6 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
           ),
           onPressed: () => HomeRoot.navigateToTab(context, 1),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.menu, color: AppColors.primary),
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(
@@ -93,6 +92,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                 children: [
                   TextField(
                     controller: _searchController,
+                    autofocus: false,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(
                         Icons.search,
@@ -108,33 +108,43 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                     ),
                     onChanged: (value) => setState(() => _searchQuery = value),
                   ),
+
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       vertical: 10,
                       horizontal: 8,
                     ),
-                    child: Row(
-                      children: const [
+                    child: const Row(
+                      children: [
                         Expanded(
                           flex: 3,
                           child: Text(
                             "Nama",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                         Expanded(
                           flex: 4,
                           child: Text(
                             "NIK",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                         Expanded(
                           flex: 3,
                           child: Text(
                             "Nama Ortu",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                       ],
@@ -145,7 +155,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                         ? const Center(
                             child: Text(
                               "Data balita tidak ditemukan",
-                              style: TextStyle(color: Colors.black54),
+                              style: TextStyle(color: Colors.black),
                             ),
                           )
                         : RefreshIndicator(
@@ -155,15 +165,15 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                               itemCount: filteredList.length,
                               itemBuilder: (context, index) {
                                 final balita = filteredList[index];
-                                final isExpanded = _expandedIndex == index;
-
                                 return GestureDetector(
                                   onTap: () {
-                                    setState(() {
-                                      _expandedIndex = isExpanded
-                                          ? null
-                                          : index;
-                                    });
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            DetailBalitaScreen(balita: balita),
+                                      ),
+                                    );
                                   },
                                   child: Container(
                                     margin: const EdgeInsets.only(bottom: 8),
@@ -183,10 +193,8 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                                             balita.namaBalita,
                                             style: const TextStyle(
                                               fontSize: 13,
+                                              color: Colors.black,
                                             ),
-                                            overflow: isExpanded
-                                                ? TextOverflow.visible
-                                                : TextOverflow.ellipsis,
                                           ),
                                         ),
                                         Expanded(
@@ -195,10 +203,8 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                                             balita.nikBalita,
                                             style: const TextStyle(
                                               fontSize: 13,
+                                              color: Colors.black,
                                             ),
-                                            overflow: isExpanded
-                                                ? TextOverflow.visible
-                                                : TextOverflow.ellipsis,
                                           ),
                                         ),
                                         Expanded(
@@ -207,10 +213,8 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                                             balita.namaOrtu,
                                             style: const TextStyle(
                                               fontSize: 13,
+                                              color: Colors.black,
                                             ),
-                                            overflow: isExpanded
-                                                ? TextOverflow.visible
-                                                : TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],

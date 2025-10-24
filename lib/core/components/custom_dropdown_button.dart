@@ -6,7 +6,7 @@ class CustomDropdownButton extends StatelessWidget {
   final ValueChanged<String?> onChanged;
   final Color textColor;
   final double fontSize;
-  final bool isCompact; 
+  final bool isCompact;
 
   const CustomDropdownButton({
     Key? key,
@@ -15,34 +15,46 @@ class CustomDropdownButton extends StatelessWidget {
     required this.onChanged,
     this.textColor = const Color.fromARGB(255, 155, 135, 135),
     this.fontSize = 14,
-    this.isCompact = false, // default tampilan normal
+    this.isCompact = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     if (isCompact) {
-      return DropdownButton<String>(
-        value: value,
-        dropdownColor: Colors.white,
-        underline: const SizedBox(),
-        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-        style: TextStyle(
-          color: textColor,
-          fontSize: fontSize,
-          fontWeight: FontWeight.bold,
-        ),
-        items: items
-            .map(
-              (item) => DropdownMenuItem<String>(
-                value: item,
+      return DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          dropdownColor: Colors.white,
+          icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+          selectedItemBuilder: (BuildContext context) {
+            return items.map((String item) {
+              return Align(
+                alignment: Alignment.centerLeft,
                 child: Text(
                   item,
-                  style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
+                  style: const TextStyle(
+                    color: Colors.white, 
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            }).toList();
+          },
+          items: items.map((item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(
+                item,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            )
-            .toList(),
-        onChanged: onChanged,
+            );
+          }).toList(),
+          onChanged: onChanged,
+        ),
       );
     }
 
@@ -66,8 +78,10 @@ class CustomDropdownButton extends StatelessWidget {
         dropdownColor: Colors.white,
         items: items
             .map(
-              (item) =>
-                  DropdownMenuItem<String>(value: item, child: Text(item)),
+              (item) => DropdownMenuItem<String>(
+                value: item,
+                child: Text(item, style: const TextStyle(color: Colors.black)),
+              ),
             )
             .toList(),
         onChanged: onChanged,

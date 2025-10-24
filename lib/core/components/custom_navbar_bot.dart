@@ -34,7 +34,7 @@ class CustomNavbarBot extends StatelessWidget {
         children: [
           _buildNavItem(
             context: context,
-            icon: CupertinoIcons.person_crop_circle_badge_plus,
+            icon: CupertinoIcons.doc_text,
             index: 0,
             isActive: currentIndex == 0,
             onTap: () => HomeRoot.navigateToTab(context, 0),
@@ -48,7 +48,7 @@ class CustomNavbarBot extends StatelessWidget {
           ),
           _buildNavItem(
             context: context,
-            icon: CupertinoIcons.doc_text,
+            icon: CupertinoIcons.person_alt_circle,
             index: 2,
             isActive: currentIndex == 2,
             onTap: () => HomeRoot.navigateToTab(context, 2),

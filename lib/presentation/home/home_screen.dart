@@ -5,6 +5,7 @@ import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
 import 'package:posyandu_app/core/components/custom_appbar_home.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/presentation/balita/grafik_bulanan_screen.dart';
+import 'package:posyandu_app/presentation/balita/tambah_balita_screen.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
 import 'package:posyandu_app/presentation/perkembanganBalita/cari_perkembangan_balita_screen.dart';
 
@@ -107,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   value: _bulanDipilih ?? _bulanList.first,
                   items: _bulanList,
                   isCompact: true,
-                  textColor: Colors.white,
+                  textColor: const Color.fromARGB(255, 255, 255, 255),
                   onChanged: (value) {
                     setState(() => _bulanDipilih = value);
                   },
@@ -158,7 +159,10 @@ class _HomeScreenState extends State<HomeScreen> {
               MenuButton(
                 title: "Tambah Balita\nBaru",
                 imagePath: "lib/core/assets/tambahbalita.png",
-                onTap: () => HomeRoot.navigateToTab(context, 0),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TambahBalitaScreen()),
+                ),
               ),
               MenuButton(
                 title: "Tambah Data\nPerkembangan",

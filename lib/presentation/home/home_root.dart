@@ -3,6 +3,7 @@ import 'package:posyandu_app/presentation/balita/cari_balita_screen.dart';
 import 'package:posyandu_app/presentation/balita/tambah_balita_screen.dart';
 import 'package:posyandu_app/presentation/home/home_screen.dart';
 import 'package:posyandu_app/core/components/custom_navbar_bot.dart';
+import 'package:posyandu_app/presentation/profile/profile_screen.dart';
 
 class HomeRoot extends StatefulWidget {
   const HomeRoot({super.key});
@@ -21,9 +22,9 @@ class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
   int _previousIndex = 1;
 
   final List<Widget> _screens = const [
-    TambahBalitaScreen(),
-    HomeScreen(),
     CariBalitaScreen(),
+    HomeScreen(),
+    ProfileScreen(),
   ];
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(

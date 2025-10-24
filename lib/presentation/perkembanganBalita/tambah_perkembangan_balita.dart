@@ -1,11 +1,22 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_texfield2.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_field.dart';
+import 'package:posyandu_app/core/components/custom_textfield.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
+import 'package:posyandu_app/data/models/request/perkembangan_balita/perkembangan_request_model.dart';
+import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
 
 class TambahPerkembanganBalita extends StatefulWidget {
   final String nikBalita;
-  const TambahPerkembanganBalita({super.key, required this.nikBalita});
+  final String namaBalita;
+
+  const TambahPerkembanganBalita({
+    super.key,
+    required this.nikBalita,
+    required this.namaBalita,
+  });
 
   @override
   State<TambahPerkembanganBalita> createState() =>
@@ -18,7 +29,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   final _lingkarLenganController = TextEditingController();
   final _lingkarKepalaController = TextEditingController();
 
-  String? _selectedBulan;
+  DateTime? _selectedDate;
   String? _caraUkur = "Berdiri";
   String? _kms;
   String? _imd;
@@ -27,26 +38,33 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
 
   bool _isLoading = false;
 
-  final List<String> bulanList = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Agustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember",
-  ];
+  bool get isSpecialMonth {
+    if (_selectedDate == null) return false;
+    final month = _selectedDate!.month;
+    return month == 2 || month == 8;
+  }
 
-  bool get isSpecialMonth =>
-      _selectedBulan == "Februari" || _selectedBulan == "Agustus";
+  String _bulanIndo(int month) {
+    const bulan = [
+      '',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    return bulan[month];
+  }
 
   void _submitForm() async {
-    if (_selectedBulan == null ||
+    if (_selectedDate == null ||
         _beratController.text.isEmpty ||
         _tinggiController.text.isEmpty ||
         _lingkarLenganController.text.isEmpty ||
@@ -58,24 +76,56 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Data perkembangan berhasil disimpan!")),
-    );
+    try {
+      final model = PerkembanganBalitaRequestModel(
+        nikBalita: widget.nikBalita,
+        lingkarLengan: double.tryParse(_lingkarLenganController.text) ?? 0.0,
+        lingkarKepala: double.tryParse(_lingkarKepalaController.text) ?? 0.0,
+        tinggiBadan: double.tryParse(_tinggiController.text) ?? 0.0,
+        beratBadan: double.tryParse(_beratController.text) ?? 0.0,
+        caraUkur: _caraUkur ?? "-",
+        vitaminA: _vitaminA ?? "-",
+        kms: _kms ?? "-",
+        imd: _imd ?? "-",
+        asiEks: _asiEks ?? "-",
+        tanggalPerubahan:
+            "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}",
+      );
 
-    Navigator.pop(context);
+
+      final repo = PerkembanganBalitaRepository();
+      final result = await repo.tambahPerkembangan(model);
+
+      result.fold(
+        (error) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Gagal: $error")));
+        },
+        (message) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
+          Navigator.pop(context);
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF9F9),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF9F9),
         elevation: 0,
+        backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
           onPressed: () => Navigator.pop(context),
@@ -88,26 +138,56 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
             fontSize: 16,
           ),
         ),
+
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Silahkan lengkapi data sesuai dengan kolom.",
-              style: TextStyle(fontSize: 13),
+            Text(
+              "Halo, ${widget.namaBalita} gimana nih perkembangan kamu bulan ini?",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
             ),
+            const SizedBox(height: 4),
+
             const SizedBox(height: 20),
 
-            CustomDropdownField(
-              label: "Bulan",
-              value: _selectedBulan,
-              items: bulanList,
-              onChanged: (val) => setState(() => _selectedBulan = val),
+            GestureDetector(
+              onTap: () async {
+                FocusScope.of(context).unfocus();
+                DateTime? picked = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now(),
+                );
+                if (picked != null) {
+                  setState(() {
+                    _selectedDate = picked;
+                  });
+                }
+              },
+              child: AbsorbPointer(
+                child: CustomTextFieldBalita(
+                  label: "Tanggal Perkembangan",
+                  hint: "Pilih tanggal perkembangan",
+                  controller: TextEditingController(
+                    text: _selectedDate == null
+                        ? ""
+                        : "${_selectedDate!.day} ${_bulanIndo(_selectedDate!.month)} ${_selectedDate!.year}",
+                  ),
+                ),
+              ),
             ),
 
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -130,8 +210,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
               ],
             ),
 
-            SizedBox(height: 10),
-
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -154,12 +233,11 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
               ],
             ),
 
-            SizedBox(height: 10),
-
+            const SizedBox(height: 10),
             CustomDropdownField(
               label: "Cara Ukur",
               value: _caraUkur,
-              items: ["Berdiri", "Telentang"],
+              items: const ["Berdiri", "Telentang"],
               onChanged: (val) => setState(() => _caraUkur = val),
             ),
 
@@ -169,7 +247,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   child: CustomDropdownField2(
                     label: "KMS",
                     value: _kms,
-                    items: ["Merah", "Hijau"],
+                    items: const ["Merah", "Hijau"],
                     onChanged: (val) => setState(() => _kms = val),
                     enabled: isSpecialMonth,
                   ),
@@ -179,7 +257,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   child: CustomDropdownField2(
                     label: "IMD",
                     value: _imd,
-                    items: ["Ya", "Tidak"],
+                    items: const ["Ya", "Tidak"],
                     onChanged: (val) => setState(() => _imd = val),
                     enabled: isSpecialMonth,
                   ),
@@ -193,7 +271,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   child: CustomDropdownField2(
                     label: "Vitamin A",
                     value: _vitaminA,
-                    items: ["Sudah", "Belum"],
+                    items: const ["Sudah", "Belum"],
                     onChanged: (val) => setState(() => _vitaminA = val),
                     enabled: isSpecialMonth,
                   ),
@@ -203,7 +281,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   child: CustomDropdownField2(
                     label: "ASI Eksklusif",
                     value: _asiEks,
-                    items: ["Ya", "Tidak"],
+                    items: const ["Ya", "Tidak"],
                     onChanged: (val) => setState(() => _asiEks = val),
                     enabled: isSpecialMonth,
                   ),
@@ -212,7 +290,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
             ),
 
             const SizedBox(height: 20),
-
             SizedBox(
               width: double.infinity,
               height: 48,

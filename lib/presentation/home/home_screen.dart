@@ -187,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
               MenuButton(
                 title: "Cari Data\nBalita",
                 imagePath: "lib/core/assets/caridata.png",
-                onTap: () => HomeRoot.navigateToTab(context, 2),
+                onTap: () => HomeRoot.navigateToTab(context, 0),
               ),
             ],
           ),

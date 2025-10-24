@@ -27,7 +27,6 @@ class _CariPerkembanganBalitaScreenState
     super.initState();
     _fetchBalita();
 
-    // Mencegah keyboard muncul otomatis
     Future.delayed(const Duration(milliseconds: 200), () {
       FocusScope.of(context).unfocus();
     });
@@ -111,7 +110,6 @@ class _CariPerkembanganBalitaScreenState
                   ),
                   const SizedBox(height: 12),
 
-                  // Header kolom
                   Container(
                     padding: const EdgeInsets.symmetric(
                       vertical: 10,
@@ -209,16 +207,20 @@ class _CariPerkembanganBalitaScreenState
                                           alignment: Alignment.centerRight,
                                           child: GestureDetector(
                                             onTap: () {
-                                              // Navigator.push(
-                                              //   context,
-                                              //   MaterialPageRoute(
-                                              //     builder: (_) =>
-                                              //         TambahPerkembanganBalita(
-                                              //           balita: balita,
-                                              //         ),
-                                              //   ),
-                                              // );
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      TambahPerkembanganBalita(
+                                                        nikBalita:
+                                                            balita.nikBalita,
+                                                        namaBalita:
+                                                            balita.namaBalita,
+                                                      ),
+                                                ),
+                                              );
                                             },
+
                                             child: Container(
                                               padding:
                                                   const EdgeInsets.symmetric(

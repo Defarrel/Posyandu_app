@@ -34,6 +34,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
   bool _isLoading = false;
 
+  // Error state
   String? _namaError;
   String? _ttlError;
   String? _nikBalitaError;
@@ -49,7 +50,9 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
   final BalitaRepository _repository = BalitaRepository();
 
+  // Fungsi submit form
   void _submitForm() async {
+    // Validasi form
     setState(() {
       _namaError = _namaController.text.isEmpty
           ? "Nama balita wajib diisi"
@@ -86,6 +89,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
       _rwError = _rwController.text.isEmpty ? "RW wajib diisi" : null;
       _jenisKelaminError = _jenisKelamin == null ? "Pilih jenis kelamin" : null;
     });
+
     if (_namaError != null ||
         _ttlError != null ||
         _nikBalitaError != null ||
@@ -97,17 +101,19 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
         _alamatError != null ||
         _rtError != null ||
         _rwError != null ||
-        _jenisKelaminError != null)
+        _jenisKelaminError != null) {
       return;
+    }
 
     setState(() => _isLoading = true);
 
+    // Data request model
     final balita = BalitaRequestModel(
       nikBalita: _nikBalitaController.text,
       namaBalita: _namaController.text,
       jenisKelamin: _jenisKelamin!,
       tanggalLahir:
-          "${_selectedDate!.year.toString().padLeft(4, '0')}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}", // YYYY-MM-DD
+          "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}",
       anakKeBerapa: _anakKeController.text,
       nomorKk: _nomorKkController.text,
       namaOrtu: _namaOrtuController.text,
@@ -118,6 +124,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
       rw: _rwController.text,
     );
 
+    // Kirim ke repository
     Either<String, String> result = await _repository.tambahBalita(balita);
 
     result.fold(
@@ -131,11 +138,14 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text(message)));
 
-        Navigator.push(
+        // ✅ Navigasi ke TambahPerkembanganBalita (dengan nama + nik)
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                TambahPerkembanganBalita(nikBalita: _nikBalitaController.text),
+            builder: (_) => TambahPerkembanganBalita(
+              nikBalita: _nikBalitaController.text,
+              namaBalita: _namaController.text,
+            ),
           ),
         );
       },
@@ -166,7 +176,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
@@ -210,7 +220,8 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
               errorText: _namaError,
             ),
             const SizedBox(height: 12),
-            // TTL pakai DatePicker
+
+            // 📅 Date picker tanggal lahir
             GestureDetector(
               onTap: () async {
                 FocusScope.of(context).unfocus();
@@ -237,6 +248,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 12),
             CustomTextFieldBalita(
               label: "NIK Balita",
@@ -246,6 +258,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
               errorText: _nikBalitaError,
             ),
             const SizedBox(height: 12),
+
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -268,6 +281,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
                   ),
               ],
             ),
+
             const SizedBox(height: 12),
             CustomTextFieldBalita(
               label: "Anak ke",
@@ -339,6 +353,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
                 ),
               ],
             ),
+
             const SizedBox(height: 30),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -354,7 +369,6 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
                 style: const TextStyle(color: Colors.white),
               ),
             ),
-
             const SizedBox(height: 40),
           ],
         ),

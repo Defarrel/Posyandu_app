@@ -20,6 +20,22 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   PerkembanganBalitaResponseModel? _latestPerkembangan;
   bool _isLoading = true;
 
+  final List<String> _bulanList = const [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+  String _selectedBulan = "November";
+
   @override
   void initState() {
     super.initState();
@@ -39,10 +55,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       },
       (dataList) {
         setState(() {
-          // Ambil data terbaru (misal urutan terakhir)
-          if (dataList.isNotEmpty) {
-            _latestPerkembangan = dataList.last;
-          }
+          if (dataList.isNotEmpty) _latestPerkembangan = dataList.last;
           _isLoading = false;
         });
       },
@@ -52,22 +65,26 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF9F9),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF9F9),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        backgroundColor: Colors.white,
         title: const Text(
           "Detail Data Balita",
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
-        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.primary,
+            size: 18,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: _isLoading
           ? const Center(
@@ -78,19 +95,13 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Biodata Balita ---
-                  const Text(
-                    "Biodata Balita",
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  _buildCard([
+                  _buildSectionTitle("Biodata Balita"),
+                  _buildContentCard([
                     _buildRow("Nama Balita", widget.balita.namaBalita),
-                    _buildRow("TTL", widget.balita.tanggalLahir),
+                    _buildRow(
+                      "TTL (Tempat, Tanggal Lahir)",
+                      widget.balita.tanggalLahir,
+                    ),
                     _buildRow("NIK Balita", widget.balita.nikBalita),
                     _buildRow("Jenis Kelamin", widget.balita.jenisKelamin),
                     _buildRow("Nama Ortu", widget.balita.namaOrtu),
@@ -98,128 +109,121 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                     _buildRow("No Telp", widget.balita.nomorTelpOrtu),
                     _buildRow("Alamat", widget.balita.alamat),
                   ]),
-
-                  const SizedBox(height: 16),
-
-                  // --- Data Perkembangan ---
-                  const Text(
-                    "Data Perkembangan Balita",
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                  const SizedBox(height: 20),
+                  _buildSectionTitle("Data Perkembangan Balita"),
+                  _buildContentCard([
+                    Row(
+                      children: [
+                        const Text(
+                          "Bulan:",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        DropdownButton<String>(
+                          value: _selectedBulan,
+                          items: _bulanList
+                              .map(
+                                (b) =>
+                                    DropdownMenuItem(value: b, child: Text(b)),
+                              )
+                              .toList(),
+                          onChanged: (val) =>
+                              setState(() => _selectedBulan = val!),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  _latestPerkembangan == null
-                      ? _buildCard([
-                          const Text(
+                    const SizedBox(height: 8),
+                    _latestPerkembangan == null
+                        ? const Text(
                             "Belum ada data perkembangan.",
                             style: TextStyle(color: Colors.black54),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildRow(
+                                "Berat Badan",
+                                "${_latestPerkembangan?.beratBadan ?? '-'} kg",
+                              ),
+                              _buildRow(
+                                "Tinggi Badan",
+                                "${_latestPerkembangan?.tinggiBadan ?? '-'} cm",
+                              ),
+                              _buildRow(
+                                "Lingkar Lengan",
+                                "${_latestPerkembangan?.lingkarLengan ?? '-'} cm",
+                              ),
+                              _buildRow(
+                                "Lingkar Kepala",
+                                "${_latestPerkembangan?.lingkarKepala ?? '-'} cm",
+                              ),
+                              _buildRow(
+                                "Cara Ukur",
+                                _latestPerkembangan?.caraUkur ?? '-',
+                              ),
+                              _buildRow("KMS", _latestPerkembangan?.kms ?? '-'),
+                              _buildRow("IMD", _latestPerkembangan?.imd ?? '-'),
+                              _buildRow(
+                                "Vitamin A",
+                                _latestPerkembangan?.vitaminA ?? '-',
+                              ),
+                              _buildRow(
+                                "ASI Eksklusif",
+                                _latestPerkembangan?.asiEks ?? '-',
+                              ),
+                            ],
                           ),
-                        ])
-                      : _buildCard([
-                          _buildRow(
-                            "Bulan",
-                            _latestPerkembangan?.tanggalPerubahan ?? "-",
-                          ),
-                          _buildRow(
-                            "Berat Badan",
-                            "${_latestPerkembangan?.beratBadan ?? '-'} kg",
-                          ),
-                          _buildRow(
-                            "Tinggi Badan",
-                            "${_latestPerkembangan?.tinggiBadan ?? '-'} cm",
-                          ),
-                          _buildRow(
-                            "Lingkar Lengan",
-                            "${_latestPerkembangan?.lingkarLengan ?? '-'} cm",
-                          ),
-                          _buildRow(
-                            "Lingkar Kepala",
-                            "${_latestPerkembangan?.lingkarKepala ?? '-'} cm",
-                          ),
-                          _buildRow(
-                            "Cara Ukur",
-                            _latestPerkembangan?.caraUkur ?? '-',
-                          ),
-                          _buildRow("KMS", _latestPerkembangan?.kms ?? '-'),
-                          _buildRow("IMD", _latestPerkembangan?.imd ?? '-'),
-                          _buildRow(
-                            "Vitamin A",
-                            _latestPerkembangan?.vitaminA ?? '-',
-                          ),
-                          _buildRow(
-                            "ASI Eksklusif",
-                            _latestPerkembangan?.asiEks ?? '-',
-                          ),
-                        ]),
-
-                  const SizedBox(height: 20),
-
-                  // Tombol Aksi
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: const Text("Perbarui Data"),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: const Text("Cetak Kartu"),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: const Text("Hapus Data"),
-                        ),
-                      ),
-                    ],
-                  ),
+                  ]),
                   const SizedBox(height: 30),
+                  _buildActionButtons(),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
     );
   }
 
-  Widget _buildCard(List<Widget> children) {
+  // Judul Biru di Atas Card
+  Widget _buildSectionTitle(String title) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
+  // Konten Card (Abu + Shadow)
+  Widget _buildContentCard(List<Widget> children) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(12),
+          bottomRight: Radius.circular(12),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 5,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -254,6 +258,52 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            child: const Text("Perbarui Data"),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            child: const Text("Cetak Kartu"),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            child: const Text("Hapus Data"),
+          ),
+        ),
+      ],
     );
   }
 }

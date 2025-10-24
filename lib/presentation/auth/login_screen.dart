@@ -55,7 +55,6 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text("Login berhasil")));
 
-        // Pindah ke HomeRoot
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -117,6 +116,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 255, 255, 255),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primaryDark,
+                        ),
                       ),
                     ),
                     validator: (value) => value == null || value.isEmpty
@@ -149,6 +157,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 255, 255, 255),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primaryDark,
+                        ),
                       ),
                     ),
                     validator: (value) => value == null || value.isEmpty

@@ -4,6 +4,7 @@ import 'package:posyandu_app/core/components/buttons.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
 import 'package:posyandu_app/core/components/custom_appbar_home.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
+import 'package:posyandu_app/presentation/balita/grafik_bulanan_screen.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
 import 'package:posyandu_app/presentation/perkembanganBalita/cari_perkembangan_balita_screen.dart';
 
@@ -52,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: const Color(0xFFEFF7FF),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: CustomAppBarHome(nama: _namaKader, posyandu: "Posyandu Dahlia"),
       body: SafeArea(
         top: false,
@@ -172,7 +173,12 @@ class _HomeScreenState extends State<HomeScreen> {
               MenuButton(
                 title: "Grafik Bulanan\nBalita",
                 imagePath: "lib/core/assets/grafik.png",
-                onTap: () {},
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const GrafikBulananScreen(),
+                  ),
+                ),
               ),
               MenuButton(
                 title: "Cari Data\nBalita",

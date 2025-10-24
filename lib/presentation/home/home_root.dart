@@ -18,67 +18,101 @@ class HomeRoot extends StatefulWidget {
 
 class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
   int _currentIndex = 1;
+  int _previousIndex = 1;
 
-  late final List<Widget> _screens = [
-    const TambahBalitaScreen(),
-    const HomeScreen(),
-    const CariBalitaScreen(),
+  final List<Widget> _screens = const [
+    TambahBalitaScreen(),
+    HomeScreen(),
+    CariBalitaScreen(),
   ];
 
-  late final List<AnimationController> _fadeControllers = List.generate(
-    _screens.length,
-    (index) => AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    ),
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
+    3,
+    (index) => GlobalKey<NavigatorState>(),
   );
 
-  late final List<Animation<double>> _fadeAnimations = _fadeControllers
-      .map(
-        (controller) => Tween<double>(begin: 0.0, end: 1.0).animate(controller),
-      )
-      .toList();
-
-  @override
-  void initState() {
-    super.initState();
-    _fadeControllers[_currentIndex].forward();
-  }
-
-  void _onTap(int index) {
-    if (index != _currentIndex) {
-      _fadeControllers[_currentIndex].reverse();
-      _fadeControllers[index].forward();
-      setState(() {
-        _currentIndex = index;
-      });
-    }
-  }
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 350),
+  );
 
   @override
   void dispose() {
-    for (final controller in _fadeControllers) {
-      controller.dispose();
-    }
+    _controller.dispose();
     super.dispose();
+  }
+
+  void _onTap(int index) {
+    if (index == _currentIndex) {
+      _navigatorKeys[index].currentState?.popUntil((r) => r.isFirst);
+      return;
+    }
+
+    if (index == 1) {
+      _navigatorKeys[1].currentState?.popUntil((r) => r.isFirst);
+    }
+
+    setState(() {
+      _previousIndex = _currentIndex;
+      _currentIndex = index;
+    });
+
+    _controller.forward(from: 0);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: List.generate(_screens.length, (index) {
-          return IgnorePointer(
-            ignoring: _currentIndex != index,
-            child: FadeTransition(
-              opacity: _fadeAnimations[index],
-              child: Offstage(
-                offstage: _currentIndex != index,
-                child: _screens[index],
-              ),
-            ),
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final slideIn =
+              Tween<Offset>(
+                begin: Offset(_previousIndex < _currentIndex ? 1.0 : -1.0, 0),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+              );
+
+          final slideOut =
+              Tween<Offset>(
+                begin: Offset.zero,
+                end: Offset(_previousIndex < _currentIndex ? -1.0 : 1.0, 0),
+              ).animate(
+                CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+              );
+
+          final fade = Tween<double>(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
           );
-        }),
+
+          return Stack(
+            children: List.generate(_screens.length, (index) {
+              final isActive = index == _currentIndex;
+              final isPrevious = index == _previousIndex;
+
+              if (!isActive && !isPrevious) return const SizedBox.shrink();
+
+              return Offstage(
+                offstage: !isActive && !isPrevious,
+                child: SlideTransition(
+                  position: isActive ? slideIn : slideOut,
+                  child: FadeTransition(
+                    opacity: isActive ? fade : ReverseAnimation(fade),
+                    child: Navigator(
+                      key: _navigatorKeys[index],
+                      onGenerateRoute: (settings) {
+                        return MaterialPageRoute(
+                          builder: (_) => _screens[index],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
       ),
       bottomNavigationBar: CustomNavbarBot(
         currentIndex: _currentIndex,

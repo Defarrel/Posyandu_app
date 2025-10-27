@@ -1,4 +1,7 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
@@ -17,7 +20,9 @@ class DetailBalitaScreen extends StatefulWidget {
 class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   final PerkembanganBalitaRepository _repository =
       PerkembanganBalitaRepository();
-  PerkembanganBalitaResponseModel? _latestPerkembangan;
+
+  List<PerkembanganBalitaResponseModel> _perkembanganList = [];
+  PerkembanganBalitaResponseModel? _filteredPerkembangan;
   bool _isLoading = true;
 
   final List<String> _bulanList = const [
@@ -34,11 +39,14 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     "November",
     "Desember",
   ];
-  String _selectedBulan = "November";
+  String _selectedBulan = "";
+  int _selectedTahun = DateTime.now().year;
 
   @override
   void initState() {
     super.initState();
+    initializeDateFormatting('id_ID', null);
+    _selectedBulan = _bulanList[DateTime.now().month - 1];
     _fetchPerkembangan();
   }
 
@@ -54,12 +62,43 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         ).showSnackBar(SnackBar(content: Text("Gagal memuat: $error")));
       },
       (dataList) {
+        log("Total data dari backend: ${dataList.length}");
+        for (var d in dataList) {
+          log("Tanggal dari backend: ${d.tanggalPerubahan}");
+        }
+
         setState(() {
-          if (dataList.isNotEmpty) _latestPerkembangan = dataList.last;
+          _perkembanganList = dataList;
+          _applyFilter();
           _isLoading = false;
         });
       },
     );
+  }
+
+  DateTime _safeParseDate(String? raw) {
+    if (raw == null || raw.isEmpty) return DateTime(1900);
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {
+      return DateTime(1900);
+    }
+  }
+
+  void _applyFilter() {
+    final bulanIndex = _bulanList.indexOf(_selectedBulan) + 1;
+    final filtered = _perkembanganList.where((data) {
+      final tgl = _safeParseDate(data.tanggalPerubahan);
+      return tgl.month == bulanIndex && tgl.year == _selectedTahun;
+    }).toList();
+
+    log(
+      "[DEBUG] Filter: $_selectedBulan $_selectedTahun -> ditemukan ${filtered.length} data",
+    );
+
+    setState(() {
+      _filteredPerkembangan = filtered.isNotEmpty ? filtered.last : null;
+    });
   }
 
   @override
@@ -98,18 +137,16 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                   _buildSectionTitle("Biodata Balita"),
                   _buildContentCard([
                     _buildRow("Nama Balita", widget.balita.namaBalita),
-                    _buildRow(
-                      "TTL (Tempat, Tanggal Lahir)",
-                      widget.balita.tanggalLahir,
-                    ),
+                    _buildRow("Tanggal Lahir", widget.balita.tanggalLahir),
                     _buildRow("NIK Balita", widget.balita.nikBalita),
                     _buildRow("Jenis Kelamin", widget.balita.jenisKelamin),
-                    _buildRow("Nama Ortu", widget.balita.namaOrtu),
-                    _buildRow("NIK Ortu", widget.balita.nikOrtu),
-                    _buildRow("No Telp", widget.balita.nomorTelpOrtu),
+                    _buildRow("Nama Orang Tua", widget.balita.namaOrtu),
+                    _buildRow("NIK Orang Tua", widget.balita.nikOrtu),
+                    _buildRow("Nomor Telepon", widget.balita.nomorTelpOrtu),
                     _buildRow("Alamat", widget.balita.alamat),
                   ]),
                   const SizedBox(height: 20),
+
                   _buildSectionTitle("Data Perkembangan Balita"),
                   _buildContentCard([
                     Row(
@@ -130,15 +167,44 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                                     DropdownMenuItem(value: b, child: Text(b)),
                               )
                               .toList(),
-                          onChanged: (val) =>
-                              setState(() => _selectedBulan = val!),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedBulan = val!;
+                              _applyFilter();
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          "Tahun:",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        DropdownButton<int>(
+                          value: _selectedTahun,
+                          items: List.generate(6, (i) {
+                            int year = DateTime.now().year - i;
+                            return DropdownMenuItem(
+                              value: year,
+                              child: Text(year.toString()),
+                            );
+                          }),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedTahun = val!;
+                              _applyFilter();
+                            });
+                          },
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    _latestPerkembangan == null
+                    _filteredPerkembangan == null
                         ? const Text(
-                            "Belum ada data perkembangan.",
+                            "Belum ada data perkembangan untuk bulan ini.",
                             style: TextStyle(color: Colors.black54),
                           )
                         : Column(
@@ -146,47 +212,61 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                             children: [
                               _buildRow(
                                 "Berat Badan",
-                                "${_latestPerkembangan?.beratBadan ?? '-'} kg",
+                                "${_filteredPerkembangan?.beratBadan ?? '-'} kg",
                               ),
                               _buildRow(
                                 "Tinggi Badan",
-                                "${_latestPerkembangan?.tinggiBadan ?? '-'} cm",
+                                "${_filteredPerkembangan?.tinggiBadan ?? '-'} cm",
                               ),
                               _buildRow(
                                 "Lingkar Lengan",
-                                "${_latestPerkembangan?.lingkarLengan ?? '-'} cm",
+                                "${_filteredPerkembangan?.lingkarLengan ?? '-'} cm",
                               ),
                               _buildRow(
                                 "Lingkar Kepala",
-                                "${_latestPerkembangan?.lingkarKepala ?? '-'} cm",
+                                "${_filteredPerkembangan?.lingkarKepala ?? '-'} cm",
                               ),
                               _buildRow(
                                 "Cara Ukur",
-                                _latestPerkembangan?.caraUkur ?? '-',
+                                _filteredPerkembangan?.caraUkur ?? '-',
                               ),
-                              _buildRow("KMS", _latestPerkembangan?.kms ?? '-'),
-                              _buildRow("IMD", _latestPerkembangan?.imd ?? '-'),
+                              _buildRow(
+                                "KMS",
+                                _filteredPerkembangan?.kms ?? '-',
+                              ),
+                              _buildRow(
+                                "IMD",
+                                _filteredPerkembangan?.imd ?? '-',
+                              ),
                               _buildRow(
                                 "Vitamin A",
-                                _latestPerkembangan?.vitaminA ?? '-',
+                                _filteredPerkembangan?.vitaminA ?? '-',
                               ),
                               _buildRow(
                                 "ASI Eksklusif",
-                                _latestPerkembangan?.asiEks ?? '-',
+                                _filteredPerkembangan?.asiEks ?? '-',
+                              ),
+                              _buildRow(
+                                "Tanggal Perubahan",
+                                DateFormat('d MMMM yyyy', 'id_ID').format(
+                                  _safeParseDate(
+                                    _filteredPerkembangan?.tanggalPerubahan,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                   ]),
                   const SizedBox(height: 30),
                   _buildActionButtons(),
-                  const SizedBox(height: 40),
                 ],
               ),
             ),
     );
   }
 
-  // Judul Biru di Atas Card
+  // ==== UI Helper ====
+
   Widget _buildSectionTitle(String title) {
     return Container(
       width: double.infinity,
@@ -209,7 +289,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     );
   }
 
-  // Konten Card (Abu + Shadow)
   Widget _buildContentCard(List<Widget> children) {
     return Container(
       width: double.infinity,
@@ -275,19 +354,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
               ),
             ),
             child: const Text("Perbarui Data"),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            child: const Text("Cetak Kartu"),
           ),
         ),
         const SizedBox(width: 8),

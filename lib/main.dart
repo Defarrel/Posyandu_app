@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/presentation/splash/splash_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
   runApp(const MyApp());
 }
 

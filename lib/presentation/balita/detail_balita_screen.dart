@@ -42,6 +42,8 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   String _selectedBulan = "";
   int _selectedTahun = DateTime.now().year;
 
+  Color _warnaNama = Colors.black;
+
   @override
   void initState() {
     super.initState();
@@ -62,14 +64,21 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         ).showSnackBar(SnackBar(content: Text("Gagal memuat: $error")));
       },
       (dataList) {
-        log("Total data dari backend: ${dataList.length}");
-        for (var d in dataList) {
-          log("Tanggal dari backend: ${d.tanggalPerubahan}");
-        }
-
         setState(() {
           _perkembanganList = dataList;
           _applyFilter();
+
+          if (_perkembanganList.isNotEmpty) {
+            final lastKMS = _perkembanganList.last.kms?.toLowerCase() ?? "";
+            if (lastKMS == "merah") {
+              _warnaNama = Colors.red;
+            } else if (lastKMS == "hijau") {
+              _warnaNama = Colors.green;
+            } else {
+              _warnaNama = Colors.black;
+            }
+          }
+
           _isLoading = false;
         });
       },
@@ -136,7 +145,30 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                 children: [
                   _buildSectionTitle("Biodata Balita"),
                   _buildContentCard([
-                    _buildRow("Nama Balita", widget.balita.namaBalita),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: RichText(
+                        text: TextSpan(
+                          text: "Nama Balita: ",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontSize: 14,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: widget.balita.namaBalita,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    _warnaNama, 
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     _buildRow("Tanggal Lahir", widget.balita.tanggalLahir),
                     _buildRow("NIK Balita", widget.balita.nikBalita),
                     _buildRow("Jenis Kelamin", widget.balita.jenisKelamin),

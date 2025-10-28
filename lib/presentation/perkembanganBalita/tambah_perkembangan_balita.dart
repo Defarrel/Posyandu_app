@@ -1,21 +1,23 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_texfield2.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_field.dart';
 import 'package:posyandu_app/core/components/custom_textfield.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/request/perkembangan_balita/perkembangan_request_model.dart';
+import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
 import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
 
 class TambahPerkembanganBalita extends StatefulWidget {
   final String nikBalita;
   final String namaBalita;
+  final PerkembanganBalitaResponseModel? existingData; // <-- Tambahan
 
   const TambahPerkembanganBalita({
     super.key,
     required this.nikBalita,
     required this.namaBalita,
+    this.existingData,
   });
 
   @override
@@ -38,10 +40,32 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
 
   bool _isLoading = false;
 
+  final _repo = PerkembanganBalitaRepository();
+
   bool get isSpecialMonth {
     if (_selectedDate == null) return false;
     final month = _selectedDate!.month;
     return month == 2 || month == 8;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Isi otomatis kalau existingData tidak null (mode update)
+    if (widget.existingData != null) {
+      final d = widget.existingData!;
+      _beratController.text = d.beratBadan?.toString() ?? "";
+      _tinggiController.text = d.tinggiBadan?.toString() ?? "";
+      _lingkarLenganController.text = d.lingkarLengan?.toString() ?? "";
+      _lingkarKepalaController.text = d.lingkarKepala?.toString() ?? "";
+      _caraUkur = d.caraUkur ?? "Berdiri";
+      _kms = d.kms;
+      _imd = d.imd;
+      _vitaminA = d.vitaminA;
+      _asiEks = d.asiEks;
+      _selectedDate = DateTime.tryParse(d.tanggalPerubahan ?? "");
+    }
   }
 
   String _bulanIndo(int month) {
@@ -93,24 +117,38 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
             "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}",
       );
 
-
-      final repo = PerkembanganBalitaRepository();
-      final result = await repo.tambahPerkembangan(model);
-
-      result.fold(
-        (error) {
-          ScaffoldMessenger.of(
+      if (widget.existingData == null) {
+        // === Mode Tambah ===
+        final result = await _repo.tambahPerkembangan(model);
+        result.fold(
+          (error) => ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text("Gagal: $error")));
-        },
-        (message) {
-          ScaffoldMessenger.of(
+          ).showSnackBar(SnackBar(content: Text("Gagal: $error"))),
+          (message) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(message)));
+            Navigator.pop(context, true);
+          },
+        );
+      } else {
+        // === Mode Update ===
+        final id = widget.existingData!.id;
+        final result = await _repo.updatePerkembangan(id, model);
+        result.fold(
+          (error) => ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text(message)));
-          Navigator.pop(context);
-        },
-      );
+          ).showSnackBar(SnackBar(content: Text("Gagal: $error"))),
+          (message) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(message)));
+            Navigator.pop(context, true);
+          },
+        );
+      }
     } catch (e) {
+      log("Exception form: $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
@@ -121,6 +159,8 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
 
   @override
   Widget build(BuildContext context) {
+    final isUpdate = widget.existingData != null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -130,15 +170,16 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Tambah Data Perkembangan Balita",
-          style: TextStyle(
+        title: Text(
+          isUpdate
+              ? "Perbarui Data Perkembangan"
+              : "Tambah Data Perkembangan Balita",
+          style: const TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
         ),
-
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -148,23 +189,24 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Halo, ${widget.namaBalita} gimana nih perkembangan kamu bulan ini?",
+              isUpdate
+                  ? "Perbarui data perkembangan ${widget.namaBalita}"
+                  : "Halo, ${widget.namaBalita}! Gimana perkembangan kamu bulan ini?",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 4),
-
             const SizedBox(height: 20),
 
+            // Tanggal
             GestureDetector(
               onTap: () async {
                 FocusScope.of(context).unfocus();
                 DateTime? picked = await showDatePicker(
                   context: context,
-                  initialDate: DateTime.now(),
+                  initialDate: _selectedDate ?? DateTime.now(),
                   firstDate: DateTime(2020),
                   lastDate: DateTime.now(),
                 );
@@ -302,7 +344,9 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   ),
                 ),
                 child: Text(
-                  _isLoading ? "Menyimpan..." : "Simpan",
+                  _isLoading
+                      ? "Menyimpan..."
+                      : (isUpdate ? "Perbarui Data" : "Simpan"),
                   style: const TextStyle(color: Colors.white),
                 ),
               ),

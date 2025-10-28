@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
+import 'package:posyandu_app/data/models/request/perkembangan_balita/perkembangan_request_model.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
 import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
 import 'package:dartz/dartz.dart' hide State;
+import 'package:posyandu_app/presentation/perkembanganBalita/tambah_perkembangan_balita.dart';
 
 class DetailBalitaScreen extends StatefulWidget {
   final BalitaResponseModel balita;
@@ -41,7 +43,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   ];
   String _selectedBulan = "";
   int _selectedTahun = DateTime.now().year;
-
   Color _warnaNama = Colors.black;
 
   @override
@@ -53,8 +54,9 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   }
 
   Future<void> _fetchPerkembangan() async {
-    final Either<String, List<PerkembanganBalitaResponseModel>> result =
-        await _repository.getPerkembanganByNIK(widget.balita.nikBalita);
+    final result = await _repository.getPerkembanganByNIK(
+      widget.balita.nikBalita,
+    );
 
     result.fold(
       (error) {
@@ -68,6 +70,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           _perkembanganList = dataList;
           _applyFilter();
 
+          // Tentukan warna nama berdasarkan KMS terakhir
           if (_perkembanganList.isNotEmpty) {
             final lastKMS = _perkembanganList.last.kms?.toLowerCase() ?? "";
             if (lastKMS == "merah") {
@@ -110,6 +113,74 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     });
   }
 
+  Future<void> _handleDelete() async {
+    if (_filteredPerkembangan == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Konfirmasi Hapus"),
+        content: const Text(
+          "Apakah kamu yakin ingin menghapus data perkembangan ini?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Hapus", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final result = await _repository.deletePerkembangan(
+        _filteredPerkembangan!.id,
+      );
+      result.fold(
+        (error) => ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error))),
+        (success) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(success)));
+          _fetchPerkembangan();
+        },
+      );
+    }
+  }
+
+  Future<void> _handleUpdate() async {
+    if (_filteredPerkembangan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Tidak ada data perkembangan untuk diperbarui."),
+        ),
+      );
+      return;
+    }
+
+    final updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TambahPerkembanganBalita(
+          nikBalita: widget.balita.nikBalita,
+          namaBalita: widget.balita.namaBalita,
+          existingData: _filteredPerkembangan,
+        ),
+      ),
+    );
+
+    if (updated == true) {
+      _fetchPerkembangan();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,11 +197,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: AppColors.primary,
-            size: 18,
-          ),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -160,8 +227,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                               text: widget.balita.namaBalita,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color:
-                                    _warnaNama, 
+                                color: _warnaNama,
                                 fontSize: 15,
                               ),
                             ),
@@ -173,121 +239,20 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                     _buildRow("NIK Balita", widget.balita.nikBalita),
                     _buildRow("Jenis Kelamin", widget.balita.jenisKelamin),
                     _buildRow("Nama Orang Tua", widget.balita.namaOrtu),
-                    _buildRow("NIK Orang Tua", widget.balita.nikOrtu),
-                    _buildRow("Nomor Telepon", widget.balita.nomorTelpOrtu),
                     _buildRow("Alamat", widget.balita.alamat),
                   ]),
                   const SizedBox(height: 20),
 
                   _buildSectionTitle("Data Perkembangan Balita"),
                   _buildContentCard([
-                    Row(
-                      children: [
-                        const Text(
-                          "Bulan:",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        DropdownButton<String>(
-                          value: _selectedBulan,
-                          items: _bulanList
-                              .map(
-                                (b) =>
-                                    DropdownMenuItem(value: b, child: Text(b)),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedBulan = val!;
-                              _applyFilter();
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 16),
-                        const Text(
-                          "Tahun:",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        DropdownButton<int>(
-                          value: _selectedTahun,
-                          items: List.generate(6, (i) {
-                            int year = DateTime.now().year - i;
-                            return DropdownMenuItem(
-                              value: year,
-                              child: Text(year.toString()),
-                            );
-                          }),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedTahun = val!;
-                              _applyFilter();
-                            });
-                          },
-                        ),
-                      ],
-                    ),
+                    _buildFilterDropdown(),
                     const SizedBox(height: 8),
                     _filteredPerkembangan == null
                         ? const Text(
                             "Belum ada data perkembangan untuk bulan ini.",
                             style: TextStyle(color: Colors.black54),
                           )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildRow(
-                                "Berat Badan",
-                                "${_filteredPerkembangan?.beratBadan ?? '-'} kg",
-                              ),
-                              _buildRow(
-                                "Tinggi Badan",
-                                "${_filteredPerkembangan?.tinggiBadan ?? '-'} cm",
-                              ),
-                              _buildRow(
-                                "Lingkar Lengan",
-                                "${_filteredPerkembangan?.lingkarLengan ?? '-'} cm",
-                              ),
-                              _buildRow(
-                                "Lingkar Kepala",
-                                "${_filteredPerkembangan?.lingkarKepala ?? '-'} cm",
-                              ),
-                              _buildRow(
-                                "Cara Ukur",
-                                _filteredPerkembangan?.caraUkur ?? '-',
-                              ),
-                              _buildRow(
-                                "KMS",
-                                _filteredPerkembangan?.kms ?? '-',
-                              ),
-                              _buildRow(
-                                "IMD",
-                                _filteredPerkembangan?.imd ?? '-',
-                              ),
-                              _buildRow(
-                                "Vitamin A",
-                                _filteredPerkembangan?.vitaminA ?? '-',
-                              ),
-                              _buildRow(
-                                "ASI Eksklusif",
-                                _filteredPerkembangan?.asiEks ?? '-',
-                              ),
-                              _buildRow(
-                                "Tanggal Perubahan",
-                                DateFormat('d MMMM yyyy', 'id_ID').format(
-                                  _safeParseDate(
-                                    _filteredPerkembangan?.tanggalPerubahan,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        : _buildPerkembanganDetail(),
                   ]),
                   const SizedBox(height: 30),
                   _buildActionButtons(),
@@ -297,111 +262,171 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     );
   }
 
-  // ==== UI Helper ====
-
-  Widget _buildSectionTitle(String title) {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContentCard(List<Widget> children) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(12),
-          bottomRight: Radius.circular(12),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      ),
-    );
-  }
-
-  Widget _buildRow(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: RichText(
-        text: TextSpan(
-          text: "$title: ",
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-            fontSize: 14,
-          ),
-          children: [
-            TextSpan(
-              text: value,
-              style: const TextStyle(
-                fontWeight: FontWeight.normal,
-                color: Colors.black,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
+  Widget _buildFilterDropdown() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            child: const Text("Perbarui Data"),
+        const Text(
+          "Bulan:",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Colors.black,
           ),
         ),
         const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            child: const Text("Hapus Data"),
+        DropdownButton<String>(
+          value: _selectedBulan,
+          items: _bulanList
+              .map((b) => DropdownMenuItem(value: b, child: Text(b)))
+              .toList(),
+          onChanged: (val) {
+            setState(() {
+              _selectedBulan = val!;
+              _applyFilter();
+            });
+          },
+        ),
+        const SizedBox(width: 16),
+        const Text(
+          "Bulan:",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Colors.black,
           ),
+        ),
+        const SizedBox(width: 8),
+        DropdownButton<int>(
+          value: _selectedTahun,
+          items: List.generate(6, (i) {
+            int year = DateTime.now().year - i;
+            return DropdownMenuItem(value: year, child: Text("$year"));
+          }),
+          onChanged: (val) {
+            setState(() {
+              _selectedTahun = val!;
+              _applyFilter();
+            });
+          },
         ),
       ],
     );
   }
+
+  Widget _buildPerkembanganDetail() {
+    final p = _filteredPerkembangan!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildRow("Berat Badan", "${p.beratBadan} kg"),
+        _buildRow("Tinggi Badan", "${p.tinggiBadan} cm"),
+        _buildRow("Lingkar Lengan", "${p.lingkarLengan} cm"),
+        _buildRow("Lingkar Kepala", "${p.lingkarKepala} cm"),
+        _buildRow("Cara Ukur", p.caraUkur),
+        _buildRow("KMS", p.kms),
+        _buildRow("IMD", p.imd),
+        _buildRow("Vitamin A", p.vitaminA),
+        _buildRow("ASI Eksklusif", p.asiEks),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title) => Container(
+    width: double.infinity,
+    decoration: const BoxDecoration(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(12),
+        topRight: Radius.circular(12),
+      ),
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    child: Text(
+      title,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: 16,
+      ),
+    ),
+  );
+
+  Widget _buildContentCard(List<Widget> children) => Container(
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(12),
+        bottomRight: Radius.circular(12),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.15),
+          blurRadius: 5,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    padding: const EdgeInsets.all(12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    ),
+  );
+
+  Widget _buildRow(String title, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: RichText(
+      text: TextSpan(
+        text: "$title: ",
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+          fontSize: 14,
+        ),
+        children: [
+          TextSpan(
+            text: value,
+            style: const TextStyle(
+              fontWeight: FontWeight.normal,
+              color: Colors.black,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildActionButtons() => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Expanded(
+        child: ElevatedButton(
+          onPressed: _handleUpdate,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+          ),
+          child: const Text("Perbarui Data"),
+        ),
+      ),
+
+      const SizedBox(width: 8),
+      Expanded(
+        child: ElevatedButton(
+          onPressed: _handleDelete,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+          ),
+          child: const Text("Hapus Data"),
+        ),
+      ),
+    ],
+  );
 }

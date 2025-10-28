@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
-import 'package:posyandu_app/data/models/request/perkembangan_balita/perkembangan_request_model.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
 import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
-import 'package:dartz/dartz.dart' hide State;
 import 'package:posyandu_app/presentation/perkembanganBalita/tambah_perkembangan_balita.dart';
 
 class DetailBalitaScreen extends StatefulWidget {
@@ -71,7 +69,8 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           _applyFilter();
 
           if (_perkembanganList.isNotEmpty) {
-            final lastKMS = _perkembanganList.last.kms?.toLowerCase() ?? "";
+            final lastKMS =
+                _perkembanganList.last.kms?.toLowerCase().trim() ?? "";
             if (lastKMS == "merah") {
               _warnaNama = Colors.red;
             } else if (lastKMS == "hijau") {
@@ -102,7 +101,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       final date = DateTime.parse(rawDate);
       return DateFormat("d MMMM yyyy", "id_ID").format(date);
     } catch (e) {
-      return rawDate; // fallback jika format salah
+      return rawDate;
     }
   }
 
@@ -237,7 +236,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: _warnaNama,
-                                fontSize: 15,
+                                fontSize: 14,
                               ),
                             ),
                           ],
@@ -252,6 +251,8 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                     _buildRow("NIK Balita", widget.balita.nikBalita),
                     _buildRow("Jenis Kelamin", widget.balita.jenisKelamin),
                     _buildRow("Nama Orang Tua", widget.balita.namaOrtu),
+                    _buildRow("NIK Orang Tua", widget.balita.nikOrtu),
+                    _buildRow("Nomor Telepon", widget.balita.nomorTelpOrtu),
                     _buildRow("Alamat", widget.balita.alamat),
                   ]),
                   const SizedBox(height: 20),

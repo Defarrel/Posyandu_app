@@ -82,7 +82,7 @@ class CustomDropdownField2 extends StatelessWidget {
   final List<String> items;
   final ValueChanged<String?> onChanged;
   final bool enabled;
-  final Color? iconColor; 
+  final Color? iconColor;
 
   const CustomDropdownField2({
     super.key,
@@ -129,15 +129,13 @@ class CustomDropdownField2 extends StatelessWidget {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     isExpanded: true,
-                    value: value,
-                    hint: const Text(
-                      "Pilih",
-                      style: TextStyle(fontSize: 14),
-                    ),
+                    value: items.contains(value) ? value : null,
+                    hint: const Text("Pilih", style: TextStyle(fontSize: 14)),
                     onChanged: enabled ? onChanged : null,
                     icon: Icon(
                       Icons.arrow_drop_down,
-                      color: iconColor ??
+                      color:
+                          iconColor ??
                           (enabled ? AppColors.primary : Colors.grey),
                     ),
                     items: items
@@ -161,4 +159,3 @@ class CustomDropdownField2 extends StatelessWidget {
     );
   }
 }
-

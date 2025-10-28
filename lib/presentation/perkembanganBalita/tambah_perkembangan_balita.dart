@@ -295,7 +295,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
             CustomDropdownField(
               label: "Cara Ukur",
               value: _caraUkur,
-              items: const ["Berdiri", "Telentang"],
+              items: const ["Berdiri", "Terlentang"],
               onChanged: (val) => setState(() => _caraUkur = val),
             ),
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/presentation/splash/splash_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
@@ -58,6 +59,13 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+      locale: const Locale('id', 'ID'),
+      supportedLocales: const [Locale('en', 'US'), Locale('id', 'ID')],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: const SplashScreen(),
     );
   }

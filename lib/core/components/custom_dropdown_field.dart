@@ -76,13 +76,13 @@ class CustomDropdownField extends StatelessWidget {
   }
 }
 
-/// Widget dropdown versi kecil — untuk 2 dalam 1 baris
 class CustomDropdownField2 extends StatelessWidget {
   final String label;
   final String? value;
   final List<String> items;
   final ValueChanged<String?> onChanged;
   final bool enabled;
+  final Color? iconColor; 
 
   const CustomDropdownField2({
     super.key,
@@ -91,6 +91,7 @@ class CustomDropdownField2 extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.enabled = true,
+    this.iconColor,
   });
 
   @override
@@ -120,6 +121,7 @@ class CustomDropdownField2 extends StatelessWidget {
                 ),
               ),
             ),
+
             Expanded(
               child: Container(
                 color: const Color(0xFFD9D9D9),
@@ -128,11 +130,15 @@ class CustomDropdownField2 extends StatelessWidget {
                   child: DropdownButton<String>(
                     isExpanded: true,
                     value: value,
-                    hint: const Text("Pilih", style: TextStyle(fontSize: 14)),
+                    hint: const Text(
+                      "Pilih",
+                      style: TextStyle(fontSize: 14),
+                    ),
                     onChanged: enabled ? onChanged : null,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_drop_down,
-                      color: AppColors.primary,
+                      color: iconColor ??
+                          (enabled ? AppColors.primary : Colors.grey),
                     ),
                     items: items
                         .map(
@@ -155,3 +161,4 @@ class CustomDropdownField2 extends StatelessWidget {
     );
   }
 }
+

@@ -11,7 +11,7 @@ import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart
 class TambahPerkembanganBalita extends StatefulWidget {
   final String nikBalita;
   final String namaBalita;
-  final PerkembanganBalitaResponseModel? existingData; // <-- Tambahan
+  final PerkembanganBalitaResponseModel? existingData;
 
   const TambahPerkembanganBalita({
     super.key,
@@ -31,7 +31,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   final _lingkarLenganController = TextEditingController();
   final _lingkarKepalaController = TextEditingController();
 
-  DateTime? _selectedDate;
+  DateTime _selectedDate = DateTime.now();
   String? _caraUkur = "Berdiri";
   String? _kms;
   String? _imd;
@@ -39,12 +39,10 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   String? _asiEks;
 
   bool _isLoading = false;
-
   final _repo = PerkembanganBalitaRepository();
 
   bool get isSpecialMonth {
-    if (_selectedDate == null) return false;
-    final month = _selectedDate!.month;
+    final month = _selectedDate.month;
     return month == 2 || month == 8;
   }
 
@@ -52,7 +50,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   void initState() {
     super.initState();
 
-    // Isi otomatis kalau existingData tidak null (mode update)
     if (widget.existingData != null) {
       final d = widget.existingData!;
       _beratController.text = d.beratBadan?.toString() ?? "";
@@ -64,7 +61,8 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       _imd = d.imd;
       _vitaminA = d.vitaminA;
       _asiEks = d.asiEks;
-      _selectedDate = DateTime.tryParse(d.tanggalPerubahan ?? "");
+      _selectedDate =
+          DateTime.tryParse(d.tanggalPerubahan ?? "") ?? DateTime.now();
     }
   }
 
@@ -87,9 +85,26 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     return bulan[month];
   }
 
+  Future<void> _pickDate() async {
+    FocusScope.of(context).unfocus();
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      initialEntryMode: DatePickerEntryMode.calendar,
+      initialDatePickerMode: DatePickerMode.day,
+      locale: const Locale('id', 'ID'),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
   void _submitForm() async {
-    if (_selectedDate == null ||
-        _beratController.text.isEmpty ||
+    if (_beratController.text.isEmpty ||
         _tinggiController.text.isEmpty ||
         _lingkarLenganController.text.isEmpty ||
         _lingkarKepalaController.text.isEmpty) {
@@ -114,7 +129,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         imd: _imd ?? "-",
         asiEks: _asiEks ?? "-",
         tanggalPerubahan:
-            "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}",
+            "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}",
       );
 
       if (widget.existingData == null) {
@@ -200,20 +215,21 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
             ),
             const SizedBox(height: 20),
 
-            // Tanggal
             GestureDetector(
               onTap: () async {
                 FocusScope.of(context).unfocus();
-                DateTime? picked = await showDatePicker(
-                  context: context,
+
+                // gunakan context dari root Scaffold
+                final picked = await showDatePicker(
+                  context: Navigator.of(context).context,
                   initialDate: _selectedDate ?? DateTime.now(),
                   firstDate: DateTime(2020),
                   lastDate: DateTime.now(),
+                  locale: const Locale('id', 'ID'),
                 );
+
                 if (picked != null) {
-                  setState(() {
-                    _selectedDate = picked;
-                  });
+                  setState(() => _selectedDate = picked);
                 }
               },
               child: AbsorbPointer(
@@ -292,6 +308,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                     items: const ["Merah", "Hijau"],
                     onChanged: (val) => setState(() => _kms = val),
                     enabled: isSpecialMonth,
+                    iconColor: isSpecialMonth ? AppColors.primary : Colors.grey,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -302,6 +319,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                     items: const ["Ya", "Tidak"],
                     onChanged: (val) => setState(() => _imd = val),
                     enabled: isSpecialMonth,
+                    iconColor: isSpecialMonth ? AppColors.primary : Colors.grey,
                   ),
                 ),
               ],
@@ -316,6 +334,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                     items: const ["Sudah", "Belum"],
                     onChanged: (val) => setState(() => _vitaminA = val),
                     enabled: isSpecialMonth,
+                    iconColor: isSpecialMonth ? AppColors.primary : Colors.grey,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -326,6 +345,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                     items: const ["Ya", "Tidak"],
                     onChanged: (val) => setState(() => _asiEks = val),
                     enabled: isSpecialMonth,
+                    iconColor: isSpecialMonth ? AppColors.primary : Colors.grey,
                   ),
                 ),
               ],

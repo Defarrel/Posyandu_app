@@ -58,7 +58,12 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeRoot()),
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const HomeRoot(),
+            transitionDuration: const Duration(milliseconds: 500),
+            transitionsBuilder: (_, animation, __, child) =>
+                FadeTransition(opacity: animation, child: child),
+          ),
         );
       },
     );
@@ -175,7 +180,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 12),
 
-                  // Checkbox "ingat kata sandi"
                   Row(
                     children: [
                       Checkbox(
@@ -194,7 +198,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 8),
 
-                  // Tombol Masuk
                   SizedBox(
                     width: double.infinity,
                     height: 48,
@@ -207,7 +210,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(color: Colors.blue)
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.blue,
+                              ),
+                            )
                           : const Text(
                               "Masuk",
                               style: TextStyle(

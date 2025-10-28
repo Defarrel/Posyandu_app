@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/presentation/balita/cari_balita_screen.dart';
-import 'package:posyandu_app/presentation/balita/tambah_balita_screen.dart';
 import 'package:posyandu_app/presentation/home/home_screen.dart';
-import 'package:posyandu_app/core/components/custom_navbar_bot.dart';
 import 'package:posyandu_app/presentation/profile/profile_screen.dart';
+import 'package:posyandu_app/core/components/custom_navbar_bot.dart';
 
 class HomeRoot extends StatefulWidget {
   const HomeRoot({super.key});
@@ -21,21 +20,18 @@ class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
   int _currentIndex = 1;
   int _previousIndex = 1;
 
-  final List<Widget> _screens = const [
-    CariBalitaScreen(),
-    HomeScreen(),
-    ProfileScreen(),
-  ];
-
-  final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
-    3,
-    (index) => GlobalKey<NavigatorState>(),
-  );
-
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 350),
+    duration: const Duration(milliseconds: 300),
   );
+
+  final List<Widget> _screens = const [
+    _KeepAlivePage(child: CariBalitaScreen()),
+    _KeepAlivePage(child: HomeScreen()),
+    _KeepAlivePage(child: ProfileScreen()),
+  ];
+
+  bool _firstRender = true;
 
   @override
   void dispose() {
@@ -44,18 +40,12 @@ class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
   }
 
   void _onTap(int index) {
-    if (index == _currentIndex) {
-      _navigatorKeys[index].currentState?.popUntil((r) => r.isFirst);
-      return;
-    }
-
-    if (index == 1) {
-      _navigatorKeys[1].currentState?.popUntil((r) => r.isFirst);
-    }
+    if (index == _currentIndex) return;
 
     setState(() {
       _previousIndex = _currentIndex;
       _currentIndex = index;
+      _firstRender = false;
     });
 
     _controller.forward(from: 0);
@@ -63,29 +53,29 @@ class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // Animasi geser kiri-kanan seperti semula
+    final slideIn = Tween<Offset>(
+      begin: Offset(_previousIndex < _currentIndex ? 1.0 : -1.0, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    final slideOut = Tween<Offset>(
+      begin: Offset.zero,
+      end: Offset(_previousIndex < _currentIndex ? -1.0 : 1.0, 0),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    final fade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
     return Scaffold(
       body: AnimatedBuilder(
         animation: _controller,
-        builder: (context, child) {
-          final slideIn =
-              Tween<Offset>(
-                begin: Offset(_previousIndex < _currentIndex ? 1.0 : -1.0, 0),
-                end: Offset.zero,
-              ).animate(
-                CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-              );
-
-          final slideOut =
-              Tween<Offset>(
-                begin: Offset.zero,
-                end: Offset(_previousIndex < _currentIndex ? -1.0 : 1.0, 0),
-              ).animate(
-                CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-              );
-
-          final fade = Tween<double>(begin: 0.0, end: 1.0).animate(
-            CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-          );
+        builder: (context, _) {
+          if (_firstRender) {
+            return _screens[_currentIndex];
+          }
 
           return Stack(
             children: List.generate(_screens.length, (index) {
@@ -100,14 +90,7 @@ class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
                   position: isActive ? slideIn : slideOut,
                   child: FadeTransition(
                     opacity: isActive ? fade : ReverseAnimation(fade),
-                    child: Navigator(
-                      key: _navigatorKeys[index],
-                      onGenerateRoute: (settings) {
-                        return MaterialPageRoute(
-                          builder: (_) => _screens[index],
-                        );
-                      },
-                    ),
+                    child: _screens[index],
                   ),
                 ),
               );
@@ -120,5 +103,25 @@ class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
         onTap: _onTap,
       ),
     );
+  }
+}
+
+class _KeepAlivePage extends StatefulWidget {
+  final Widget child;
+  const _KeepAlivePage({required this.child});
+
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

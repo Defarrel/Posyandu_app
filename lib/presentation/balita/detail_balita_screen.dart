@@ -70,7 +70,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           _perkembanganList = dataList;
           _applyFilter();
 
-          // Tentukan warna nama berdasarkan KMS terakhir
           if (_perkembanganList.isNotEmpty) {
             final lastKMS = _perkembanganList.last.kms?.toLowerCase() ?? "";
             if (lastKMS == "merah") {
@@ -94,6 +93,16 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       return DateTime.parse(raw);
     } catch (_) {
       return DateTime(1900);
+    }
+  }
+
+  String _formatTanggalIndonesia(String? rawDate) {
+    if (rawDate == null || rawDate.isEmpty) return "-";
+    try {
+      final date = DateTime.parse(rawDate);
+      return DateFormat("d MMMM yyyy", "id_ID").format(date);
+    } catch (e) {
+      return rawDate; // fallback jika format salah
     }
   }
 
@@ -235,7 +244,11 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                         ),
                       ),
                     ),
-                    _buildRow("Tanggal Lahir", widget.balita.tanggalLahir),
+                    _buildRow(
+                      "Tanggal Lahir",
+                      _formatTanggalIndonesia(widget.balita.tanggalLahir),
+                    ),
+
                     _buildRow("NIK Balita", widget.balita.nikBalita),
                     _buildRow("Jenis Kelamin", widget.balita.jenisKelamin),
                     _buildRow("Nama Orang Tua", widget.balita.namaOrtu),

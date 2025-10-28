@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/presentation/balita/cari_balita_screen.dart';
+import 'package:posyandu_app/presentation/balita/tambah_balita_screen.dart';
 import 'package:posyandu_app/presentation/home/home_screen.dart';
 import 'package:posyandu_app/presentation/profile/profile_screen.dart';
 import 'package:posyandu_app/core/components/custom_navbar_bot.dart';
@@ -16,13 +17,10 @@ class HomeRoot extends StatefulWidget {
   State<HomeRoot> createState() => _HomeRootState();
 }
 
-class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
+class _HomeRootState extends State<HomeRoot> {
   int _currentIndex = 1;
-  int _previousIndex = 1;
-
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 300),
+  late final PageController _pageController = PageController(
+    initialPage: _currentIndex,
   );
 
   final List<Widget> _screens = const [
@@ -31,70 +29,40 @@ class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
     _KeepAlivePage(child: ProfileScreen()),
   ];
 
-  bool _firstRender = true;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   void _onTap(int index) {
     if (index == _currentIndex) return;
 
-    setState(() {
-      _previousIndex = _currentIndex;
-      _currentIndex = index;
-      _firstRender = false;
-    });
+    setState(() => _currentIndex = index);
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+  }
 
-    _controller.forward(from: 0);
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Animasi geser kiri-kanan seperti semula
-    final slideIn = Tween<Offset>(
-      begin: Offset(_previousIndex < _currentIndex ? 1.0 : -1.0, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    final slideOut = Tween<Offset>(
-      begin: Offset.zero,
-      end: Offset(_previousIndex < _currentIndex ? -1.0 : 1.0, 0),
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    final fade = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
     return Scaffold(
-      body: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          if (_firstRender) {
-            return _screens[_currentIndex];
-          }
-
-          return Stack(
-            children: List.generate(_screens.length, (index) {
-              final isActive = index == _currentIndex;
-              final isPrevious = index == _previousIndex;
-
-              if (!isActive && !isPrevious) return const SizedBox.shrink();
-
-              return Offstage(
-                offstage: !isActive && !isPrevious,
-                child: SlideTransition(
-                  position: isActive ? slideIn : slideOut,
-                  child: FadeTransition(
-                    opacity: isActive ? fade : ReverseAnimation(fade),
-                    child: _screens[index],
-                  ),
-                ),
-              );
-            }),
+      body: Navigator(
+        onGenerateRoute: (settings) {
+          return MaterialPageRoute(
+            builder: (context) => PageView(
+              controller: _pageController,
+              physics: CustomPageViewScrollPhysics(
+                currentIndex: _currentIndex,
+                maxIndex: _screens.length - 1,
+              ),
+              onPageChanged: (index) {
+                setState(() => _currentIndex = index);
+              },
+              children: _screens,
+            ),
           );
         },
       ),
@@ -103,6 +71,37 @@ class _HomeRootState extends State<HomeRoot> with TickerProviderStateMixin {
         onTap: _onTap,
       ),
     );
+  }
+}
+
+class CustomPageViewScrollPhysics extends BouncingScrollPhysics {
+  final int currentIndex;
+  final int maxIndex;
+
+  const CustomPageViewScrollPhysics({
+    required this.currentIndex,
+    required this.maxIndex,
+    ScrollPhysics? parent,
+  }) : super(parent: parent);
+
+  @override
+  CustomPageViewScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return CustomPageViewScrollPhysics(
+      currentIndex: currentIndex,
+      maxIndex: maxIndex,
+      parent: buildParent(ancestor),
+    );
+  }
+
+  @override
+  double applyBoundaryConditions(ScrollMetrics position, double value) {
+    if (currentIndex == 0 && value < position.pixels) {
+      return value - position.pixels;
+    }
+    if (currentIndex == maxIndex && value > position.pixels) {
+      return value - position.pixels;
+    }
+    return super.applyBoundaryConditions(position, value);
   }
 }
 

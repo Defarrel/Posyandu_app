@@ -34,7 +34,6 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
   bool _isLoading = false;
 
-  // Error state
   String? _namaError;
   String? _ttlError;
   String? _nikBalitaError;
@@ -50,9 +49,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
   final BalitaRepository _repository = BalitaRepository();
 
-  // Fungsi submit form
   void _submitForm() async {
-    // Validasi form
     setState(() {
       _namaError = _namaController.text.isEmpty
           ? "Nama balita wajib diisi"
@@ -124,7 +121,6 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
       rw: _rwController.text,
     );
 
-    // Kirim ke repository
     Either<String, String> result = await _repository.tambahBalita(balita);
 
     result.fold(
@@ -138,7 +134,6 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text(message)));
 
-        // ✅ Navigasi ke TambahPerkembanganBalita (dengan nama + nik)
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -204,7 +199,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             color: AppColors.primary,
             size: 18,
           ),
-          onPressed: () => HomeRoot.navigateToTab(context, 1),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
@@ -221,7 +216,6 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             ),
             const SizedBox(height: 12),
 
-            // 📅 Date picker tanggal lahir
             GestureDetector(
               onTap: () async {
                 FocusScope.of(context).unfocus();

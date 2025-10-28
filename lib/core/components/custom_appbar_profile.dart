@@ -66,19 +66,15 @@ class SlightDownCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-
     path.lineTo(0, size.height - 25);
-
     path.quadraticBezierTo(
-      size.width / 2, 
-      size.height + 35, 
+      size.width / 2,
+      size.height + 10, // lembut, tidak menonjol
       size.width,
-      size.height - 25, 
+      size.height - 25,
     );
-
     path.lineTo(size.width, 0);
     path.close();
-
     return path;
   }
 

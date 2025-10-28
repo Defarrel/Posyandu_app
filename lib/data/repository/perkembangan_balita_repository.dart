@@ -126,4 +126,36 @@ class PerkembanganBalitaRepository {
       return Left("Terjadi kesalahan saat menghapus data perkembangan");
     }
   }
+
+  Future<Either<String, Map<String, dynamic>>> getStatistikPerkembangan({
+    required int bulan,
+    int? tahun,
+  }) async {
+    try {
+      final endpoint = tahun != null
+          ? "perkembangan/statistik/bulan?bulan=$bulan&tahun=$tahun"
+          : "perkembangan/statistik/bulan?bulan=$bulan";
+
+      final response = await _service.get(endpoint);
+      final jsonResponse = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return Right({
+          "bulan": jsonResponse["bulan"],
+          "tahun": jsonResponse["tahun"],
+          "normal": jsonResponse["normal"],
+          "kurang": jsonResponse["kurang"],
+          "obesitas": jsonResponse["obesitas"],
+          "total": jsonResponse["total"],
+        });
+      } else {
+        return Left(
+          jsonResponse['message'] ?? "Gagal mengambil data statistik",
+        );
+      }
+    } catch (e) {
+      log("Exception getStatistikPerkembangan: $e");
+      return Left("Terjadi kesalahan saat mengambil data statistik");
+    }
+  }
 }

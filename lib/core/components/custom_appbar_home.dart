@@ -18,45 +18,6 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(230);
 
-  Future<void> _handleLogout(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Konfirmasi Logout"),
-        content: const Text("Apakah kamu yakin ingin keluar dari akun ini?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Batal"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Logout", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      const storage = FlutterSecureStorage();
-      await storage.deleteAll();
-
-      if (context.mounted) {
-        // Gunakan root navigator agar HomeRoot (dengan navbot) ikut dihapus
-        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-          PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 400),
-            pageBuilder: (_, __, ___) => const LoginScreen(),
-            transitionsBuilder: (_, animation, __, child) =>
-                FadeTransition(opacity: animation, child: child),
-          ),
-          (route) => false, // hapus semua route sebelumnya
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return ClipPath(
@@ -94,7 +55,7 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'Halo,',
+                          'Halo, Selamat Datang',
                           style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
                         Text(
@@ -105,37 +66,10 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
                             color: Colors.white,
                           ),
                         ),
-                        Text(
-                          posyandu,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                        ),
                       ],
                     ),
                   ),
                 ],
-              ),
-            ),
-
-            // tombol menu di kiri
-            Positioned(
-              left: 10,
-              top: 30,
-              child: IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
-                onPressed: onMenuTap,
-              ),
-            ),
-
-            // tombol logout di kanan
-            Positioned(
-              right: 10,
-              top: 30,
-              child: IconButton(
-                icon: const Icon(Icons.exit_to_app, color: Colors.white),
-                onPressed: () => _handleLogout(context),
               ),
             ),
           ],

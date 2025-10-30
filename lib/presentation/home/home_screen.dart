@@ -41,6 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
   String _namaKader = "Memuat...";
   bool _isLoadingChart = true;
 
+  final ScrollController _scrollController = ScrollController();
+  static const double _flatAppBarHeight = 100.0;
+  static const double _curvedAppBarHeight = 230.0;
+  static const double _scrollThreshold = 100.0; 
+
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final PerkembanganBalitaRepository _repository =
       PerkembanganBalitaRepository();
@@ -57,6 +62,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _tahunList = List.generate(5, (i) => DateTime.now().year - i);
     _loadNamaKader();
     _fetchStatistik();
+
+    _scrollController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadNamaKader() async {
@@ -98,20 +111,61 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double currentScrollOffset = _scrollController.hasClients
+        ? _scrollController.offset
+        : 0.0;
+
+    final double t = (currentScrollOffset / _scrollThreshold).clamp(0.0, 1.0);
+
+    final double dynamicHeight = Tween<double>(
+      begin: _curvedAppBarHeight,
+      end: _flatAppBarHeight,
+    ).transform(t);
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
-      appBar: CustomAppBarHome(nama: _namaKader, posyandu: "Posyandu Dahlia"),
+
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(dynamicHeight),
+        child: AnimatedBuilder(
+          animation: _scrollController,
+          builder: (context, child) {
+            final double animatedOffset = _scrollController.hasClients
+                ? _scrollController.offset
+                : 0.0;
+            final double animatedT = (animatedOffset / _scrollThreshold).clamp(
+              0.0,
+              1.0,
+            );
+            final double animatedHeight = Tween<double>(
+              begin: _curvedAppBarHeight,
+              end: _flatAppBarHeight,
+            ).transform(animatedT);
+
+            return CustomAppBarHome(
+              nama: _namaKader,
+              posyandu: "Posyandu Dahlia",
+              transitionFactor: animatedT, 
+              preferredHeight: animatedHeight, 
+            );
+          },
+        ),
+      ),
+
       body: SafeArea(
         top: false,
         child: RefreshIndicator(
           onRefresh: _fetchStatistik,
           child: SingleChildScrollView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.only(
+              top: _curvedAppBarHeight + 10,
+              bottom: 20,
+            ),
             child: Column(
               children: [
-                const SizedBox(height: 240),
                 _buildGrafikCard(),
                 const SizedBox(height: 20),
                 _buildMenuSection(context),

@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
-
-import 'package:posyandu_app/core/constant/constants.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 
 class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
   final String nama;
   final String posyandu;
   final VoidCallback? onMenuTap;
+  final double preferredHeight;
+  final double transitionFactor;
 
   const CustomAppBarHome({
     super.key,
     required this.nama,
     required this.posyandu,
     this.onMenuTap,
+    this.preferredHeight = 230,
+    this.transitionFactor = 0.0,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(230);
+  Size get preferredSize => Size.fromHeight(preferredHeight);
 
   @override
   Widget build(BuildContext context) {
+    final double disappear = (1 - (transitionFactor * 2)).clamp(0.0, 1.0);
+
     return ClipPath(
-      clipper: SlightUpCurveClipper(),
+      clipper: SlightUpCurveClipper(transitionFactor: transitionFactor),
       child: Container(
         height: preferredSize.height,
         width: double.infinity,
@@ -33,19 +38,83 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
         ),
         child: Stack(
           children: [
+            Positioned(
+              top: -30,
+              left: -40,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              right: -50,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+
+            Positioned(
+              top: 40,
+              right: 20,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: disappear,
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(
+                        Icons.notifications_none,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: onMenuTap,
+                      icon: const Icon(Icons.more_vert, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
             Padding(
-              padding: const EdgeInsets.only(
+              padding: EdgeInsets.only(
                 left: 20,
                 right: 20,
-                top: 20,
+                top: Tween<double>(
+                  begin: 60,
+                  end: 20,
+                ).transform(transitionFactor),
                 bottom: 25,
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const CircleAvatar(
-                    radius: 35,
-                    backgroundImage: AssetImage('lib/core/assets/profile.jpg'),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.6),
+                        width: 2,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const CircleAvatar(
+                      radius: 35,
+                      backgroundImage: AssetImage(
+                        'lib/core/assets/profile.jpg',
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -54,8 +123,13 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'Halo, Selamat Datang',
-                          style: TextStyle(fontSize: 18, color: Colors.white),
+                          'Halo, Selamat Datang 👋',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.3,
+                          ),
                         ),
                         Text(
                           nama,
@@ -64,6 +138,11 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
+                        ),
+                        const SizedBox(height: 4),
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: disappear,
                         ),
                       ],
                     ),
@@ -79,17 +158,28 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class SlightUpCurveClipper extends CustomClipper<Path> {
+  final double transitionFactor;
+
+  SlightUpCurveClipper({this.transitionFactor = 0.0});
+
   @override
   Path getClip(Size size) {
     final path = Path();
 
-    path.lineTo(0, size.height - 25);
-    path.quadraticBezierTo(
-      size.width / 2,
-      size.height - 60,
-      size.width,
-      size.height - 25,
-    );
+    const double initialHeightOffset = 25;
+    const double initialControlPointOffset = 60;
+
+    final double endY = Tween<double>(
+      begin: size.height - initialHeightOffset,
+      end: size.height,
+    ).transform(transitionFactor);
+    final double controlPointY = Tween<double>(
+      begin: size.height - initialControlPointOffset,
+      end: size.height,
+    ).transform(transitionFactor);
+
+    path.lineTo(0, endY);
+    path.quadraticBezierTo(size.width / 2, controlPointY, size.width, endY);
     path.lineTo(size.width, 0);
     path.close();
 
@@ -97,5 +187,8 @@ class SlightUpCurveClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(CustomClipper<Path> oldClipper) {
+    return oldClipper is SlightUpCurveClipper &&
+        oldClipper.transitionFactor != transitionFactor;
+  }
 }

@@ -49,7 +49,6 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
   Future<void> _fetchStatistik() async {
     setState(() => _isLoadingChart = true);
-
     final bulanIndex = _bulanList.indexOf(_bulanDipilih) + 1;
 
     final result = await _repository.getStatistikPerkembangan(
@@ -115,8 +114,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Pilih Bulan & Tahun
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   DropdownButton<String>(
                     value: _bulanDipilih,
@@ -129,7 +128,6 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                       _fetchStatistik();
                     },
                   ),
-                  const SizedBox(width: 16),
                   DropdownButton<int>(
                     value: _tahunDipilih,
                     items: _tahunList
@@ -148,200 +146,252 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 16),
 
-              // Grafik
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: _isLoadingChart
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      )
-                    : SfCartesianChart(
-                        plotAreaBorderWidth: 0,
-                        primaryXAxis: CategoryAxis(
-                          labelStyle: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        primaryYAxis: NumericAxis(
-                          labelStyle: const TextStyle(color: Colors.black),
-                          axisLine: const AxisLine(width: 0),
-                          majorGridLines: const MajorGridLines(
-                            color: Colors.grey,
-                            width: 0.3,
-                          ),
-                          interval: 10,
-                        ),
-                        tooltipBehavior: TooltipBehavior(enable: true),
-                        series: <CartesianSeries<_GrafikData, String>>[
-                          ColumnSeries<_GrafikData, String>(
-                            dataSource: chartData,
-                            xValueMapper: (data, _) => data.kategori,
-                            yValueMapper: (data, _) => data.jumlah,
-                            pointColorMapper: (data, _) => data.warna,
-                            borderRadius: const BorderRadius.all(
-                              Radius.circular(2),
-                            ),
-                            width: 0.5,
-                            dataLabelSettings: const DataLabelSettings(
-                              isVisible: true,
-                              labelAlignment: ChartDataLabelAlignment.middle,
-                              textStyle: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-              const SizedBox(height: 24),
-
-              // Detail Tabel & Ringkasan
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 6,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
+                padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Detail Grafik",
+                      'Grafik Balita Bulan Ini',
                       style: TextStyle(
-                        fontSize: 18,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Table(
-                      border: TableBorder.all(color: Colors.grey.shade400),
-                      children: [
-                        const TableRow(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Text(
-                                'Status Gizi',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(height: 14),
+                    Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: _isLoadingChart
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primary,
                               ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Text(
-                                'Laki-Laki',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                            )
+                          : SfCartesianChart(
+                              plotAreaBorderWidth: 0,
+                              primaryXAxis: CategoryAxis(
+                                labelStyle: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Text(
-                                'Perempuan',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                              primaryYAxis: NumericAxis(
+                                labelStyle: const TextStyle(
+                                  color: Colors.black,
+                                ),
+                                axisLine: const AxisLine(width: 0),
+                                majorGridLines: const MajorGridLines(
+                                  color: Colors.grey,
+                                  width: 0.3,
+                                ),
+                                interval: 1,
                               ),
+                              tooltipBehavior: TooltipBehavior(enable: true),
+                              series: <CartesianSeries<_GrafikData, String>>[
+                                ColumnSeries<_GrafikData, String>(
+                                  dataSource: chartData,
+                                  xValueMapper: (data, _) => data.kategori,
+                                  yValueMapper: (data, _) => data.jumlah,
+                                  pointColorMapper: (data, _) => data.warna,
+                                  borderRadius: const BorderRadius.all(
+                                    Radius.circular(2),
+                                  ),
+                                  width: 0.5,
+                                  dataLabelSettings: const DataLabelSettings(
+                                    isVisible: true,
+                                    labelAlignment:
+                                        ChartDataLabelAlignment.middle,
+                                    textStyle: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Text(
-                                'Total',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
-                        ),
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Text('Normal'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('${(_normal * 0.5).toInt()}'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('${(_normal * 0.5).toInt()}'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('$_normal'),
-                            ),
-                          ],
-                        ),
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Text('Kurang'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('${(_kurang * 0.55).toInt()}'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('${(_kurang * 0.45).toInt()}'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('$_kurang'),
-                            ),
-                          ],
-                        ),
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Text('Obesitas'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('${(_obesitas * 0.45).toInt()}'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('${(_obesitas * 0.55).toInt()}'),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text('$_obesitas'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Ringkasan Pertumbuhan Balita",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Total balita: $total anak\n"
-                      "- Normal: $_normal anak\n"
-                      "- Kurang: $_kurang anak\n"
-                      "- Obesitas: $_obesitas anak\n"
-                      "Mayoritas balita dalam kategori gizi normal. Namun, beberapa anak masih memerlukan perhatian.",
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 16,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        "Detail Grafik",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Table(
+                            border: TableBorder.all(
+                              color: Colors.grey.shade300,
+                            ),
+                            children: [
+                              _buildRow([
+                                "Status Gizi",
+                                "Laki-laki",
+                                "Perempuan",
+                                "Total",
+                              ], isHeader: true),
+                              _buildRow([
+                                "Normal",
+                                "${(_normal * 0.5).toInt()}",
+                                "${(_normal * 0.5).toInt()}",
+                                "$_normal",
+                              ]),
+                              _buildRow([
+                                "Kurang",
+                                "${(_kurang * 0.55).toInt()}",
+                                "${(_kurang * 0.45).toInt()}",
+                                "$_kurang",
+                              ]),
+                              _buildRow([
+                                "Obesitas",
+                                "${(_obesitas * 0.45).toInt()}",
+                                "${(_obesitas * 0.55).toInt()}",
+                                "$_obesitas",
+                              ]),
+                              _buildRow([
+                                "Total",
+                                "—",
+                                "—",
+                                "$total",
+                              ], isHeader: true),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "Ringkasan Pertumbuhan Balita – $_bulanDipilih",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "Total balita: $total anak\n"
+                            "• Normal: $_normal anak\n"
+                            "• Kurang: $_kurang anak\n"
+                            "• Obesitas: $_obesitas anak\n\n"
+                            "Mayoritas balita dalam kategori gizi normal. "
+                            "Namun, ${(100 - (_normal / (total == 0 ? 1 : total) * 100)).toStringAsFixed(1)}% anak "
+                            "masih mengalami masalah gizi yang perlu perhatian lebih lanjut.",
+                            style: const TextStyle(height: 1.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Tombol Cetak
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Fitur cetak laporan belum tersedia"),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    "Cetak Laporan",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  TableRow _buildRow(List<String> data, {bool isHeader = false}) {
+    return TableRow(
+      decoration: BoxDecoration(color: isHeader ? Colors.grey.shade100 : null),
+      children: data.map((text) {
+        return Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+              fontSize: 14,
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

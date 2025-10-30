@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/core/components/custom_appbar_profile.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -75,8 +74,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                 ),
                 _buildSettingTile(
-                  icon: Icons.notifications_active,
-                  title: "Notifikasi",
+                  icon: Icons.person,
+                  title: "Ubah Foto Profile",
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Fitur belum tersedia")),

@@ -302,7 +302,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         ),
         const SizedBox(width: 16),
         const Text(
-          "Bulan:",
+          "Tahun:",
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,

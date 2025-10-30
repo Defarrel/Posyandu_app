@@ -86,9 +86,26 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     final total = _normal + _kurang + _obesitas;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Grafik Pertumbuhan Balita"),
-        backgroundColor: AppColors.primary,
+        elevation: 0,
+        backgroundColor: Colors.white,
+        title: const Text(
+          "Grafik Perkembangan Balita",
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.primary,
+            size: 18,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: _fetchStatistik,

@@ -5,6 +5,8 @@ import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
 import 'package:posyandu_app/presentation/balita/detail_balita_screen.dart';
 import 'package:dartz/dartz.dart' hide State;
+import 'package:intl/intl.dart';
+import 'package:posyandu_app/core/components/custom_appbar_cari.dart';
 
 class CariBalitaScreen extends StatefulWidget {
   const CariBalitaScreen({Key? key}) : super(key: key);
@@ -20,16 +22,12 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
   List<BalitaResponseModel> _balitaList = [];
   String _searchQuery = "";
   bool _isLoading = true;
+  String _filterKategori = "Semua";
 
-  @override
   @override
   void initState() {
     super.initState();
     _fetchBalita();
-
-    Future.delayed(Duration(milliseconds: 100), () {
-      FocusScope.of(context).unfocus();
-    });
   }
 
   Future<void> _fetchBalita() async {
@@ -52,64 +50,50 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
     );
   }
 
+  int _hitungUmurBulan(String tanggalLahir) {
+    try {
+      final lahir = DateFormat("yyyy-MM-dd").parse(tanggalLahir);
+      final now = DateTime.now();
+      return (now.difference(lahir).inDays / 30.4375).floor();
+    } catch (_) {
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filteredList = _balitaList.where((balita) {
+    var filteredList = _balitaList.where((balita) {
       final query = _searchQuery.toLowerCase();
       return balita.namaBalita.toLowerCase().contains(query) ||
           balita.nikBalita.toLowerCase().contains(query);
     }).toList();
 
+    filteredList = filteredList.where((balita) {
+      final umur = _hitungUmurBulan(balita.tanggalLahir);
+      if (_filterKategori == "Balita") {
+        return umur >= 12 && umur < 60;
+      } else if (_filterKategori == "Baduta") {
+        return umur < 24;
+      }
+      return true;
+    }).toList();
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        title: const Text(
-          "Cari Data Balita",
-          style: TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: AppColors.primary,
-            size: 18,
-          ),
-          onPressed: () => HomeRoot.navigateToTab(context, 1),
-        ),
+      backgroundColor: Colors.white,
+      appBar: CustomAppBarCari(
+        searchController: _searchController,
+        filterValue: _filterKategori,
+        onSearchChanged: (value) => setState(() => _searchQuery = value),
+        onFilterChanged: (value) => setState(() => _filterKategori = value!),
       ),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             )
           : Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
+              padding: const EdgeInsets.only(left: 16, right: 16),
               child: Column(
                 children: [
-                  TextField(
-                    controller: _searchController,
-                    autofocus: false,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: AppColors.primary,
-                      ),
-                      hintText: "Masukkan Nama atau NIK Balita",
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onChanged: (value) => setState(() => _searchQuery = value),
-                  ),
-
-                  const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       vertical: 10,
@@ -155,7 +139,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                         ? const Center(
                             child: Text(
                               "Data balita tidak ditemukan",
-                              style: TextStyle(color: Colors.black),
+                              style: TextStyle(color: Colors.black54),
                             ),
                           )
                         : RefreshIndicator(
@@ -166,15 +150,13 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                               itemBuilder: (context, index) {
                                 final balita = filteredList[index];
                                 return GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            DetailBalitaScreen(balita: balita),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          DetailBalitaScreen(balita: balita),
+                                    ),
+                                  ),
                                   child: Container(
                                     margin: const EdgeInsets.only(bottom: 8),
                                     padding: const EdgeInsets.symmetric(
@@ -182,8 +164,8 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                                       horizontal: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.circular(16),
+                                      color: Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Row(
                                       children: [

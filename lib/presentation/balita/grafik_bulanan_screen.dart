@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
@@ -37,6 +38,14 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   int _normal = 0;
   int _kurang = 0;
   int _obesitas = 0;
+  int _lakiNormal = 0;
+  int _lakiKurang = 0;
+  int _lakiObesitas = 0;
+  int _perempuanNormal = 0;
+  int _perempuanKurang = 0;
+  int _perempuanObesitas = 0;
+  int _totalLaki = 0;
+  int _totalPerempuan = 0;
 
   @override
   void initState() {
@@ -64,12 +73,36 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         setState(() => _isLoadingChart = false);
       },
       (data) {
-        setState(() {
-          _normal = data["normal"];
-          _kurang = data["kurang"];
-          _obesitas = data["obesitas"];
-          _isLoadingChart = false;
-        });
+        try {
+          final laki = (data['laki_laki'] ?? {}) as Map<String, dynamic>;
+          final perempuan = (data['perempuan'] ?? {}) as Map<String, dynamic>;
+
+          setState(() {
+            // Ambil langsung dari API tanpa perhitungan
+            _normal = (data['normal'] ?? 0) as int;
+            _kurang = (data['kurang'] ?? 0) as int;
+            _obesitas = (data['obesitas'] ?? 0) as int;
+            _totalLaki = (data['total_laki'] ?? 0) as int;
+            _totalPerempuan = (data['total_perempuan'] ?? 0) as int;
+
+            _lakiNormal = (laki['normal'] ?? 0) as int;
+            _lakiKurang = (laki['kurang'] ?? 0) as int;
+            _lakiObesitas = (laki['obesitas'] ?? 0) as int;
+
+            _perempuanNormal = (perempuan['normal'] ?? 0) as int;
+            _perempuanKurang = (perempuan['kurang'] ?? 0) as int;
+            _perempuanObesitas = (perempuan['obesitas'] ?? 0) as int;
+
+            _isLoadingChart = false;
+          });
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Format data tidak sesuai struktur API baru: $e"),
+            ),
+          );
+          setState(() => _isLoadingChart = false);
+        }
       },
     );
   }
@@ -114,41 +147,6 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  DropdownButton<String>(
-                    value: _bulanDipilih,
-                    items: _bulanList
-                        .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                        .toList(),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _bulanDipilih = value);
-                      _fetchStatistik();
-                    },
-                  ),
-                  DropdownButton<int>(
-                    value: _tahunDipilih,
-                    items: _tahunList
-                        .map(
-                          (t) => DropdownMenuItem(
-                            value: t,
-                            child: Text(t.toString()),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _tahunDipilih = value);
-                      _fetchStatistik();
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -166,13 +164,51 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Grafik Balita Bulan Ini',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    Row(
+                      children: [
+                        const Text(
+                          'Grafik Balita Bulan ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Flexible(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CustomDropdownButton(
+                                value: _bulanDipilih ?? _bulanList.first,
+                                items: _bulanList,
+                                isCompact: true,
+                                textColor: Colors.white,
+                                onChanged: (value) async {
+                                  setState(() => _bulanDipilih = value ?? '');
+                                  await _fetchStatistik();
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              CustomDropdownButton(
+                                value: _tahunDipilih.toString(),
+                                items: _tahunList
+                                    .map((t) => t.toString())
+                                    .toList(),
+                                isCompact: true,
+                                textColor: Colors.white,
+                                onChanged: (value) async {
+                                  setState(
+                                    () => _tahunDipilih =
+                                        int.tryParse(value ?? '') ??
+                                        DateTime.now().year,
+                                  );
+                                  await _fetchStatistik();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 14),
                     Container(
@@ -292,26 +328,26 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                               ], isHeader: true),
                               _buildRow([
                                 "Normal",
-                                "${(_normal * 0.5).toInt()}",
-                                "${(_normal * 0.5).toInt()}",
-                                "$_normal",
+                                "${_lakiNormal}",
+                                "${_perempuanNormal}",
+                                "${_normal}",
                               ]),
                               _buildRow([
                                 "Kurang",
-                                "${(_kurang * 0.55).toInt()}",
-                                "${(_kurang * 0.45).toInt()}",
-                                "$_kurang",
+                                "${_lakiKurang}",
+                                "${_perempuanKurang}",
+                                "${_kurang}",
                               ]),
                               _buildRow([
                                 "Obesitas",
-                                "${(_obesitas * 0.45).toInt()}",
-                                "${(_obesitas * 0.55).toInt()}",
-                                "$_obesitas",
+                                "${_lakiObesitas}",
+                                "${_perempuanObesitas}",
+                                "${_obesitas}",
                               ]),
                               _buildRow([
                                 "Total",
-                                "—",
-                                "—",
+                                "${_totalLaki}",
+                                "${_totalPerempuan}",
                                 "$total",
                               ], isHeader: true),
                             ],
@@ -324,6 +360,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                           const SizedBox(height: 6),
                           Text(
                             "Total balita: $total anak\n"
+                            "• Laki-laki: $_totalLaki anak\n"
+                            "• Perempuan: $_totalPerempuan anak\n\n"
                             "• Normal: $_normal anak\n"
                             "• Kurang: $_kurang anak\n"
                             "• Obesitas: $_obesitas anak\n\n"

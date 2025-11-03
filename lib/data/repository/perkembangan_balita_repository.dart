@@ -140,17 +140,16 @@ class PerkembanganBalitaRepository {
       final jsonResponse = json.decode(response.body);
 
       if (response.statusCode == 200) {
-        return Right({
-          "bulan": jsonResponse["bulan"],
-          "tahun": jsonResponse["tahun"],
-          "normal": jsonResponse["normal"],
-          "kurang": jsonResponse["kurang"],
-          "obesitas": jsonResponse["obesitas"],
-          "total": jsonResponse["total"],
-        });
+        if (jsonResponse is Map<String, dynamic>) {
+          return Right(jsonResponse);
+        } else {
+          return Left("Format data dari server tidak sesuai");
+        }
       } else {
         return Left(
-          jsonResponse['message'] ?? "Gagal mengambil data statistik",
+          (jsonResponse is Map && jsonResponse['message'] != null)
+              ? jsonResponse['message']
+              : "Gagal mengambil data statistik",
         );
       }
     } catch (e) {

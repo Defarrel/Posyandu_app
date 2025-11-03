@@ -305,10 +305,8 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   child: CustomDropdownField2(
                     label: "KMS",
                     value: _kms,
-                    items: const ["Merah", "Hijau"],
+                    items: const ["Merah", "Hijau", "Kuning"],
                     onChanged: (val) => setState(() => _kms = val),
-                    enabled: isSpecialMonth,
-                    iconColor: isSpecialMonth ? AppColors.primary : Colors.grey,
                   ),
                 ),
                 const SizedBox(width: 10),

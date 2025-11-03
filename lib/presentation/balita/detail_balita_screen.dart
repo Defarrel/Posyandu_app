@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
@@ -247,7 +248,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                       "Tanggal Lahir",
                       _formatTanggalIndonesia(widget.balita.tanggalLahir),
                     ),
-
                     _buildRow("NIK Balita", widget.balita.nikBalita),
                     _buildRow("Jenis Kelamin", widget.balita.jenisKelamin),
                     _buildRow("Nama Orang Tua", widget.balita.namaOrtu),
@@ -255,6 +255,11 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                     _buildRow("Nomor Telepon", widget.balita.nomorTelpOrtu),
                     _buildRow("Alamat", widget.balita.alamat),
                   ]),
+
+                  // Tambahan: Grafik perkembangan balita
+                  const SizedBox(height: 20),
+                  _buildSectionTitle("Grafik Perkembangan Balita"),
+                  _buildGrafikPerkembangan(),
                   const SizedBox(height: 20),
 
                   _buildSectionTitle("Data Perkembangan Balita"),
@@ -273,6 +278,158 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  // Grafik perkembangan balita (Line Chart)
+  Widget _buildGrafikPerkembangan() {
+    if (_perkembanganList.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(12),
+            bottomRight: Radius.circular(12),
+          ),
+        ),
+        child: const Text(
+          "Belum ada data perkembangan balita.",
+          style: TextStyle(color: Colors.black54),
+        ),
+      );
+    }
+
+    final List<String> jenisDataList = [
+      "Berat Badan (kg)",
+      "Tinggi Badan (cm)",
+      "Lingkar Lengan (cm)",
+      "Lingkar Kepala (cm)",
+    ];
+
+    String selectedJenis = "Berat Badan (kg)";
+
+    return StatefulBuilder(
+      builder: (context, setLocalState) {
+        final sortedData =
+            List.of(_perkembanganList)
+                .where(
+                  (e) =>
+                      _safeParseDate(e.tanggalPerubahan).year == _selectedTahun,
+                )
+                .toList()
+              ..sort(
+                (a, b) => _safeParseDate(
+                  a.tanggalPerubahan,
+                ).compareTo(_safeParseDate(b.tanggalPerubahan)),
+              );
+
+        List<_GrafikBalitaData> chartData = sortedData.map((e) {
+          final date = _safeParseDate(e.tanggalPerubahan);
+          double value;
+          switch (selectedJenis) {
+            case "Tinggi Badan (cm)":
+              value = e.tinggiBadan?.toDouble() ?? 0;
+              break;
+            case "Lingkar Lengan (cm)":
+              value = e.lingkarLengan?.toDouble() ?? 0;
+              break;
+            case "Lingkar Kepala (cm)":
+              value = e.lingkarKepala?.toDouble() ?? 0;
+              break;
+            default:
+              value = e.beratBadan?.toDouble() ?? 0;
+          }
+          return _GrafikBalitaData(DateFormat("MMM").format(date), value);
+        }).toList();
+
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(12),
+              bottomRight: Radius.circular(12),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 5,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    "Jenis Data:",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  DropdownButton<String>(
+                    value: selectedJenis,
+                    items: jenisDataList
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setLocalState(() => selectedJenis = val);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 220,
+                child: SfCartesianChart(
+                  primaryXAxis: CategoryAxis(
+                    labelStyle: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  primaryYAxis: NumericAxis(
+                    labelStyle: const TextStyle(color: Colors.black),
+                    axisLine: const AxisLine(width: 0),
+                    majorGridLines: const MajorGridLines(
+                      color: Colors.grey,
+                      width: 0.3,
+                    ),
+                  ),
+                  tooltipBehavior: TooltipBehavior(enable: true),
+                  series: <CartesianSeries<_GrafikBalitaData, String>>[
+                    LineSeries<_GrafikBalitaData, String>(
+                      dataSource: chartData,
+                      xValueMapper: (data, _) => data.bulan,
+                      yValueMapper: (data, _) => data.nilai,
+                      markerSettings: const MarkerSettings(isVisible: true),
+                      color: AppColors.primary,
+                      dataLabelSettings: const DataLabelSettings(
+                        isVisible: true,
+                        textStyle: TextStyle(
+                          color: Colors.black,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -427,7 +584,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           child: const Text("Perbarui Data"),
         ),
       ),
-
       const SizedBox(width: 8),
       Expanded(
         child: ElevatedButton(
@@ -443,4 +599,10 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       ),
     ],
   );
+}
+
+class _GrafikBalitaData {
+  final String bulan;
+  final double nilai;
+  _GrafikBalitaData(this.bulan, this.nilai);
 }

@@ -39,31 +39,6 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
         child: Stack(
           children: [
             Positioned(
-              top: -30,
-              left: -40,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: -50,
-              child: Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-
-            Positioned(
               top: 40,
               right: 20,
               child: AnimatedOpacity(

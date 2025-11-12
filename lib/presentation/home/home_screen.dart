@@ -42,9 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingChart = true;
 
   final ScrollController _scrollController = ScrollController();
-  static const double _flatAppBarHeight = 100.0;
   static const double _curvedAppBarHeight = 230.0;
-  static const double _scrollThreshold = 100.0; 
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final PerkembanganBalitaRepository _repository =
@@ -111,47 +109,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final double currentScrollOffset = _scrollController.hasClients
-        ? _scrollController.offset
-        : 0.0;
-
-    final double t = (currentScrollOffset / _scrollThreshold).clamp(0.0, 1.0);
-
-    final double dynamicHeight = Tween<double>(
-      begin: _curvedAppBarHeight,
-      end: _flatAppBarHeight,
-    ).transform(t);
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
 
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(dynamicHeight),
-        child: AnimatedBuilder(
-          animation: _scrollController,
-          builder: (context, child) {
-            final double animatedOffset = _scrollController.hasClients
-                ? _scrollController.offset
-                : 0.0;
-            final double animatedT = (animatedOffset / _scrollThreshold).clamp(
-              0.0,
-              1.0,
-            );
-            final double animatedHeight = Tween<double>(
-              begin: _curvedAppBarHeight,
-              end: _flatAppBarHeight,
-            ).transform(animatedT);
-
-            return CustomAppBarHome(
-              nama: _namaKader,
-              posyandu: "Posyandu Dahlia",
-              transitionFactor: animatedT, 
-              preferredHeight: animatedHeight, 
-            );
-          },
-        ),
-      ),
+      appBar: CustomAppBarHome(nama: _namaKader, posyandu: "Posyandu Dahlia"),
 
       body: SafeArea(
         top: false,

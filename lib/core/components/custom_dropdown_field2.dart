@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 
-/// Widget dropdown tunggal dengan label biru di kiri
 class CustomDropdownField2 extends StatelessWidget {
   final String label;
   final String? value;

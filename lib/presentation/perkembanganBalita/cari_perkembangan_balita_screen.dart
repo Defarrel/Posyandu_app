@@ -20,28 +20,28 @@ class _CariPerkembanganBalitaScreenState
 
   List<BalitaResponseModel> _balitaList = [];
   String _searchQuery = "";
+  String _filterValue = "Semua";
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _fetchBalita();
-
     Future.delayed(const Duration(milliseconds: 200), () {
       FocusScope.of(context).unfocus();
     });
   }
 
   Future<void> _fetchBalita() async {
-    final Either<String, List<BalitaResponseModel>> result = await _repository
-        .getBalita();
+    final Either<String, List<BalitaResponseModel>> result =
+        await _repository.getBalita();
 
     result.fold(
       (error) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Gagal memuat data: $error")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal memuat data: $error")),
+        );
       },
       (data) {
         setState(() {
@@ -52,16 +52,45 @@ class _CariPerkembanganBalitaScreenState
     );
   }
 
+  void _onSearchChanged(String query) {
+    setState(() => _searchQuery = query);
+  }
+
+  void _onFilterChanged(String? value) {
+    setState(() => _filterValue = value ?? "Semua");
+  }
+
+  int _hitungUmurBulan(String tanggalLahir) {
+    try {
+      final birthDate = DateTime.parse(tanggalLahir);
+      final now = DateTime.now();
+      return (now.year - birthDate.year) * 12 + (now.month - birthDate.month);
+    } catch (_) {
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredList = _balitaList.where((balita) {
       final query = _searchQuery.toLowerCase();
-      return balita.namaBalita.toLowerCase().contains(query) ||
+      final matchesSearch = balita.namaBalita.toLowerCase().contains(query) ||
           balita.nikBalita.toLowerCase().contains(query);
+
+      final umurBulan = _hitungUmurBulan(balita.tanggalLahir);
+
+      bool matchesFilter = true;
+      if (_filterValue == "Balita") {
+        matchesFilter = umurBulan >= 24 && umurBulan <= 59;
+      } else if (_filterValue == "Baduta") {
+        matchesFilter = umurBulan < 24;
+      }
+
+      return matchesSearch && matchesFilter;
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
@@ -87,26 +116,77 @@ class _CariPerkembanganBalitaScreenState
               child: CircularProgressIndicator(color: AppColors.primary),
             )
           : Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Column(
                 children: [
-                  TextField(
-                    controller: _searchController,
-                    autofocus: false,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: AppColors.primary,
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: TextField(
+                          controller: _searchController,
+                          style: const TextStyle(color: Colors.black),
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              color: AppColors.primary,
+                            ),
+                            hintText: "Cari Nama / NIK Balita",
+                            hintStyle: const TextStyle(color: Colors.black54),
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 0,
+                              horizontal: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          onChanged: _onSearchChanged,
+                        ),
                       ),
-                      hintText: "Masukkan Nama atau NIK Balita",
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _filterValue,
+                              icon: const Icon(
+                                Icons.filter_list,
+                                color: AppColors.primary,
+                              ),
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: "Semua",
+                                  child: Text("Semua"),
+                                ),
+                                DropdownMenuItem(
+                                  value: "Balita",
+                                  child: Text("Balita"),
+                                ),
+                                DropdownMenuItem(
+                                  value: "Baduta",
+                                  child: Text("Baduta"),
+                                ),
+                              ],
+                              onChanged: _onFilterChanged,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    onChanged: (value) => setState(() => _searchQuery = value),
+                    ],
                   ),
                   const SizedBox(height: 12),
 
@@ -151,7 +231,7 @@ class _CariPerkembanganBalitaScreenState
                     ),
                   ),
 
-                  // Daftar data balita
+
                   Expanded(
                     child: filteredList.isEmpty
                         ? const Center(
@@ -212,21 +292,20 @@ class _CariPerkembanganBalitaScreenState
                                                 MaterialPageRoute(
                                                   builder: (_) =>
                                                       TambahPerkembanganBalita(
-                                                        nikBalita:
-                                                            balita.nikBalita,
-                                                        namaBalita:
-                                                            balita.namaBalita,
-                                                      ),
+                                                    nikBalita:
+                                                        balita.nikBalita,
+                                                    namaBalita:
+                                                        balita.namaBalita,
+                                                  ),
                                                 ),
                                               );
                                             },
-
                                             child: Container(
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                    vertical: 8,
-                                                    horizontal: 13,
-                                                  ),
+                                                vertical: 8,
+                                                horizontal: 13,
+                                              ),
                                               decoration: BoxDecoration(
                                                 color: const Color(0xFF5AC05E),
                                                 borderRadius:

@@ -78,7 +78,6 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           final perempuan = (data['perempuan'] ?? {}) as Map<String, dynamic>;
 
           setState(() {
-            // Ambil langsung dari API tanpa perhitungan
             _normal = (data['normal'] ?? 0) as int;
             _kurang = (data['kurang'] ?? 0) as int;
             _obesitas = (data['obesitas'] ?? 0) as int;

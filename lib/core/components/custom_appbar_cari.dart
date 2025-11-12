@@ -38,7 +38,6 @@ class CustomAppBarCari extends StatelessWidget implements PreferredSizeWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Judul di atas
                 const Center(
                   child: Text(
                     "Cari Data Balita",
@@ -52,7 +51,6 @@ class CustomAppBarCari extends StatelessWidget implements PreferredSizeWidget {
 
                 const SizedBox(height: 50),
 
-                // Search dan Filter
                 Row(
                   children: [
                     Expanded(

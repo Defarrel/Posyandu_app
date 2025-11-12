@@ -41,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _namaKader = "Memuat...";
   bool _isLoadingChart = true;
 
-  final ScrollController _scrollController = ScrollController();
   static const double _curvedAppBarHeight = 230.0;
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -60,13 +59,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _tahunList = List.generate(5, (i) => DateTime.now().year - i);
     _loadNamaKader();
     _fetchStatistik();
-
-    _scrollController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -112,15 +108,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
-
       appBar: CustomAppBarHome(nama: _namaKader, posyandu: "Posyandu Dahlia"),
-
       body: SafeArea(
         top: false,
         child: RefreshIndicator(
           onRefresh: _fetchStatistik,
           child: SingleChildScrollView(
-            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(
               top: _curvedAppBarHeight + 10,
@@ -165,7 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header grafik
             Row(
               children: [
                 const Text(
@@ -210,10 +202,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 14),
 
-            // Grafik
             Container(
               height: 200,
               decoration: BoxDecoration(
@@ -246,14 +236,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       tooltipBehavior: TooltipBehavior(enable: true),
                       series: <CartesianSeries<_GrafikData, String>>[
                         ColumnSeries<_GrafikData, String>(
-                          dataSource: chartData,
-                          xValueMapper: (data, _) => data.kategori,
-                          yValueMapper: (data, _) => data.jumlah,
-                          pointColorMapper: (data, _) => data.warna,
+                          animationDuration: 1500,
                           borderRadius: const BorderRadius.all(
                             Radius.circular(2),
                           ),
                           width: 0.5,
+                          dataSource: chartData,
+                          xValueMapper: (data, _) => data.kategori,
+                          yValueMapper: (data, _) => data.jumlah,
+                          pointColorMapper: (data, _) => data.warna,
                           dataLabelSettings: const DataLabelSettings(
                             isVisible: true,
                             labelAlignment: ChartDataLabelAlignment.middle,

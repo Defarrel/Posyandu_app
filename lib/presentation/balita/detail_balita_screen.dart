@@ -65,17 +65,26 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         ).showSnackBar(SnackBar(content: Text("Gagal memuat: $error")));
       },
       (dataList) {
+        dataList.sort((a, b) {
+          final dateA = _safeParseDate(a.tanggalPerubahan);
+          final dateB = _safeParseDate(b.tanggalPerubahan);
+          return dateB.compareTo(dateA); 
+        });
+
         setState(() {
           _perkembanganList = dataList;
           _applyFilter();
 
           if (_perkembanganList.isNotEmpty) {
-            final lastKMS =
-                _perkembanganList.last.kms?.toLowerCase().trim() ?? "";
+            final last = _perkembanganList.first; 
+            final lastKMS = (last.kms ?? "").toLowerCase().trim();
+
             if (lastKMS == "merah") {
               _warnaNama = Colors.red;
             } else if (lastKMS == "hijau") {
               _warnaNama = Colors.green;
+            } else if (lastKMS == "kuning") {
+              _warnaNama = Colors.orange;
             } else {
               _warnaNama = Colors.black;
             }
@@ -256,15 +265,11 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                     _buildRow("Alamat", widget.balita.alamat),
                   ]),
 
-                  // Tambahan: Grafik perkembangan balita
-                  const SizedBox(height: 20),
-                  _buildSectionTitle("Grafik Perkembangan Balita"),
-                  _buildGrafikPerkembangan(),
                   const SizedBox(height: 20),
 
                   _buildSectionTitle("Data Perkembangan Balita"),
                   _buildContentCard([
-                    _buildFilterDropdown(),
+                    _buildGrafikPerkembangan(),
                     const SizedBox(height: 8),
                     _filteredPerkembangan == null
                         ? const Text(
@@ -281,22 +286,27 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     );
   }
 
-  // Grafik perkembangan balita (Line Chart)
   Widget _buildGrafikPerkembangan() {
     if (_perkembanganList.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(12),
-            bottomRight: Radius.circular(12),
-          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: const Text(
-          "Belum ada data perkembangan balita.",
-          style: TextStyle(color: Colors.black54),
+        child: const Center(
+          child: Text(
+            "Belum ada data perkembangan balita.",
+            style: TextStyle(color: Colors.black54),
+          ),
         ),
       );
     }
@@ -312,114 +322,185 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
 
     return StatefulBuilder(
       builder: (context, setLocalState) {
-        final sortedData =
-            List.of(_perkembanganList)
-                .where(
-                  (e) =>
-                      _safeParseDate(e.tanggalPerubahan).year == _selectedTahun,
-                )
-                .toList()
-              ..sort(
-                (a, b) => _safeParseDate(
-                  a.tanggalPerubahan,
-                ).compareTo(_safeParseDate(b.tanggalPerubahan)),
-              );
+        final selectedMonthIndex = _bulanList.indexOf(_selectedBulan) + 1;
+        final selectedYear = _selectedTahun;
 
-        List<_GrafikBalitaData> chartData = sortedData.map((e) {
+        List<DateTime> lastFiveMonths = List.generate(5, (i) {
+          final date = DateTime(selectedYear, selectedMonthIndex - 4 + i);
+          return DateTime(date.year, date.month);
+        });
+
+        final filteredData = _perkembanganList.where((e) {
           final date = _safeParseDate(e.tanggalPerubahan);
+          return lastFiveMonths.any(
+            (m) => m.month == date.month && m.year == date.year,
+          );
+        }).toList();
+
+        List<_GrafikBalitaData> chartData = lastFiveMonths.map((month) {
+          final bulanNama = _bulanList[(month.month - 1) % 12].substring(0, 3);
+          final dataBulan = filteredData.firstWhere(
+            (d) {
+              final tgl = _safeParseDate(d.tanggalPerubahan);
+              return tgl.month == month.month && tgl.year == month.year;
+            },
+            orElse: () => PerkembanganBalitaResponseModel(
+              id: 0,
+              tanggalPerubahan: '',
+              caraUkur: '',
+              imd: '',
+              kms: '',
+              vitaminA: '',
+              asiEks: '',
+              createdAt: '',
+              nikBalita: '',
+              beratBadan: 0,
+              tinggiBadan: 0,
+              lingkarLengan: 0,
+              lingkarKepala: 0,
+            ),
+          );
+
           double value;
           switch (selectedJenis) {
             case "Tinggi Badan (cm)":
-              value = e.tinggiBadan?.toDouble() ?? 0;
+              value = dataBulan.tinggiBadan.toDouble();
               break;
             case "Lingkar Lengan (cm)":
-              value = e.lingkarLengan?.toDouble() ?? 0;
+              value = dataBulan.lingkarLengan.toDouble();
               break;
             case "Lingkar Kepala (cm)":
-              value = e.lingkarKepala?.toDouble() ?? 0;
+              value = dataBulan.lingkarKepala.toDouble();
               break;
             default:
-              value = e.beratBadan?.toDouble() ?? 0;
+              value = dataBulan.beratBadan.toDouble();
           }
-          return _GrafikBalitaData(DateFormat("MMM").format(date), value);
+
+          return _GrafikBalitaData("$bulanNama\n${month.year}", value);
         }).toList();
 
         return Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(12),
-              bottomRight: Radius.circular(12),
-            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 5,
-                offset: const Offset(0, 3),
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Text(
-                    "Jenis Data:",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      fontSize: 14,
+                  Expanded(
+                    child: _modernDropdown<String>(
+                      label: "Bulan",
+                      value: _selectedBulan,
+                      items: _bulanList,
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _selectedBulan = val;
+                            _applyFilter();
+                          });
+                        }
+                      },
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  DropdownButton<String>(
-                    value: selectedJenis,
-                    items: jenisDataList
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setLocalState(() => selectedJenis = val);
-                      }
-                    },
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _modernDropdown<int>(
+                      label: "Tahun",
+                      value: _selectedTahun,
+                      items: List.generate(6, (i) => DateTime.now().year - i),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _selectedTahun = val;
+                            _applyFilter();
+                          });
+                        }
+                      },
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: 10),
+
+              _modernDropdown<String>(
+                label: "Jenis Data",
+                value: selectedJenis,
+                items: jenisDataList,
+                onChanged: (val) {
+                  if (val != null) {
+                    setLocalState(() => selectedJenis = val);
+                  }
+                },
+              ),
+
+              const SizedBox(height: 20),
+
               SizedBox(
-                height: 220,
+                height: 250,
                 child: SfCartesianChart(
+                  plotAreaBorderWidth: 0,
+                  backgroundColor: Colors.transparent,
                   primaryXAxis: CategoryAxis(
                     labelStyle: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
+                    axisLine: const AxisLine(width: 0),
+                    majorGridLines: const MajorGridLines(width: 0),
                   ),
                   primaryYAxis: NumericAxis(
-                    labelStyle: const TextStyle(color: Colors.black),
+                    labelStyle: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 11,
+                    ),
                     axisLine: const AxisLine(width: 0),
                     majorGridLines: const MajorGridLines(
-                      color: Colors.grey,
-                      width: 0.3,
+                      color: Color(0xFFE0E0E0),
+                      width: 0.6,
                     ),
                   ),
-                  tooltipBehavior: TooltipBehavior(enable: true),
+                  tooltipBehavior: TooltipBehavior(
+                    enable: true,
+                    color: Colors.white,
+                    borderColor: Colors.grey.shade300,
+                    borderWidth: 0.8,
+                    textStyle: const TextStyle(color: Colors.black),
+                    canShowMarker: false,
+                  ),
                   series: <CartesianSeries<_GrafikBalitaData, String>>[
-                    LineSeries<_GrafikBalitaData, String>(
+                    SplineSeries<_GrafikBalitaData, String>(
                       dataSource: chartData,
                       xValueMapper: (data, _) => data.bulan,
                       yValueMapper: (data, _) => data.nilai,
-                      markerSettings: const MarkerSettings(isVisible: true),
+                      width: 3,
                       color: AppColors.primary,
+                      markerSettings: const MarkerSettings(
+                        isVisible: true,
+                        shape: DataMarkerType.circle,
+                        borderWidth: 2,
+                        borderColor: AppColors.primary,
+                        height: 8,
+                        width: 8,
+                      ),
                       dataLabelSettings: const DataLabelSettings(
                         isVisible: true,
                         textStyle: TextStyle(
                           color: Colors.black,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -433,54 +514,55 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     );
   }
 
-  Widget _buildFilterDropdown() {
-    return Row(
-      children: [
-        const Text(
-          "Bulan:",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: Colors.black,
+  Widget _modernDropdown<T>({
+    required String label,
+    required T value,
+    required List<T> items,
+    required Function(T?) onChanged,
+  }) {
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.only(right: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+              fontSize: 13,
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        DropdownButton<String>(
-          value: _selectedBulan,
-          items: _bulanList
-              .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-              .toList(),
-          onChanged: (val) {
-            setState(() {
-              _selectedBulan = val!;
-              _applyFilter();
-            });
-          },
-        ),
-        const SizedBox(width: 16),
-        const Text(
-          "Tahun:",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: Colors.black,
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9F9F9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade300, width: 1),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<T>(
+                isExpanded: true,
+                value: value,
+                items: items
+                    .map(
+                      (item) => DropdownMenuItem(
+                        value: item,
+                        child: Text(
+                          "$item",
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: onChanged,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        DropdownButton<int>(
-          value: _selectedTahun,
-          items: List.generate(6, (i) {
-            int year = DateTime.now().year - i;
-            return DropdownMenuItem(value: year, child: Text("$year"));
-          }),
-          onChanged: (val) {
-            setState(() {
-              _selectedTahun = val!;
-              _applyFilter();
-            });
-          },
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -116,7 +116,11 @@ class _CariPerkembanganBalitaScreenState
               child: CircularProgressIndicator(color: AppColors.primary),
             )
           : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.only(
+                top: 16,
+                left: 16,
+                right: 16,
+              ),
               child: Column(
                 children: [
                   Row(

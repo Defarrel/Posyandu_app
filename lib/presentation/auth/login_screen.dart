@@ -101,9 +101,12 @@ class _LoginScreenState extends State<LoginScreen>
           await _storage.delete(key: 'saved_password');
         }
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Login berhasil")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Login berhasil"),
+            backgroundColor: Colors.green,
+          ),
+        );
 
         if (!mounted) return;
         Navigator.pushReplacement(

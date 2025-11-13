@@ -157,4 +157,35 @@ class PerkembanganBalitaRepository {
       return Left("Terjadi kesalahan saat mengambil data statistik");
     }
   }
+
+  Future<Either<String, List<dynamic>>> getDetailPerkembanganBulanan({
+    required int bulan,
+    required int tahun,
+  }) async {
+    try {
+      final response = await _service.get(
+        "perkembangan/bulanan/detail?bulan=$bulan&tahun=$tahun",
+      );
+      final jsonResponse = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        if (jsonResponse is Map<String, dynamic> &&
+            jsonResponse['success'] == true &&
+            jsonResponse['data'] is List) {
+          return Right(jsonResponse['data']);
+        } else {
+          return Left("Format data detail tidak sesuai");
+        }
+      } else {
+        return Left(
+          (jsonResponse is Map && jsonResponse['message'] != null)
+              ? jsonResponse['message']
+              : "Gagal mengambil data detail perkembangan",
+        );
+      }
+    } catch (e) {
+      log("Exception getDetailPerkembanganBulanan: $e");
+      return Left("Terjadi kesalahan saat mengambil data detail perkembangan");
+    }
+  }
 }

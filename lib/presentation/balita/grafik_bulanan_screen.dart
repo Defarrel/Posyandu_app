@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
+import 'package:posyandu_app/presentation/balita/laporan_bulanan.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
@@ -35,6 +36,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   late List<int> _tahunList;
 
   bool _isLoadingChart = true;
+  bool _isGeneratingPdf = false;
   int _normal = 0;
   int _kurang = 0;
   int _obesitas = 0;
@@ -104,6 +106,127 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         }
       },
     );
+  }
+
+  Future<void> _generateAndExportPdf() async {
+    setState(() => _isGeneratingPdf = true);
+
+    try {
+      final bulanIndex = _bulanList.indexOf(_bulanDipilih) + 1;
+
+      final summary = {
+        'normal': _normal,
+        'kurang': _kurang,
+        'obesitas': _obesitas,
+        'total_laki': _totalLaki,
+        'total_perempuan': _totalPerempuan,
+        'total': _normal + _kurang + _obesitas,
+        'laki_laki': {
+          'normal': _lakiNormal,
+          'kurang': _lakiKurang,
+          'obesitas': _lakiObesitas,
+        },
+        'perempuan': {
+          'normal': _perempuanNormal,
+          'kurang': _perempuanKurang,
+          'obesitas': _perempuanObesitas,
+        },
+      };
+
+      final includeScannerColumns = bulanIndex == 2 || bulanIndex == 8;
+
+      final detailResult = await _repository.getDetailPerkembanganBulanan(
+        bulan: bulanIndex,
+        tahun: _tahunDipilih,
+      );
+
+      List<PerkembanganItem> detailData = [];
+
+      detailResult.fold(
+        (error) {
+          print("Gagal mengambil data detail: $error");
+        },
+        (data) {
+          if (data is List) {
+            detailData = data.map((item) {
+              return PerkembanganItem(
+                nama: item['nama'] ?? '',
+                nik: item['nik'] ?? '',
+                jenisKelamin: item['jenis_kelamin'] == 'Laki-laki' ? 'L' : 'P',
+
+                tanggalLahir: item['tanggal_lahir'] ?? '',
+                anakKe: item['anak_ke']?.toString() ?? '',
+                namaOrtu: item['nama_ortu'] ?? '',
+                nikOrtu: item['nik_ortu'] ?? '',
+                nomorHpOrtu: item['nomor_telp_ortu'] ?? '',
+                alamat: item['alamat'] ?? '',
+                rt: item['rt']?.toString() ?? '',
+                rw: item['rw']?.toString() ?? '',
+
+                berat: (item['berat'] ?? 0).toDouble(),
+                tinggi: (item['tinggi'] ?? 0).toDouble(),
+                lingkarLengan: (item['lingkar_lengan'] ?? 0).toDouble(),
+                lingkarKepala: (item['lingkar_kepala'] ?? 0).toDouble(),
+
+                kms: item['kms'] ?? '-',
+                vitaminA: item['vitamin_a'] ?? '-',
+                imd: item['imd'] ?? '-',
+                asiEks: item['asi_eksklusif'] ?? '-',
+              );
+            }).toList();
+          }
+        },
+      );
+
+      final pdfBytes = await LaporanBulananPdf.buildPdf(
+        bulanIndex: bulanIndex,
+        tahun: _tahunDipilih,
+        detail: detailData,
+        includeScannerColumns: includeScannerColumns,
+      );
+
+      await LaporanBulananPdf.downloadPdf(
+        pdfBytes,
+        "Laporan_Bulanan_${_bulanDipilih}_$_tahunDipilih.pdf",
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("PDF berhasil di-generate dan siap dicetak"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Gagal generate PDF: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isGeneratingPdf = false);
+    }
+  }
+
+  String _getAnalisisGizi(int normal, int kurang, int obesitas, int total) {
+    if (total == 0) return "Belum ada data perkembangan bulan ini.";
+
+    final persenNormal = (normal / total) * 100;
+    final persenKurang = (kurang / total) * 100;
+    final persenObes = (obesitas / total) * 100;
+    final persenMasalah = persenKurang + persenObes;
+
+    if (persenNormal >= 100) {
+      return "Semua balita berada pada kategori gizi normal (${persenNormal.toStringAsFixed(1)}%). Tidak ada tindakan khusus yang diperlukan.";
+    } else if (persenNormal >= 70) {
+      return "Mayoritas balita dalam kategori gizi normal (${persenNormal.toStringAsFixed(1)}%). Namun, ${persenMasalah.toStringAsFixed(1)}% anak masih perlu perhatian karena mengalami gizi kurang atau obesitas.";
+    } else if (persenKurang > persenObes) {
+      return "Perhatian: proporsi gizi kurang tinggi (${persenKurang.toStringAsFixed(1)}%). Disarankan intervensi nutrisi.";
+    } else if (persenObes > persenKurang) {
+      return "Perhatian: proporsi obesitas tinggi (${persenObes.toStringAsFixed(1)}%). Disarankan evaluasi pola makan.";
+    } else {
+      return "Distribusi status gizi bervariasi — tetap pantau dan tindak lanjut sesuai kebutuhan.";
+    }
   }
 
   @override
@@ -178,7 +301,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               CustomDropdownButton(
-                                value: _bulanDipilih ?? _bulanList.first,
+                                value: _bulanDipilih,
                                 items: _bulanList,
                                 isCompact: true,
                                 textColor: Colors.white,
@@ -327,26 +450,26 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                               ], isHeader: true),
                               _buildRow([
                                 "Normal",
-                                "${_lakiNormal}",
-                                "${_perempuanNormal}",
-                                "${_normal}",
+                                "$_lakiNormal",
+                                "$_perempuanNormal",
+                                "$_normal",
                               ]),
                               _buildRow([
                                 "Kurang",
-                                "${_lakiKurang}",
-                                "${_perempuanKurang}",
-                                "${_kurang}",
+                                "$_lakiKurang",
+                                "$_perempuanKurang",
+                                "$_kurang",
                               ]),
                               _buildRow([
                                 "Obesitas",
-                                "${_lakiObesitas}",
-                                "${_perempuanObesitas}",
-                                "${_obesitas}",
+                                "$_lakiObesitas",
+                                "$_perempuanObesitas",
+                                "$_obesitas",
                               ]),
                               _buildRow([
                                 "Total",
-                                "${_totalLaki}",
-                                "${_totalPerempuan}",
+                                "$_totalLaki",
+                                "$_totalPerempuan",
                                 "$total",
                               ], isHeader: true),
                             ],
@@ -362,11 +485,9 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                             "• Laki-laki: $_totalLaki anak\n"
                             "• Perempuan: $_totalPerempuan anak\n\n"
                             "• Normal: $_normal anak\n"
-                            "• Kurang: $_kurang anak\n"
+                            "• Kurang gizi: $_kurang anak\n"
                             "• Obesitas: $_obesitas anak\n\n"
-                            "Mayoritas balita dalam kategori gizi normal. "
-                            "Namun, ${(100 - (_normal / (total == 0 ? 1 : total) * 100)).toStringAsFixed(1)}% anak "
-                            "masih mengalami masalah gizi yang perlu perhatian lebih lanjut.",
+                            "${_getAnalisisGizi(_normal, _kurang, _obesitas, total)}",
                             style: const TextStyle(height: 1.5),
                           ),
                         ],
@@ -377,35 +498,35 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Tombol Cetak
               Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Fitur cetak laporan belum tersedia"),
+                child: _isGeneratingPdf
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton.icon(
+                        onPressed: _generateAndExportPdf,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 40,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(
+                          Icons.picture_as_pdf,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          "Cetak Laporan PDF",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    "Cetak Laporan",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

@@ -10,7 +10,7 @@ class PerkembanganItem {
   final String nama;
   final String nik;
   final String jenisKelamin;
-  final String tanggalLahir; 
+  final String tanggalLahir;
   final String anakKe;
   final String namaOrtu;
   final String nikOrtu;
@@ -68,7 +68,7 @@ class LaporanBulananPdf {
 
     pdf.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a3.landscape, 
+        pageFormat: PdfPageFormat.a3.landscape,
         orientation: pw.PageOrientation.landscape,
         margin: const pw.EdgeInsets.all(20),
         build: (context) => [
@@ -183,7 +183,7 @@ class LaporanBulananPdf {
         d.nik,
         d.nama,
         d.jenisKelamin,
-        formattedTanggal, 
+        formattedTanggal,
         d.anakKe,
         d.namaOrtu,
         d.nikOrtu,
@@ -195,7 +195,7 @@ class LaporanBulananPdf {
         d.tinggi.toStringAsFixed(1),
         d.lingkarLengan.toStringAsFixed(1),
         d.lingkarKepala.toStringAsFixed(1),
-        d.kms,
+        _formatKMS(d.kms),
       ];
 
       if (includeScanner) {
@@ -204,6 +204,11 @@ class LaporanBulananPdf {
 
       return row;
     }).toList();
+  }
+
+  static String _formatKMS(String kms) {
+    if (kms.trim().isEmpty || kms == "-") return "-";
+    return "Ada";
   }
 
   static String _formatDate(String tgl) {

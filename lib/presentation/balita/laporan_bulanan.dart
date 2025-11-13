@@ -88,14 +88,6 @@ class LaporanBulananPdf {
 
           pw.Align(
             alignment: pw.Alignment.centerRight,
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.end,
-              children: [
-                pw.Text("Kader Posyandu,"),
-                pw.SizedBox(height: 50),
-                pw.Text("______________________________"),
-              ],
-            ),
           ),
         ],
       ),

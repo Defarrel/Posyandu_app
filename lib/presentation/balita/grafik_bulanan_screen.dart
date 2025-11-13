@@ -37,6 +37,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
   bool _isLoadingChart = true;
   bool _isGeneratingPdf = false;
+  bool _isGeneratingPdfKhusus = false;
   int _normal = 0;
   int _kurang = 0;
   int _obesitas = 0;
@@ -108,32 +109,33 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     );
   }
 
-  Future<void> _generateAndExportPdf() async {
-    setState(() => _isGeneratingPdf = true);
+  bool get _isBulanKhusus {
+    final bulanIndex = _bulanList.indexOf(_bulanDipilih) + 1;
+    return bulanIndex == 2 || bulanIndex == 8; 
+  }
+
+  Future<void> _generateAndExportPdf({bool isLaporanKhusus = false}) async {
+    if (isLaporanKhusus) {
+      setState(() => _isGeneratingPdfKhusus = true);
+    } else {
+      setState(() => _isGeneratingPdf = true);
+    }
 
     try {
       final bulanIndex = _bulanList.indexOf(_bulanDipilih) + 1;
+      final int semester;
+      final int bulanMulai;
+      final int bulanSelesai;
 
-      final summary = {
-        'normal': _normal,
-        'kurang': _kurang,
-        'obesitas': _obesitas,
-        'total_laki': _totalLaki,
-        'total_perempuan': _totalPerempuan,
-        'total': _normal + _kurang + _obesitas,
-        'laki_laki': {
-          'normal': _lakiNormal,
-          'kurang': _lakiKurang,
-          'obesitas': _lakiObesitas,
-        },
-        'perempuan': {
-          'normal': _perempuanNormal,
-          'kurang': _perempuanKurang,
-          'obesitas': _perempuanObesitas,
-        },
-      };
-
-      final includeScannerColumns = bulanIndex == 2 || bulanIndex == 8;
+      if (bulanIndex >= 1 && bulanIndex <= 6) {
+        semester = 1;
+        bulanMulai = 1;
+        bulanSelesai = 6;
+      } else {
+        semester = 2;
+        bulanMulai = 7;
+        bulanSelesai = 12;
+      }
 
       final detailResult = await _repository.getDetailPerkembanganBulanan(
         bulan: bulanIndex,
@@ -152,26 +154,17 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
               return PerkembanganItem(
                 nama: item['nama'] ?? '',
                 nik: item['nik'] ?? '',
-                jenisKelamin: item['jenis_kelamin'] == 'Laki-laki' ? 'L' : 'P',
-
+                jenisKelamin: item['jenis_kelamin'] ?? '',
                 tanggalLahir: item['tanggal_lahir'] ?? '',
                 anakKe: item['anak_ke']?.toString() ?? '',
                 namaOrtu: item['nama_ortu'] ?? '',
                 nikOrtu: item['nik_ortu'] ?? '',
-                nomorHpOrtu: item['nomor_telp_ortu'] ?? '',
+                nomorHpOrtu: item['nomor_hp_ortu'] ?? '',
                 alamat: item['alamat'] ?? '',
                 rt: item['rt']?.toString() ?? '',
                 rw: item['rw']?.toString() ?? '',
-
-                berat: (item['berat'] ?? 0).toDouble(),
-                tinggi: (item['tinggi'] ?? 0).toDouble(),
-                lingkarLengan: (item['lingkar_lengan'] ?? 0).toDouble(),
-                lingkarKepala: (item['lingkar_kepala'] ?? 0).toDouble(),
-
-                kms: item['kms'] ?? '-',
-                vitaminA: item['vitamin_a'] ?? '-',
-                imd: item['imd'] ?? '-',
-                asiEks: item['asi_eksklusif'] ?? '-',
+                perkembanganBulanan:
+                    (item['bulan'] ?? {}) as Map<String, dynamic>,
               );
             }).toList();
           }
@@ -179,20 +172,25 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
       );
 
       final pdfBytes = await LaporanBulananPdf.buildPdf(
-        bulanIndex: bulanIndex,
         tahun: _tahunDipilih,
+        semester: semester,
+        bulanMulai: bulanMulai,
+        bulanSelesai: bulanSelesai,
         detail: detailData,
-        includeScannerColumns: includeScannerColumns,
+        isBulanKhusus: isLaporanKhusus,
       );
 
-      await LaporanBulananPdf.downloadPdf(
-        pdfBytes,
-        "Laporan_Bulanan_${_bulanDipilih}_$_tahunDipilih.pdf",
-      );
+      final fileName = isLaporanKhusus
+          ? "Laporan_Khusus_${_bulanDipilih}_$_tahunDipilih.pdf"
+          : "Laporan_Bulanan_${_bulanDipilih}_$_tahunDipilih.pdf";
+
+      await LaporanBulananPdf.downloadPdf(pdfBytes, fileName);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("PDF berhasil di-generate dan siap dicetak"),
+        SnackBar(
+          content: Text(
+            "PDF ${isLaporanKhusus ? 'khusus ' : ''}berhasil di-generate dan siap dicetak",
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -204,7 +202,11 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         ),
       );
     } finally {
-      setState(() => _isGeneratingPdf = false);
+      if (isLaporanKhusus) {
+        setState(() => _isGeneratingPdfKhusus = false);
+      } else {
+        setState(() => _isGeneratingPdf = false);
+      }
     }
   }
 
@@ -499,32 +501,77 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
               const SizedBox(height: 20),
 
               Center(
-                child: _isGeneratingPdf
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton.icon(
-                        onPressed: _generateAndExportPdf,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 40,
-                            vertical: 14,
+                child: Column(
+                  children: [
+                    _isGeneratingPdf
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton.icon(
+                            onPressed: _generateAndExportPdf,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.picture_as_pdf,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              "Cetak Laporan Semester",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+
+                    if (_isBulanKhusus) ...[
+                      const SizedBox(height: 12),
+                      _isGeneratingPdfKhusus
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton.icon(
+                              onPressed: () =>
+                                  _generateAndExportPdf(isLaporanKhusus: true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(
+                                Icons.assignment,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                "Cetak Laporan Khusus",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "* Laporan khusus untuk bulan $_bulanDipilih",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          fontStyle: FontStyle.italic,
                         ),
-                        icon: const Icon(
-                          Icons.picture_as_pdf,
-                          color: Colors.white,
-                        ),
-                        label: const Text(
-                          "Cetak Laporan PDF",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        textAlign: TextAlign.center,
                       ),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
             ],

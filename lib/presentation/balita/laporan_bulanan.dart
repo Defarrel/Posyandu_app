@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 import 'dart:io';
+import 'dart:ui';
+
 import 'package:intl/intl.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xls;
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PerkembanganItem {
   final String nama;
@@ -18,7 +20,6 @@ class PerkembanganItem {
   final String alamat;
   final String rt;
   final String rw;
-
   final Map<String, dynamic> perkembanganBulanan;
 
   PerkembanganItem({
@@ -36,350 +37,327 @@ class PerkembanganItem {
     required this.perkembanganBulanan,
   });
 
-  double getBeratBadan(int bulan) {
-    final dataBulan = perkembanganBulanan[bulan.toString()];
-    return dataBulan != null ? (dataBulan['bb'] ?? 0.0).toDouble() : 0.0;
-  }
-
-  double getTinggiBadan(int bulan) {
-    final dataBulan = perkembanganBulanan[bulan.toString()];
-    return dataBulan != null ? (dataBulan['tb'] ?? 0.0).toDouble() : 0.0;
-  }
-
-  double getLingkarLengan(int bulan) {
-    final dataBulan = perkembanganBulanan[bulan.toString()];
-    return dataBulan != null ? (dataBulan['ll'] ?? 0.0).toDouble() : 0.0;
-  }
-
-  double getLingkarKepala(int bulan) {
-    final dataBulan = perkembanganBulanan[bulan.toString()];
-    return dataBulan != null ? (dataBulan['lk'] ?? 0.0).toDouble() : 0.0;
-  }
+  double getBeratBadan(int bulan) =>
+      (perkembanganBulanan[bulan.toString()]?['bb'] ?? 0.0).toDouble();
+  double getTinggiBadan(int bulan) =>
+      (perkembanganBulanan[bulan.toString()]?['tb'] ?? 0.0).toDouble();
+  double getLingkarLengan(int bulan) =>
+      (perkembanganBulanan[bulan.toString()]?['ll'] ?? 0.0).toDouble();
+  double getLingkarKepala(int bulan) =>
+      (perkembanganBulanan[bulan.toString()]?['lk'] ?? 0.0).toDouble();
 }
 
-class LaporanBulananPdf {
-  static final _tglFmt = DateFormat("dd/MM/yy");
-
-  static Future<Uint8List> buildPdf({
-    required int tahun,
-    required int semester,
+class LaporanPosyandu {
+  static Future<Uint8List> generateExcel({
+    required List<PerkembanganItem> detail,
     required int bulanMulai,
     required int bulanSelesai,
-    required List<PerkembanganItem> detail,
-    required bool isBulanKhusus,
   }) async {
-    if (isBulanKhusus) {
-      return _buildLaporanKhususPdf(tahun, bulanMulai, detail);
-    } else {
-      return _buildLaporanSemesterPdf(
-        tahun: tahun,
-        semester: semester,
-        bulanMulai: bulanMulai,
-        bulanSelesai: bulanSelesai,
-        detail: detail,
-      );
-    }
-  }
+    final workbook = xls.Workbook();
+    final sheet = workbook.worksheets[0];
 
-  static Future<Uint8List> _buildLaporanSemesterPdf({
-    required int tahun,
-    required int semester,
-    required int bulanMulai,
-    required int bulanSelesai,
-    required List<PerkembanganItem> detail,
-  }) async {
-    final pdf = pw.Document();
-
-    final bulanNamaMulai = DateFormat.MMMM(
-      "id_ID",
-    ).dateSymbols.MONTHS[bulanMulai - 1];
-    final bulanNamaSelesai = DateFormat.MMMM(
-      "id_ID",
-    ).dateSymbols.MONTHS[bulanSelesai - 1];
-
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4.landscape,
-        margin: const pw.EdgeInsets.all(10),
-        build: (context) => [
-          pw.Text(
-            "LAPORAN PENIMBANGAN BALITA",
-            style: pw.TextStyle(fontSize: 8),
-          ),
-          pw.SizedBox(height: 4),
-          pw.Text("POSYANDU DAHLIA X", style: pw.TextStyle(fontSize: 8)),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            "Periode ($bulanNamaMulai - $bulanNamaSelesai $tahun)",
-            style: const pw.TextStyle(fontSize: 8),
-          ),
-          pw.SizedBox(height: 10),
-
-          _buildTabelUtama(detail, bulanMulai, bulanSelesai),
-        ],
-      ),
-    );
-
-    return pdf.save();
-  }
-
-  static pw.Widget _buildTabelUtama(
-    List<PerkembanganItem> detail,
-    int bulanMulai,
-    int bulanSelesai,
-  ) {
-    final bulanList = DateFormat.MMMM("id_ID").dateSymbols.MONTHS;
-
-    final rows = <pw.Widget>[];
-
-    const perPage = 20;
-    final totalPages = (detail.length / perPage).ceil();
-
-    for (int page = 0; page < totalPages; page++) {
-      final start = page * perPage;
-      final end = (start + perPage > detail.length)
-          ? detail.length
-          : start + perPage;
-      final chunk = detail.sublist(start, end);
-
-      rows.add(
-        pw.Table(
-          border: pw.TableBorder.all(width: 0.5),
-          columnWidths: _getColumnWidths(bulanMulai, bulanSelesai),
-          children: [
-            _buildHeaderRow1(bulanMulai, bulanSelesai, bulanList),
-            _buildHeaderRow2(bulanMulai, bulanSelesai),
-            ..._buildDataRows(chunk, bulanMulai, bulanSelesai),
-          ],
-        ),
-      );
-
-      rows.add(pw.SizedBox(height: 30));
-    }
-
-    return pw.Column(children: rows);
-  }
-
-  static pw.TableRow _buildHeaderRow1(
-    int bulanMulai,
-    int bulanSelesai,
-    List<String> bulanList,
-  ) {
-    final cells = <pw.Widget>[
-      _headerCell("NO", 1),
-      _headerCell("ANAK\nKE", 1),
-      _headerCell("L/P", 1),
-      _headerCell("NIK", 1),
-      _headerCell("NAMA ANAK", 1),
-      _headerCell("NAMA ORTU", 1),
-      _headerCell("NIK ORTU", 1),
-      _headerCell("HP ORTU", 1),
-      _headerCell("ALAMAT", 1),
-      _headerCell("RT", 1),
-      _headerCell("RW", 1),
+    final headers = [
+      "NO",
+      "ANAK KE",
+      "L/P",
+      "NIK",
+      "NAMA ANAK",
+      "NAMA ORTU",
+      "NIK ORTU",
+      "HP ORTU",
+      "ALAMAT",
+      "RT",
+      "RW",
     ];
 
+    for (int i = 0; i < headers.length; i++) {
+      sheet.getRangeByIndex(1, i + 1).setText(headers[i]);
+      sheet.getRangeByIndex(1, i + 1, 2, i + 1).merge();
+    }
+
+    int col = 12;
     for (int b = bulanMulai; b <= bulanSelesai; b++) {
-      cells.add(
-        pw.Container(
-          width: 56,
-          padding: const pw.EdgeInsets.all(2),
-          child: pw.Center(
-            child: pw.Text(
-              bulanList[b - 1].toUpperCase(),
-              style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold),
-            ),
-          ),
+      String bulanNama =
+          DateFormat.MMMM("id_ID").dateSymbols.MONTHS[b - 1].toUpperCase();
+      sheet.getRangeByIndex(1, col, 1, col + 3).merge();
+      sheet.getRangeByIndex(1, col).setText(bulanNama);
+      sheet.getRangeByIndex(2, col).setText("LL");
+      sheet.getRangeByIndex(2, col + 1).setText("LK");
+      sheet.getRangeByIndex(2, col + 2).setText("TB");
+      sheet.getRangeByIndex(2, col + 3).setText("BB");
+      col += 4;
+    }
+
+    int row = 3;
+    for (int i = 0; i < detail.length; i++) {
+      final d = detail[i];
+      sheet.getRangeByIndex(row, 1).setNumber(i + 1);
+      sheet.getRangeByIndex(row, 2).setText(d.anakKe);
+      sheet.getRangeByIndex(row, 3).setText(d.jenisKelamin);
+      sheet.getRangeByIndex(row, 4).setText(d.nik);
+      sheet.getRangeByIndex(row, 5).setText(d.nama);
+      sheet.getRangeByIndex(row, 6).setText(d.namaOrtu);
+      sheet.getRangeByIndex(row, 7).setText(d.nikOrtu);
+      sheet.getRangeByIndex(row, 8).setText(d.nomorHpOrtu);
+      sheet.getRangeByIndex(row, 9).setText(d.alamat);
+      sheet.getRangeByIndex(row, 10).setText(d.rt);
+      sheet.getRangeByIndex(row, 11).setText(d.rw);
+
+      int c = 12;
+      for (int b = bulanMulai; b <= bulanSelesai; b++) {
+        sheet
+            .getRangeByIndex(row, c)
+            .setText(d.getLingkarLengan(b) > 0 ? d.getLingkarLengan(b).toStringAsFixed(1) : "-");
+        sheet
+            .getRangeByIndex(row, c + 1)
+            .setText(d.getLingkarKepala(b) > 0 ? d.getLingkarKepala(b).toStringAsFixed(1) : "-");
+        sheet
+            .getRangeByIndex(row, c + 2)
+            .setText(d.getTinggiBadan(b) > 0 ? d.getTinggiBadan(b).toStringAsFixed(0) : "-");
+        sheet
+            .getRangeByIndex(row, c + 3)
+            .setText(d.getBeratBadan(b) > 0 ? d.getBeratBadan(b).toStringAsFixed(1) : "-");
+        c += 4;
+      }
+      row++;
+    }
+
+    final bytes = workbook.saveAsStream();
+    workbook.dispose();
+    return Uint8List.fromList(bytes);
+  }
+
+  static Future<Uint8List> generatePdf({
+    required List<PerkembanganItem> detail,
+    required int bulanMulai,
+    required int bulanSelesai,
+    required String bulanNama,
+    required int tahun,
+  }) async {
+    if (bulanMulai <= 6) {
+      bulanMulai = 1;
+      bulanSelesai = 6;
+    } else {
+      bulanMulai = 7;
+      bulanSelesai = 12;
+    }
+
+    final PdfDocument doc = PdfDocument();
+    doc.pageSettings.orientation = PdfPageOrientation.landscape;
+    doc.pageSettings.size = PdfPageSize.a3;
+
+    final PdfFont fontHeader =
+        PdfStandardFont(PdfFontFamily.helvetica, 8, style: PdfFontStyle.bold);
+    final PdfFont fontCell = PdfStandardFont(PdfFontFamily.helvetica, 8);
+
+    final PdfGridCellStyle headerStyle = PdfGridCellStyle(
+      font: fontHeader,
+      textBrush: PdfBrushes.black,
+      format: PdfStringFormat(
+        alignment: PdfTextAlignment.center,
+        lineAlignment: PdfVerticalAlignment.middle,
+      ),
+      borders: PdfBorders(
+        left: PdfPen(PdfColor(0, 0, 0), width: 0.4),
+        right: PdfPen(PdfColor(0, 0, 0), width: 0.4),
+        top: PdfPen(PdfColor(0, 0, 0), width: 0.4),
+        bottom: PdfPen(PdfColor(0, 0, 0), width: 0.4),
+      ),
+    );
+
+    final PdfGridCellStyle cellStyle = PdfGridCellStyle(
+      font: fontCell,
+      format: PdfStringFormat(
+        alignment: PdfTextAlignment.center,
+        lineAlignment: PdfVerticalAlignment.middle,
+      ),
+      borders: PdfBorders(
+        left: PdfPen(PdfColor(0, 0, 0), width: 0.4),
+        right: PdfPen(PdfColor(0, 0, 0), width: 0.4),
+        top: PdfPen(PdfColor(0, 0, 0), width: 0.4),
+        bottom: PdfPen(PdfColor(0, 0, 0), width: 0.4),
+      ),
+    );
+
+    List<String> headerUtama = [
+      "NO",
+      "ANAK KE",
+      "TGL LAHIR",
+      "L/P",
+      "NIK",
+      "NAMA ANAK",
+      "NAMA ORTU",
+      "NIK ORTU",
+      "HP ORTU",
+      "ALAMAT",
+      "RT",
+      "RW",
+    ];
+
+    const int maxRowsPerPage = 20;
+    final int totalPages = (detail.length / maxRowsPerPage).ceil();
+
+    for (int pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+      final PdfPage page = doc.pages.add();
+      final PdfGrid grid = PdfGrid();
+
+      final int totalColumns =
+          headerUtama.length + (bulanSelesai - bulanMulai + 1) * 4;
+      grid.columns.add(count: totalColumns);
+
+      final List<double> baseWidths = [
+        20.0,
+        26.0,
+        55.0,
+        26.0,
+        80.0,
+        80.0,
+        80.0,
+        80.0,
+        60.0,
+        70.0,
+        20.0,
+        20.0,
+      ];
+
+      int wIndex = 0;
+      for (double w in baseWidths) {
+        if (wIndex < grid.columns.count) {
+          grid.columns[wIndex].width = w;
+        }
+        wIndex++;
+      }
+
+      const double small = 20.0;
+      for (int m = bulanMulai; m <= bulanSelesai; m++) {
+        if (wIndex < grid.columns.count) grid.columns[wIndex++].width = small;
+        if (wIndex < grid.columns.count) grid.columns[wIndex++].width = small;
+        if (wIndex < grid.columns.count) grid.columns[wIndex++].width = small;
+        if (wIndex < grid.columns.count) grid.columns[wIndex++].width = small;
+      }
+
+      final header = grid.headers.add(2);
+      final PdfGridRow h1 = header[0];
+      final PdfGridRow h2 = header[1];
+
+      h1.height = 18;
+      h2.height = 18;
+
+      int col = 0;
+      for (var h in headerUtama) {
+        h1.cells[col].value = h;
+        h1.cells[col].rowSpan = 2;
+        h1.cells[col].style = headerStyle;
+        h2.cells[col].value = "";
+        col++;
+      }
+
+      for (int b = bulanMulai; b <= bulanSelesai; b++) {
+        final String namaBulan =
+            DateFormat.MMMM("id_ID").dateSymbols.MONTHS[b - 1].toUpperCase();
+
+        h1.cells[col].value = namaBulan;
+        h1.cells[col].columnSpan = 4;
+        h1.cells[col].style = headerStyle;
+
+        h2.cells[col].value = "LL";
+        h2.cells[col + 1].value = "LK";
+        h2.cells[col + 2].value = "TB";
+        h2.cells[col + 3].value = "BB";
+
+        h2.cells[col].style = headerStyle;
+        h2.cells[col + 1].style = headerStyle;
+        h2.cells[col + 2].style = headerStyle;
+        h2.cells[col + 3].style = headerStyle;
+
+        col += 4;
+      }
+
+      final int startIndex = pageIndex * maxRowsPerPage;
+      final int endIndex =
+          (pageIndex == totalPages - 1) ? detail.length : startIndex + maxRowsPerPage;
+
+      for (int idx = startIndex; idx < endIndex; idx++) {
+        final PerkembanganItem d = detail[idx];
+        final PdfGridRow row = grid.rows.add();
+        row.height = 25;
+
+        int c = 0;
+        row.cells[c++].value = (idx + 1).toString();
+        row.cells[c++].value = d.anakKe;
+
+        String formattedTanggal = "-";
+        try {
+          final DateTime dt = DateTime.parse(d.tanggalLahir);
+          formattedTanggal = DateFormat("dd/MM/yyyy").format(dt);
+        } catch (_) {
+          formattedTanggal = d.tanggalLahir;
+        }
+        row.cells[c++].value = formattedTanggal;
+
+        row.cells[c++].value =
+            d.jenisKelamin.trim().toUpperCase().startsWith("L") ? "L" : "P";
+        row.cells[c++].value = d.nik;
+        row.cells[c++].value = d.nama;
+        row.cells[c++].value = d.namaOrtu;
+        row.cells[c++].value = d.nikOrtu;
+        row.cells[c++].value = d.nomorHpOrtu;
+        row.cells[c++].value = d.alamat;
+        row.cells[c++].value = d.rt;
+        row.cells[c++].value = d.rw;
+
+        for (int b = bulanMulai; b <= bulanSelesai; b++) {
+          final ll = d.getLingkarLengan(b);
+          final lk = d.getLingkarKepala(b);
+          final tb = d.getTinggiBadan(b);
+          final bb = d.getBeratBadan(b);
+
+          row.cells[c++].value = ll > 0 ? ll.toStringAsFixed(1) : "-";
+          row.cells[c++].value = lk > 0 ? lk.toStringAsFixed(1) : "-";
+          row.cells[c++].value = tb > 0 ? tb.toStringAsFixed(0) : "-";
+          row.cells[c++].value = bb > 0 ? bb.toStringAsFixed(1) : "-";
+        }
+
+        for (int x = 0; x < row.cells.count; x++) {
+          row.cells[x].style = cellStyle;
+        }
+      }
+
+      final String titleText =
+          "LAPORAN PENIMBANGAN BALITA\nPOSYANDU DAHLIA X\nPERIODE : ${bulanNama.toUpperCase()} $tahun";
+
+      page.graphics.drawString(
+        titleText,
+        PdfStandardFont(PdfFontFamily.helvetica, 12),
+        bounds: Rect.fromLTWH(0, 10, page.getClientSize().width, 60),
+      );
+
+      grid.draw(
+        page: page,
+        bounds: Rect.fromLTWH(
+          5,
+          80,
+          page.getClientSize().width - 40,
+          page.getClientSize().height - 80,
         ),
       );
     }
 
-    return pw.TableRow(children: cells);
+    final List<int> bytes = await doc.save();
+    doc.dispose();
+    return Uint8List.fromList(bytes);
   }
 
-  static pw.TableRow _buildHeaderRow2(int bulanMulai, int bulanSelesai) {
-    final cells = <pw.Widget>[for (int i = 0; i < 11; i++) pw.Container()];
+  static Future<File> saveAndShare(Uint8List bytes, String fileName) async {
+    final dir =
+        await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+    final file = File("${dir.path}/$fileName");
+    await file.writeAsBytes(bytes);
 
-    for (int b = bulanMulai; b <= bulanSelesai; b++) {
-      cells.addAll([
-        _subHeaderCell("LL"),
-        _subHeaderCell("LK"),
-        _subHeaderCell("TB"),
-        _subHeaderCell("BB"),
-      ]);
-    }
+    await Share.shareXFiles([
+      XFile(file.path),
+    ], text: "Laporan Posyandu $fileName");
 
-    return pw.TableRow(children: cells);
-  }
-
-  static List<pw.TableRow> _buildDataRows(
-    List<PerkembanganItem> detail,
-    int bulanMulai,
-    int bulanSelesai,
-  ) {
-    return detail.asMap().entries.map((entry) {
-      final i = entry.key;
-      final d = entry.value;
-
-      String lp = d.jenisKelamin.toUpperCase().startsWith("L") ? "L" : "P";
-
-      final cells = <pw.Widget>[
-        _dataCell("${i + 1}"),
-        _dataCell(d.anakKe),
-        _dataCell(lp),
-        _dataCell(d.nik),
-        _dataCell(d.nama),
-        _dataCell(d.namaOrtu),
-        _dataCell(d.nikOrtu),
-        _dataCell(d.nomorHpOrtu),
-        _dataCell(d.alamat),
-        _dataCell(d.rt),
-        _dataCell(d.rw),
-      ];
-
-      for (int b = bulanMulai; b <= bulanSelesai; b++) {
-        final ll = d.getLingkarLengan(b);
-        final lk = d.getLingkarKepala(b);
-        final tb = d.getTinggiBadan(b);
-        final bb = d.getBeratBadan(b);
-
-        cells.addAll([
-          _dataCellSmall(ll > 0 ? ll.toStringAsFixed(1) : "-"),
-          _dataCellSmall(lk > 0 ? lk.toStringAsFixed(1) : "-"),
-          _dataCellSmall(tb > 0 ? tb.toStringAsFixed(0) : "-"),
-          _dataCellSmall(bb > 0 ? bb.toStringAsFixed(1) : "-"),
-        ]);
-      }
-
-      return pw.TableRow(children: cells);
-    }).toList();
-  }
-
-  static pw.Widget _headerCell(String text, int colspan) {
-    return pw.Container(
-      width: colspan * 14.0,
-      padding: const pw.EdgeInsets.all(2),
-      child: pw.Center(
-        child: pw.Text(
-          text,
-          style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold),
-          textAlign: pw.TextAlign.center,
-        ),
-      ),
-    );
-  }
-
-  static pw.Widget _subHeaderCell(String text) {
-    return pw.Container(
-      width: 14,
-      padding: const pw.EdgeInsets.all(1),
-      child: pw.Center(
-        child: pw.Text(
-          text,
-          style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold),
-          textAlign: pw.TextAlign.center,
-        ),
-      ),
-    );
-  }
-
-  static pw.Widget _dataCell(String text) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(1),
-      child: pw.Text(
-        text,
-        style: const pw.TextStyle(fontSize: 6),
-        textAlign: pw.TextAlign.center,
-        maxLines: 2,
-      ),
-    );
-  }
-
-  static pw.Widget _dataCellSmall(String text) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(1),
-      child: pw.Text(
-        text,
-        style: const pw.TextStyle(fontSize: 5),
-        textAlign: pw.TextAlign.center,
-      ),
-    );
-  }
-
-  static Map<int, pw.TableColumnWidth> _getColumnWidths(
-    int bulanMulai,
-    int bulanSelesai,
-  ) {
-    final widths = <int, pw.TableColumnWidth>{
-      0: const pw.FixedColumnWidth(10),
-      1: const pw.FixedColumnWidth(12),
-      2: const pw.FixedColumnWidth(8),
-      3: const pw.FixedColumnWidth(25),
-      4: const pw.FixedColumnWidth(30),
-      5: const pw.FixedColumnWidth(30),
-      6: const pw.FixedColumnWidth(25),
-      7: const pw.FixedColumnWidth(20),
-      8: const pw.FixedColumnWidth(40),
-      9: const pw.FixedColumnWidth(8),
-      10: const pw.FixedColumnWidth(8),
-    };
-
-    int colIndex = 11;
-    for (int b = bulanMulai; b <= bulanSelesai; b++) {
-      for (int i = 0; i < 4; i++) {
-        widths[colIndex++] = const pw.FixedColumnWidth(14);
-      }
-    }
-
-    return widths;
-  }
-
-  static Future<Uint8List> _buildLaporanKhususPdf(
-    int tahun,
-    int bulan,
-    List<PerkembanganItem> detail,
-  ) async {
-    final pdf = pw.Document();
-    final bulanNama = DateFormat.MMMM("id_ID").dateSymbols.MONTHS[bulan - 1];
-
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a3.landscape,
-        margin: const pw.EdgeInsets.all(20),
-        build: (context) => [
-          pw.Center(
-            child: pw.Text(
-              "LAPORAN KHUSUS BULAN $bulanNama $tahun",
-              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-            ),
-          ),
-          pw.SizedBox(height: 20),
-          pw.Text(
-            "Laporan khusus untuk bulan $bulanNama $tahun",
-            style: const pw.TextStyle(fontSize: 12),
-          ),
-          pw.SizedBox(height: 10),
-          pw.Text(
-            "Total data: ${detail.length} balita",
-            style: const pw.TextStyle(fontSize: 12),
-          ),
-        ],
-      ),
-    );
-
-    return pdf.save();
-  }
-
-  static Future<void> downloadPdf(Uint8List bytes, String fileName) async {
-    try {
-      final dir =
-          await getDownloadsDirectory() ??
-          await getApplicationDocumentsDirectory();
-      final file = File("${dir.path}/$fileName");
-      await file.writeAsBytes(bytes);
-      await Printing.sharePdf(bytes: bytes, filename: fileName);
-    } catch (e) {
-      print("Error saving PDF: $e");
-    }
+    return file;
   }
 }

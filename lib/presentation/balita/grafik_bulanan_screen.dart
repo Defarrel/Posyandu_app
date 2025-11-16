@@ -111,7 +111,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
   bool get _isBulanKhusus {
     final bulanIndex = _bulanList.indexOf(_bulanDipilih) + 1;
-    return bulanIndex == 2 || bulanIndex == 8; 
+    return bulanIndex == 2 || bulanIndex == 8;
   }
 
   Future<void> _generateAndExportPdf({bool isLaporanKhusus = false}) async {
@@ -171,20 +171,15 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         },
       );
 
-      final pdfBytes = await LaporanBulananPdf.buildPdf(
-        tahun: _tahunDipilih,
-        semester: semester,
+      final pdfBytes = await LaporanPosyandu.generatePdf(
+        detail: detailData,
         bulanMulai: bulanMulai,
         bulanSelesai: bulanSelesai,
-        detail: detailData,
-        isBulanKhusus: isLaporanKhusus,
+        bulanNama: _bulanDipilih,
+        tahun: _tahunDipilih,
       );
 
-      final fileName = isLaporanKhusus
-          ? "Laporan_Khusus_${_bulanDipilih}_$_tahunDipilih.pdf"
-          : "Laporan_Bulanan_${_bulanDipilih}_$_tahunDipilih.pdf";
-
-      await LaporanBulananPdf.downloadPdf(pdfBytes, fileName);
+      await LaporanPosyandu.saveAndShare(pdfBytes, "laporan_posyandu_bulan_$_bulanDipilih.pdf");
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -478,7 +473,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            "Ringkasan Pertumbuhan Balita – $_bulanDipilih",
+                            "Ringkasan Pertumbuhan Balita - $_bulanDipilih",
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 6),
@@ -522,7 +517,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                               color: Colors.white,
                             ),
                             label: const Text(
-                              "Cetak Laporan Semester",
+                              "Download Laporan Bulanan",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -552,7 +547,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                                 color: Colors.white,
                               ),
                               label: const Text(
-                                "Cetak Laporan Khusus",
+                                "Download Laporan Khusus",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,

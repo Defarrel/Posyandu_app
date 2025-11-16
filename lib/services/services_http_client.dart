@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class ServiceHttpClient {
-  final String baseUrl = 'http://192.168.1.12:5000/api/';
+  final String baseUrl = 'http://172.30.110.203:5000/api/';
   final secureStorage = FlutterSecureStorage();
 
   // POST tanpa token

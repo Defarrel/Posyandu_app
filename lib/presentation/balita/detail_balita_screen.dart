@@ -2,12 +2,14 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
 import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
 import 'package:posyandu_app/presentation/perkembanganBalita/tambah_perkembangan_balita.dart';
+import 'package:posyandu_app/presentation/balita/tambah_balita_screen.dart'; // Import tambahan
 
 class DetailBalitaScreen extends StatefulWidget {
   final BalitaResponseModel balita;
@@ -21,6 +23,28 @@ class DetailBalitaScreen extends StatefulWidget {
 class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   final PerkembanganBalitaRepository _repository =
       PerkembanganBalitaRepository();
+  final BalitaRepository _balitaRepository = BalitaRepository();
+
+  int _hitungUmurBulan(DateTime tglLahir) {
+    final now = DateTime.now();
+    int bulan = (now.year - tglLahir.year) * 12 + (now.month - tglLahir.month);
+
+    if (now.day < tglLahir.day) bulan--;
+
+    return bulan < 0 ? 0 : bulan;
+  }
+
+  Color _warnaVitaminABerdasarkanUmur(DateTime tglLahir) {
+    final umurBulan = _hitungUmurBulan(tglLahir);
+
+    if (umurBulan >= 6 && umurBulan <= 11) {
+      return Colors.blue;
+    } else if (umurBulan >= 12 && umurBulan <= 60) {
+      return Colors.red;
+    }
+
+    return Colors.black;
+  }
 
   List<PerkembanganBalitaResponseModel> _perkembanganList = [];
   PerkembanganBalitaResponseModel? _filteredPerkembangan;
@@ -53,6 +77,26 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   }
 
   Future<void> _fetchPerkembangan() async {
+    final balitaResult = await _balitaRepository.getBalitaByNIK(
+      widget.balita.nikBalita,
+    );
+
+    balitaResult.fold(
+      (error) {
+        log("Gagal memuat data balita terbaru: $error");
+      },
+      (updatedBalita) {
+        try {
+          final tglLahir = DateTime.parse(updatedBalita.tanggalLahir);
+          setState(() {
+            _warnaNama = _warnaVitaminABerdasarkanUmur(tglLahir);
+          });
+        } catch (e) {
+          setState(() => _warnaNama = Colors.black);
+        }
+      },
+    );
+
     final result = await _repository.getPerkembanganByNIK(
       widget.balita.nikBalita,
     );
@@ -60,36 +104,20 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     result.fold(
       (error) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Gagal memuat: $error")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal memuat data perkembangan: $error")),
+        );
       },
       (dataList) {
         dataList.sort((a, b) {
           final dateA = _safeParseDate(a.tanggalPerubahan);
           final dateB = _safeParseDate(b.tanggalPerubahan);
-          return dateB.compareTo(dateA); 
+          return dateB.compareTo(dateA);
         });
 
         setState(() {
           _perkembanganList = dataList;
           _applyFilter();
-
-          if (_perkembanganList.isNotEmpty) {
-            final last = _perkembanganList.first; 
-            final lastKMS = (last.kms ?? "").toLowerCase().trim();
-
-            if (lastKMS == "merah") {
-              _warnaNama = Colors.red;
-            } else if (lastKMS == "hijau") {
-              _warnaNama = Colors.green;
-            } else if (lastKMS == "kuning") {
-              _warnaNama = Colors.orange;
-            } else {
-              _warnaNama = Colors.black;
-            }
-          }
-
           _isLoading = false;
         });
       },
@@ -131,7 +159,93 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     });
   }
 
-  Future<void> _handleDelete() async {
+  Future<void> _handleUpdateBalita() async {
+    final updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TambahBalitaScreen(isEdit: true, data: widget.balita),
+      ),
+    );
+
+    if (updated == true) {
+      _fetchPerkembangan();
+    }
+  }
+
+  Future<void> _handleDeleteBalita() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Konfirmasi Hapus"),
+        content: Text(
+          "Apakah kamu yakin ingin menghapus data balita ${widget.balita.namaBalita}?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Hapus", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final result = await _balitaRepository.deleteBalita(
+      widget.balita.nikBalita,
+    );
+
+    result.fold(
+      (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Gagal menghapus balita: $error"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+      (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(success), backgroundColor: Colors.green),
+        );
+
+        Navigator.of(context).pop(true);
+      },
+    );
+  }
+
+  Future<void> _handleUpdatePerkembangan() async {
+    if (_filteredPerkembangan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Tidak ada data perkembangan untuk diperbarui."),
+        ),
+      );
+      return;
+    }
+
+    final updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TambahPerkembanganBalita(
+          nikBalita: widget.balita.nikBalita,
+          namaBalita: widget.balita.namaBalita,
+          existingData: _filteredPerkembangan,
+        ),
+      ),
+    );
+
+    if (updated == true) {
+      _fetchPerkembangan();
+    }
+  }
+
+  Future<void> _handleDeletePerkembangan() async {
     if (_filteredPerkembangan == null) return;
 
     final confirm = await showDialog<bool>(
@@ -170,32 +284,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           _fetchPerkembangan();
         },
       );
-    }
-  }
-
-  Future<void> _handleUpdate() async {
-    if (_filteredPerkembangan == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Tidak ada data perkembangan untuk diperbarui."),
-        ),
-      );
-      return;
-    }
-
-    final updated = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TambahPerkembanganBalita(
-          nikBalita: widget.balita.nikBalita,
-          namaBalita: widget.balita.namaBalita,
-          existingData: _filteredPerkembangan,
-        ),
-      ),
-    );
-
-    if (updated == true) {
-      _fetchPerkembangan();
     }
   }
 
@@ -264,7 +352,8 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                     _buildRow("Nomor Telepon", widget.balita.nomorTelpOrtu),
                     _buildRow("Alamat", widget.balita.alamat),
                   ]),
-
+                  const SizedBox(height: 20),
+                  _buildActionButtonsBalita(),
                   const SizedBox(height: 20),
 
                   _buildSectionTitle("Data Perkembangan Balita"),
@@ -279,12 +368,91 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                         : _buildPerkembanganDetail(),
                   ]),
                   const SizedBox(height: 30),
-                  _buildActionButtons(),
+
+                  _buildActionButtonsPerkembangan(),
                 ],
               ),
             ),
     );
   }
+
+  Widget _buildActionButtonsBalita() => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Expanded(
+        child: ElevatedButton(
+          onPressed: _handleUpdateBalita,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [Text("Perbarui Data Balita")],
+          ),
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: ElevatedButton(
+          onPressed: _handleDeleteBalita,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [Text("Hapus Data Balita")],
+          ),
+        ),
+      ),
+    ],
+  );
+
+  Widget _buildActionButtonsPerkembangan() => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Expanded(
+        child: ElevatedButton(
+          onPressed: _handleUpdatePerkembangan,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [Text("Perbarui Perkembangan")],
+          ),
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: ElevatedButton(
+          onPressed: _handleDeletePerkembangan,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [Text("Hapus Perkembangan")],
+          ),
+        ),
+      ),
+    ],
+  );
 
   Widget _buildGrafikPerkembangan() {
     if (_perkembanganList.isEmpty) {
@@ -649,37 +817,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         ],
       ),
     ),
-  );
-
-  Widget _buildActionButtons() => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Expanded(
-        child: ElevatedButton(
-          onPressed: _handleUpdate,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const Text("Perbarui Data"),
-        ),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: ElevatedButton(
-          onPressed: _handleDelete,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const Text("Hapus Data"),
-        ),
-      ),
-    ],
   );
 }
 

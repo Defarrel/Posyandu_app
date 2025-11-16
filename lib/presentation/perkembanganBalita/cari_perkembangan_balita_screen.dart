@@ -258,7 +258,7 @@ class _CariPerkembanganBalitaScreenState
                                     horizontal: 8,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[300],
+                                    color: Colors.grey[200],
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Row(

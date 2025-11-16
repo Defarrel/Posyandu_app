@@ -341,7 +341,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   child: CustomDropdownField2(
                     label: "Vitamin A",
                     value: _vitaminA,
-                    items: const ["Sudah", "Belum"],
+                    items: const ["Merah", "Biru"],
                     onChanged: (val) => setState(() => _vitaminA = val),
                     enabled: isSpecialMonth,
                     iconColor: isSpecialMonth ? AppColors.primary : Colors.grey,

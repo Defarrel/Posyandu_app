@@ -47,7 +47,6 @@ class _MenuButtonState extends State<MenuButton> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Jangan tambahkan "color: Colors.white"
               Image.asset(widget.imagePath, width: 45, height: 45),
               const SizedBox(height: 8),
               Text(

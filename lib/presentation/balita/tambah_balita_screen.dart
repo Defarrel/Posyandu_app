@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_radio_button.dart';
 import 'package:posyandu_app/core/components/custom_texfield2.dart';
 import 'package:posyandu_app/core/components/custom_textfield.dart';
-import 'package:posyandu_app/core/constant/constants.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/request/balita/balita_request_model.dart';
+import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:dartz/dartz.dart' hide State;
 import 'package:posyandu_app/presentation/perkembanganBalita/tambah_perkembangan_balita.dart';
 
 class TambahBalitaScreen extends StatefulWidget {
-  const TambahBalitaScreen({Key? key}) : super(key: key);
+  final bool isEdit;
+  final BalitaResponseModel? data;
+
+  const TambahBalitaScreen({super.key, this.isEdit = false, this.data});
 
   @override
   State<TambahBalitaScreen> createState() => _TambahBalitaScreenState();
@@ -48,47 +52,84 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
   final BalitaRepository _repository = BalitaRepository();
 
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.isEdit && widget.data != null) {
+      final b = widget.data!;
+
+      _namaController.text = b.namaBalita;
+      _nikBalitaController.text = b.nikBalita;
+      _jenisKelamin = b.jenisKelamin;
+
+      _selectedDate = DateTime.tryParse(b.tanggalLahir);
+      if (_selectedDate != null) {
+        _ttlController.text =
+            "${_selectedDate!.day}-${_selectedDate!.month}-${_selectedDate!.year}";
+      }
+
+      _anakKeController.text = b.anakKeBerapa;
+      _nomorKkController.text = b.nomorKk;
+      _namaOrtuController.text = b.namaOrtu;
+      _nikOrtuController.text = b.nikOrtu;
+      _noTelpController.text = b.nomorTelpOrtu;
+      _alamatController.text = b.alamat;
+      _rtController.text = b.rt;
+      _rwController.text = b.rw;
+    }
+  }
+
   void _submitForm() async {
     setState(() {
-      _namaError = _namaController.text.isEmpty
-          ? "Nama balita wajib diisi"
-          : null;
+      _namaError = _namaController.text.isEmpty ? "Nama wajib diisi" : null;
+
       _ttlError = _selectedDate == null ? "Tanggal lahir wajib diisi" : null;
+
       _nikBalitaError = _nikBalitaController.text.isEmpty
           ? "NIK wajib diisi"
           : _nikBalitaController.text.length != 16
           ? "NIK harus 16 digit"
           : null;
+
+      _jenisKelaminError = _jenisKelamin == null ? "Pilih jenis kelamin" : null;
+
       _anakKeError = _anakKeController.text.isEmpty
           ? "Anak ke wajib diisi"
           : null;
+
       _nomorKkError = _nomorKkController.text.isEmpty
           ? "Nomor KK wajib diisi"
           : _nomorKkController.text.length != 16
           ? "KK harus 16 digit"
           : null;
+
       _namaOrtuError = _namaOrtuController.text.isEmpty
           ? "Nama orang tua wajib diisi"
           : null;
+
       _nikOrtuError = _nikOrtuController.text.isEmpty
           ? "NIK orang tua wajib diisi"
           : _nikOrtuController.text.length != 16
           ? "NIK harus 16 digit"
           : null;
+
       _noTelpError = _noTelpController.text.isEmpty
           ? "Nomor telepon wajib diisi"
           : null;
+
       _alamatError = _alamatController.text.isEmpty
           ? "Alamat wajib diisi"
           : null;
+
       _rtError = _rtController.text.isEmpty ? "RT wajib diisi" : null;
       _rwError = _rwController.text.isEmpty ? "RW wajib diisi" : null;
-      _jenisKelaminError = _jenisKelamin == null ? "Pilih jenis kelamin" : null;
     });
 
     if (_namaError != null ||
         _ttlError != null ||
         _nikBalitaError != null ||
+        _jenisKelaminError != null ||
         _anakKeError != null ||
         _nomorKkError != null ||
         _namaOrtuError != null ||
@@ -96,8 +137,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
         _noTelpError != null ||
         _alamatError != null ||
         _rtError != null ||
-        _rwError != null ||
-        _jenisKelaminError != null) {
+        _rwError != null) {
       return;
     }
 
@@ -119,75 +159,84 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
       rw: _rwController.text,
     );
 
-    Either<String, String> result = await _repository.tambahBalita(balita);
+    if (widget.isEdit) {
+      final result = await _repository.updateBalita(balita.nikBalita, balita);
+
+      result.fold(
+        (err) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Gagal: $err")));
+          setState(() => _isLoading = false);
+        },
+        (msg) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(msg)));
+          Navigator.of(context).pop(true);
+        },
+      );
+      return;
+    }
+
+    final result = await _repository.tambahBalita(balita);
 
     result.fold(
-      (error) {
+      (err) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Gagal: $error')));
+        ).showSnackBar(SnackBar(content: Text("Gagal: $err")));
+        setState(() => _isLoading = false);
       },
-      (message) {
+      (msg) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(message)));
-
+        ).showSnackBar(SnackBar(content: Text(msg)));
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => TambahPerkembanganBalita(
-              nikBalita: _nikBalitaController.text,
-              namaBalita: _namaController.text,
+              nikBalita: balita.nikBalita,
+              namaBalita: balita.namaBalita,
             ),
           ),
         );
       },
     );
-
-    setState(() => _isLoading = false);
-  }
-
-  String _bulanIndo(int month) {
-    const bulan = [
-      '',
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    return bulan[month];
   }
 
   @override
   Widget build(BuildContext context) {
+    final title = widget.isEdit
+        ? "Perbarui Data Balita"
+        : "Tambah Data Balita Baru";
+
+    final subtitle = widget.isEdit
+        ? "Perbarui data sesuai kebutuhan"
+        : "Silahkan lengkapi data sesuai kolom";
+
+    final buttonText = widget.isEdit ? "Perbarui Data" : "Selanjutnya";
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Tambah Data Balita Baru",
-              style: TextStyle(
+              title,
+              style: const TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
               ),
             ),
-            SizedBox(height: 2),
+            const SizedBox(height: 2),
             Text(
-              "Silahkan lengkapi data sesuai dengan kolom",
-              style: TextStyle(color: Colors.black54, fontSize: 12),
+              subtitle,
+              style: const TextStyle(color: Colors.black54, fontSize: 12),
             ),
           ],
         ),
@@ -200,61 +249,73 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        physics: const BouncingScrollPhysics(),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CustomTextFieldBalita(
               label: "Nama Balita",
-              hint: "Masukkan nama lengkap balita",
+              hint: "Masukkan nama lengkap",
               controller: _namaController,
               errorText: _namaError,
             ),
             const SizedBox(height: 12),
-
             GestureDetector(
-              onTap: () async {
-                FocusScope.of(context).unfocus();
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime.now(),
-                );
-
-                if (pickedDate != null) {
-                  _selectedDate = pickedDate;
-                  _ttlController.text =
-                      "${pickedDate.day} ${_bulanIndo(pickedDate.month)} ${pickedDate.year}";
-                  setState(() => _ttlError = null);
-                }
-              },
+              onTap: widget.isEdit
+                  ? null
+                  : () async {
+                      FocusScope.of(context).unfocus();
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (pickedDate != null) {
+                        _selectedDate = pickedDate;
+                        _ttlController.text =
+                            "${pickedDate.day}-${pickedDate.month}-${pickedDate.year}";
+                        setState(() => _ttlError = null);
+                      }
+                    },
               child: AbsorbPointer(
-                child: CustomTextFieldBalita(
-                  label: "Tanggal Lahir",
-                  hint: "Pilih tanggal lahir",
-                  controller: _ttlController,
-                  errorText: _ttlError,
+                absorbing: widget.isEdit,
+                child: Opacity(
+                  opacity: widget.isEdit ? 0.5 : 1,
+                  child: CustomTextFieldBalita(
+                    label: "Tanggal Lahir",
+                    hint: "Pilih tanggal lahir",
+                    controller: _ttlController,
+                    errorText: _ttlError,
+                  ),
                 ),
               ),
             ),
 
             const SizedBox(height: 12),
-            CustomTextFieldBalita(
-              label: "NIK Balita",
-              hint: "Masukkan NIK balita",
-              controller: _nikBalitaController,
-              keyboardType: TextInputType.number,
-              errorText: _nikBalitaError,
+
+            IgnorePointer(
+              ignoring: widget.isEdit,
+              child: Opacity(
+                opacity: widget.isEdit ? 0.5 : 1,
+                child: CustomTextFieldBalita(
+                  label: "NIK Balita",
+                  hint: "Masukkan NIK balita",
+                  controller: _nikBalitaController,
+                  keyboardType: TextInputType.number,
+                  errorText: _nikBalitaError,
+                ),
+              ),
             ),
+
             const SizedBox(height: 12),
 
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CustomRadioBalita(
+            IgnorePointer(
+              ignoring: widget.isEdit,
+              child: Opacity(
+                opacity: widget.isEdit ? 0.5 : 1,
+                child: CustomRadioBalita(
                   groupValue: _jenisKelamin,
                   onChanged: (value) {
                     setState(() {
@@ -263,16 +324,16 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
                     });
                   },
                 ),
-                if (_jenisKelaminError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8, top: 4),
-                    child: Text(
-                      _jenisKelaminError!,
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
-                    ),
-                  ),
-              ],
+              ),
             ),
+            if (_jenisKelaminError != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 8, top: 4),
+                child: Text(
+                  _jenisKelaminError!,
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
 
             const SizedBox(height: 12),
             CustomTextFieldBalita(
@@ -285,41 +346,41 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             const SizedBox(height: 12),
             CustomTextFieldBalita(
               label: "Nomor KK",
-              hint: "Masukkan nomor KK",
               controller: _nomorKkController,
               keyboardType: TextInputType.number,
               errorText: _nomorKkError,
+              hint: "Masukkan nomor KK",
             ),
             const SizedBox(height: 12),
             CustomTextFieldBalita(
-              label: "Nama Ortu",
-              hint: "Masukkan nama orang tua",
+              label: "Nama Orang Tua",
               controller: _namaOrtuController,
               errorText: _namaOrtuError,
+              hint: "Masukkan nama orang tua",
             ),
             const SizedBox(height: 12),
             CustomTextFieldBalita(
               label: "NIK Ortu",
-              hint: "Masukkan NIK orang tua",
               controller: _nikOrtuController,
               keyboardType: TextInputType.number,
               errorText: _nikOrtuError,
+              hint: "Masukkan NIK orang tua",
             ),
             const SizedBox(height: 12),
             CustomTextFieldBalita(
-              label: "No Telp",
-              hint: "Masukkan nomor telepon",
+              label: "No Telepon",
               controller: _noTelpController,
               keyboardType: TextInputType.phone,
               errorText: _noTelpError,
+              hint: "Masukkan no telepon",
             ),
             const SizedBox(height: 12),
             CustomTextFieldBalita(
               label: "Alamat",
-              hint: "Masukkan alamat lengkap",
               controller: _alamatController,
               maxLines: 2,
               errorText: _alamatError,
+              hint: "Masukkan alamat",
             ),
             const SizedBox(height: 12),
             Row(
@@ -327,20 +388,20 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
                 Expanded(
                   child: CustomTextField2(
                     label: "RT",
-                    hint: "RT",
                     controller: _rtController,
                     keyboardType: TextInputType.number,
                     errorText: _rtError,
+                    hint: "RT",
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: CustomTextField2(
                     label: "RW",
-                    hint: "RW",
                     controller: _rwController,
                     keyboardType: TextInputType.number,
                     errorText: _rwError,
+                    hint: "RW",
                   ),
                 ),
               ],
@@ -357,7 +418,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
               ),
               onPressed: _isLoading ? null : _submitForm,
               child: Text(
-                _isLoading ? "Menyimpan..." : "Selanjutnya",
+                _isLoading ? "Menyimpan..." : buttonText,
                 style: const TextStyle(color: Colors.white),
               ),
             ),

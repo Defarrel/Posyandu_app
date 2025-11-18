@@ -124,6 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildGrafikCard(),
                 const SizedBox(height: 20),
                 _buildMenuSection(context),
+                const SizedBox(height: 20),
+                _buildAdditionalMenuSection(context),
               ],
             ),
           ),
@@ -270,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         children: [
           const Text(
-            'Menu',
+            'Menu Utama',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -318,8 +320,165 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdditionalMenuSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          const Text(
+            'Menu Lainnya',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ModernMenuCard(
+            title: "Vaksin Balita",
+            subtitle: "Kelola jadwal dan riwayat vaksinasi",
+            imagePath: "lib/core/assets/vaksin_balita.png",
+            gradientColors: const [AppColors.primary, AppColors.accent],
+            onTap: () {
+              // TODO: Navigate to Vaksin Screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Menu Vaksin Balita")),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          ModernMenuCard(
+            title: "Kelulusan Balita",
+            subtitle: "Data balita yang telah lulus posyandu",
+            imagePath: "lib/core/assets/kelulusan_balita.png",
+            gradientColors: const [Color(0xFF0096FF), Color(0xFF00B4D8)],
+            onTap: () {
+              // TODO: Navigate to Kelulusan Screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Menu Kelulusan Balita")),
+              );
+            },
+          ),
           const SizedBox(height: 30),
         ],
+      ),
+    );
+  }
+}
+
+class ModernMenuCard extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final String imagePath;
+  final List<Color> gradientColors;
+  final VoidCallback onTap;
+
+  const ModernMenuCard({
+    Key? key,
+    required this.title,
+    required this.subtitle,
+    required this.imagePath,
+    required this.gradientColors,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  State<ModernMenuCard> createState() => _ModernMenuCardState();
+}
+
+class _ModernMenuCardState extends State<ModernMenuCard>
+    with SingleTickerProviderStateMixin {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+        transform: Matrix4.identity()..scale(_isPressed ? 0.97 : 1.0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: widget.gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: widget.gradientColors[0].withOpacity(0.3),
+              blurRadius: _isPressed ? 8 : 12,
+              offset: Offset(0, _isPressed ? 2 : 6),
+            ),
+          ],
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Image.asset(widget.imagePath, fit: BoxFit.contain),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

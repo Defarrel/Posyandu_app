@@ -1,5 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
+import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_item.dart';
+import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_khusus_item.dart';
 import 'package:posyandu_app/presentation/balita/laporan_bulanan.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
@@ -163,23 +167,58 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                 alamat: item['alamat'] ?? '',
                 rt: item['rt']?.toString() ?? '',
                 rw: item['rw']?.toString() ?? '',
-                perkembanganBulanan:
-                    (item['bulan'] ?? {}) as Map<String, dynamic>,
+                perkembanganBulanan: Map<String, dynamic>.from(
+                  item['bulan'] ?? {},
+                ),
               );
             }).toList();
           }
         },
       );
+      final Uint8List pdfBytes;
 
-      final pdfBytes = await LaporanPosyandu.generatePdf(
-        detail: detailData,
-        bulanMulai: bulanMulai,
-        bulanSelesai: bulanSelesai,
-        bulanNama: _bulanDipilih,
-        tahun: _tahunDipilih,
+      if (isLaporanKhusus) {
+        // 1. AMBIL DATA LAPORAN KHUSUS
+        final result = await _repository.getLaporanKhusus(
+          bulan: bulanIndex,
+          tahun: _tahunDipilih,
+        );
+
+        List<PerkembanganKhususItem> listKhusus = [];
+
+        result.fold(
+          (error) {
+            print("Error laporan khusus: $error");
+          },
+          (dataList) {
+            listKhusus = dataList
+                .map((item) => PerkembanganKhususItem.fromJson(item))
+                .toList();
+          },
+        );
+
+        // 2. KIRIM DATA KHUSUS KE GENERATE PDF
+        pdfBytes = await LaporanPosyandu.generatePdfKhusus(
+          data: listKhusus,
+          bulanNama: _bulanDipilih,
+          tahun: _tahunDipilih,
+        );
+      } else {
+        // LAPORAN BULANAN BIASA
+        pdfBytes = await LaporanPosyandu.generatePdf(
+          detail: detailData,
+          bulanMulai: bulanMulai,
+          bulanSelesai: bulanSelesai,
+          bulanNama: _bulanDipilih,
+          tahun: _tahunDipilih,
+        );
+      }
+
+      // SIMPAN & SHARE FILE
+      await LaporanPosyandu.saveAndShare(
+        pdfBytes,
+        "laporan_posyandu_bulan_$_bulanDipilih.pdf",
       );
-
-      await LaporanPosyandu.saveAndShare(pdfBytes, "laporan_posyandu_bulan_$_bulanDipilih.pdf");
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -228,6 +267,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final int totalBalita = _normal + _kurang + _obesitas;
     final List<_GrafikData> chartData = [
       _GrafikData('Obesitas', _obesitas, Colors.redAccent),
       _GrafikData('Kurang', _kurang, Colors.orangeAccent),
@@ -269,7 +309,14 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary.withOpacity(0.95),
+                      AppColors.accent,
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -385,6 +432,30 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                                 ),
                               ],
                             ),
+                    ),
+
+                    const SizedBox(height: 14),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.group,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            "Total Balita: $totalBalita",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

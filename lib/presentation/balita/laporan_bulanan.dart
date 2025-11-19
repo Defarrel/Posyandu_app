@@ -4,48 +4,11 @@ import 'dart:ui';
 
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_item.dart';
+import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_khusus_item.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xls;
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:share_plus/share_plus.dart';
-
-class PerkembanganItem {
-  final String nama;
-  final String nik;
-  final String jenisKelamin;
-  final String tanggalLahir;
-  final String anakKe;
-  final String namaOrtu;
-  final String nikOrtu;
-  final String nomorHpOrtu;
-  final String alamat;
-  final String rt;
-  final String rw;
-  final Map<String, dynamic> perkembanganBulanan;
-
-  PerkembanganItem({
-    required this.nama,
-    required this.nik,
-    required this.jenisKelamin,
-    required this.tanggalLahir,
-    required this.anakKe,
-    required this.namaOrtu,
-    required this.nikOrtu,
-    required this.nomorHpOrtu,
-    required this.alamat,
-    required this.rt,
-    required this.rw,
-    required this.perkembanganBulanan,
-  });
-
-  double getBeratBadan(int bulan) =>
-      (perkembanganBulanan[bulan.toString()]?['bb'] ?? 0.0).toDouble();
-  double getTinggiBadan(int bulan) =>
-      (perkembanganBulanan[bulan.toString()]?['tb'] ?? 0.0).toDouble();
-  double getLingkarLengan(int bulan) =>
-      (perkembanganBulanan[bulan.toString()]?['ll'] ?? 0.0).toDouble();
-  double getLingkarKepala(int bulan) =>
-      (perkembanganBulanan[bulan.toString()]?['lk'] ?? 0.0).toDouble();
-}
 
 class LaporanPosyandu {
   static Future<Uint8List> generateExcel({
@@ -77,8 +40,9 @@ class LaporanPosyandu {
 
     int col = 12;
     for (int b = bulanMulai; b <= bulanSelesai; b++) {
-      String bulanNama =
-          DateFormat.MMMM("id_ID").dateSymbols.MONTHS[b - 1].toUpperCase();
+      String bulanNama = DateFormat.MMMM(
+        "id_ID",
+      ).dateSymbols.MONTHS[b - 1].toUpperCase();
       sheet.getRangeByIndex(1, col, 1, col + 3).merge();
       sheet.getRangeByIndex(1, col).setText(bulanNama);
       sheet.getRangeByIndex(2, col).setText("LL");
@@ -107,16 +71,32 @@ class LaporanPosyandu {
       for (int b = bulanMulai; b <= bulanSelesai; b++) {
         sheet
             .getRangeByIndex(row, c)
-            .setText(d.getLingkarLengan(b) > 0 ? d.getLingkarLengan(b).toStringAsFixed(1) : "-");
+            .setText(
+              d.getLingkarLengan(b) > 0
+                  ? d.getLingkarLengan(b).toStringAsFixed(1)
+                  : "-",
+            );
         sheet
             .getRangeByIndex(row, c + 1)
-            .setText(d.getLingkarKepala(b) > 0 ? d.getLingkarKepala(b).toStringAsFixed(1) : "-");
+            .setText(
+              d.getLingkarKepala(b) > 0
+                  ? d.getLingkarKepala(b).toStringAsFixed(1)
+                  : "-",
+            );
         sheet
             .getRangeByIndex(row, c + 2)
-            .setText(d.getTinggiBadan(b) > 0 ? d.getTinggiBadan(b).toStringAsFixed(0) : "-");
+            .setText(
+              d.getTinggiBadan(b) > 0
+                  ? d.getTinggiBadan(b).toStringAsFixed(0)
+                  : "-",
+            );
         sheet
             .getRangeByIndex(row, c + 3)
-            .setText(d.getBeratBadan(b) > 0 ? d.getBeratBadan(b).toStringAsFixed(1) : "-");
+            .setText(
+              d.getBeratBadan(b) > 0
+                  ? d.getBeratBadan(b).toStringAsFixed(1)
+                  : "-",
+            );
         c += 4;
       }
       row++;
@@ -146,8 +126,11 @@ class LaporanPosyandu {
     doc.pageSettings.orientation = PdfPageOrientation.landscape;
     doc.pageSettings.size = PdfPageSize.a3;
 
-    final PdfFont fontHeader =
-        PdfStandardFont(PdfFontFamily.helvetica, 8, style: PdfFontStyle.bold);
+    final PdfFont fontHeader = PdfStandardFont(
+      PdfFontFamily.helvetica,
+      8,
+      style: PdfFontStyle.bold,
+    );
     final PdfFont fontCell = PdfStandardFont(PdfFontFamily.helvetica, 8);
 
     final PdfGridCellStyle headerStyle = PdfGridCellStyle(
@@ -253,8 +236,9 @@ class LaporanPosyandu {
       }
 
       for (int b = bulanMulai; b <= bulanSelesai; b++) {
-        final String namaBulan =
-            DateFormat.MMMM("id_ID").dateSymbols.MONTHS[b - 1].toUpperCase();
+        final String namaBulan = DateFormat.MMMM(
+          "id_ID",
+        ).dateSymbols.MONTHS[b - 1].toUpperCase();
 
         h1.cells[col].value = namaBulan;
         h1.cells[col].columnSpan = 4;
@@ -274,8 +258,9 @@ class LaporanPosyandu {
       }
 
       final int startIndex = pageIndex * maxRowsPerPage;
-      final int endIndex =
-          (pageIndex == totalPages - 1) ? detail.length : startIndex + maxRowsPerPage;
+      final int endIndex = (pageIndex == totalPages - 1)
+          ? detail.length
+          : startIndex + maxRowsPerPage;
 
       for (int idx = startIndex; idx < endIndex; idx++) {
         final PerkembanganItem d = detail[idx];
@@ -348,9 +333,212 @@ class LaporanPosyandu {
     return Uint8List.fromList(bytes);
   }
 
+  static Future<Uint8List> generatePdfKhusus({
+    required List<PerkembanganKhususItem> data,
+    required String bulanNama,
+    required int tahun,
+  }) async {
+    final PdfDocument doc = PdfDocument();
+    doc.pageSettings.orientation = PdfPageOrientation.landscape;
+    doc.pageSettings.size = PdfPageSize.a3;
+
+    final PdfFont fontHeader = PdfStandardFont(
+      PdfFontFamily.helvetica,
+      9,
+      style: PdfFontStyle.bold,
+    );
+    final PdfFont fontCell = PdfStandardFont(PdfFontFamily.helvetica, 9);
+
+    final PdfGridCellStyle headerStyle = PdfGridCellStyle(
+      font: fontHeader,
+      format: PdfStringFormat(
+        alignment: PdfTextAlignment.center,
+        lineAlignment: PdfVerticalAlignment.middle,
+      ),
+      borders: PdfBorders(
+        left: PdfPen(PdfColor(0, 0, 0), width: 0.5),
+        right: PdfPen(PdfColor(0, 0, 0), width: 0.5),
+        top: PdfPen(PdfColor(0, 0, 0), width: 0.5),
+        bottom: PdfPen(PdfColor(0, 0, 0), width: 0.5),
+      ),
+    );
+
+    final PdfGridCellStyle cellStyle = PdfGridCellStyle(
+      font: fontCell,
+      format: PdfStringFormat(
+        alignment: PdfTextAlignment.center,
+        lineAlignment: PdfVerticalAlignment.middle,
+      ),
+      borders: PdfBorders(
+        left: PdfPen(PdfColor(0, 0, 0), width: 0.5),
+        right: PdfPen(PdfColor(0, 0, 0), width: 0.5),
+        top: PdfPen(PdfColor(0, 0, 0), width: 0.5),
+        bottom: PdfPen(PdfColor(0, 0, 0), width: 0.5),
+      ),
+    );
+
+    const int maxRowsPerPage = 20;
+    final int totalPages = (data.length / maxRowsPerPage).ceil();
+
+    for (int pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+      final page = doc.pages.add();
+      final grid = PdfGrid();
+      grid.columns.add(count: 20);
+
+      final widths = [
+        20,
+        35,
+        55,
+        25,
+        85,
+        85,
+        90,
+        40,
+        40,
+        40,
+        40,
+        55,
+        40,
+        40,
+        40,
+        40,
+        80,
+        85,
+        60,
+        110,
+      ];
+
+      for (int i = 0; i < widths.length; i++) {
+        grid.columns[i].width = widths[i].toDouble();
+      }
+
+      final header = grid.headers.add(2);
+      final h1 = header[0];
+      final h2 = header[1];
+
+      h1.height = 22;
+      h2.height = 22;
+
+      final noMerge = {
+        0: "NO",
+        1: "Anak Ke",
+        2: "TGL LAHIR",
+        3: "JK",
+        4: "NO KK",
+        5: "NIK BALITA",
+        6: "NAMA BALITA",
+        11: "CARA UKUR",
+        12: "KMS",
+        13: "IMD",
+        14: "ASI EKS",
+        15: "VIT A",
+        16: "NAMA ORANG TUA",
+        17: "NIK ORANG TUA",
+        18: "NO HP",
+        19: "ALAMAT LENGKAP",
+      };
+
+      noMerge.forEach((index, text) {
+        h1.cells[index].value = text;
+        h1.cells[index].rowSpan = 2;
+        h1.cells[index].style = headerStyle;
+      });
+
+      h1.cells[7].value = "BB";
+      h1.cells[7].columnSpan = 2;
+      h1.cells[7].style = headerStyle;
+
+      h2.cells[7].value = "Lahir";
+      h2.cells[8].value = "Bulan Ini";
+
+      h2.cells[7].style = headerStyle;
+      h2.cells[8].style = headerStyle;
+
+      h1.cells[9].value = "TB&PB";
+      h1.cells[9].columnSpan = 2;
+      h1.cells[9].style = headerStyle;
+
+      h2.cells[9].value = "Lahir";
+      h2.cells[10].value = "Bulan Ini";
+
+      h2.cells[9].style = headerStyle;
+      h2.cells[10].style = headerStyle;
+
+      final int start = pageIndex * maxRowsPerPage;
+      final int end = (pageIndex == totalPages - 1)
+          ? data.length
+          : start + maxRowsPerPage;
+
+      for (int i = start; i < end; i++) {
+        final d = data[i];
+        final row = grid.rows.add();
+        row.height = 28;
+
+        String tgl = "-";
+        try {
+          tgl = DateFormat("dd/MM/yyyy").format(DateTime.parse(d.tanggalLahir));
+        } catch (_) {
+          tgl = d.tanggalLahir;
+        }
+
+        final kms = (d.kms.trim().isNotEmpty) ? "Ada" : "-";
+
+        row.cells[0].value = (i + 1).toString();
+        row.cells[1].value = d.anakKe;
+        row.cells[2].value = tgl;
+        row.cells[3].value = d.jenisKelamin;
+        row.cells[4].value = d.noKk;
+        row.cells[5].value = d.nik;
+        row.cells[6].value = d.nama;
+
+        row.cells[7].value = d.bbLahir.isEmpty ? "-" : d.bbLahir;
+        row.cells[8].value = d.bbBulanIni.toString();
+
+        row.cells[9].value = d.tbLahir.isEmpty ? "-" : d.tbLahir;
+        row.cells[10].value = d.tbBulanIni.toString();
+
+        row.cells[11].value = d.caraUkur;
+        row.cells[12].value = kms;
+        row.cells[13].value = d.imd;
+        row.cells[14].value = d.asiEks;
+        row.cells[15].value = d.vitaminA;
+
+        row.cells[16].value = d.namaOrtu;
+        row.cells[17].value = d.nikOrtu;
+        row.cells[18].value = d.nomorHpOrtu;
+        row.cells[19].value = d.alamat;
+
+        for (int c = 0; c < row.cells.count; c++) {
+          row.cells[c].style = cellStyle;
+        }
+      }
+
+      page.graphics.drawString(
+        "LAPORAN BULANAN KHUSUS BALITA\nPOSYANDU DAHLIA X\nBULAN ${bulanNama.toUpperCase()} $tahun",
+        PdfStandardFont(PdfFontFamily.helvetica, 12),
+        bounds: Rect.fromLTWH(0, 10, page.getClientSize().width, 60),
+      );
+
+      grid.draw(
+        page: page,
+        bounds: Rect.fromLTWH(
+          5,
+          80,
+          page.getClientSize().width - 10,
+          page.getClientSize().height - 80,
+        ),
+      );
+    }
+
+    final bytes = await doc.save();
+    doc.dispose();
+    return Uint8List.fromList(bytes);
+  }
+
   static Future<File> saveAndShare(Uint8List bytes, String fileName) async {
     final dir =
-        await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+        await getDownloadsDirectory() ??
+        await getApplicationDocumentsDirectory();
     final file = File("${dir.path}/$fileName");
     await file.writeAsBytes(bytes);
 

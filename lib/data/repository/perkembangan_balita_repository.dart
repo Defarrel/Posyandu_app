@@ -188,4 +188,36 @@ class PerkembanganBalitaRepository {
       return Left("Terjadi kesalahan saat mengambil data detail perkembangan");
     }
   }
+
+  Future<Either<String, List<dynamic>>> getLaporanKhusus({
+    required int bulan,
+    required int tahun,
+  }) async {
+    try {
+      final response = await _service.get(
+        "perkembangan/laporan/khusus?bulan=$bulan&tahun=$tahun",
+      );
+
+      final jsonResponse = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        if (jsonResponse is Map<String, dynamic> &&
+            jsonResponse['success'] == true &&
+            jsonResponse['data'] is List) {
+          return Right(jsonResponse['data']);
+        } else {
+          return Left("Format data laporan khusus tidak sesuai");
+        }
+      } else {
+        return Left(
+          (jsonResponse is Map && jsonResponse['message'] != null)
+              ? jsonResponse['message']
+              : "Gagal mengambil data laporan khusus",
+        );
+      }
+    } catch (e) {
+      log("Exception getLaporanKhusus: $e");
+      return Left("Terjadi kesalahan saat mengambil laporan khusus");
+    }
+  }
 }

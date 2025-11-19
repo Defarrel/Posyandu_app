@@ -135,6 +135,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGrafikCard() {
+    final int totalBalita = _normal + _kurang + _obesitas;
+
     final List<_GrafikData> chartData = [
       _GrafikData('Obesitas', _obesitas, Colors.redAccent),
       _GrafikData('Kurang', _kurang, Colors.orangeAccent),
@@ -146,12 +148,19 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary.withOpacity(0.95),
+              AppColors.accent,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 6,
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
@@ -166,8 +175,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Grafik Balita Bulan ',
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                    letterSpacing: 0.3,
                   ),
                 ),
                 Flexible(
@@ -204,13 +214,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+
+            const SizedBox(height: 16),
 
             Container(
               height: 200,
               decoration: BoxDecoration(
                 color: AppColors.background,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: _isLoadingChart
                   ? const Center(
@@ -222,12 +240,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       plotAreaBorderWidth: 0,
                       primaryXAxis: CategoryAxis(
                         labelStyle: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       primaryYAxis: NumericAxis(
-                        labelStyle: const TextStyle(color: Colors.black),
+                        labelStyle: const TextStyle(color: Colors.black87),
                         axisLine: const AxisLine(width: 0),
                         majorGridLines: const MajorGridLines(
                           color: Colors.grey,
@@ -238,11 +256,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       tooltipBehavior: TooltipBehavior(enable: true),
                       series: <CartesianSeries<_GrafikData, String>>[
                         ColumnSeries<_GrafikData, String>(
-                          animationDuration: 1500,
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(2),
+                          animationDuration: 1300,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(10),
+                            topRight: Radius.circular(10),
                           ),
-                          width: 0.5,
+                          width: 0.55,
                           dataSource: chartData,
                           xValueMapper: (data, _) => data.kategori,
                           yValueMapper: (data, _) => data.jumlah,
@@ -259,6 +278,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
+            ),
+
+            const SizedBox(height: 14),
+
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.group, color: Colors.white, size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Total Balita: $totalBalita",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -428,15 +468,14 @@ class _ModernMenuCardState extends State<ModernMenuCard>
           child: Row(
             children: [
               Container(
-                width: 60,
-                height: 60,
+                width: 70,
+                height: 70,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Image.asset(widget.imagePath, fit: BoxFit.contain),
+                  child: Image.asset(widget.imagePath, width: 45, height: 45),
                 ),
               ),
               const SizedBox(width: 16),

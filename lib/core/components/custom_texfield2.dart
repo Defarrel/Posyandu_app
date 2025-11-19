@@ -8,6 +8,8 @@ class CustomTextField2 extends StatelessWidget {
   final int maxLines;
   final TextInputType keyboardType;
   final String? errorText;
+  final Function(String)? onChanged;
+
 
   const CustomTextField2({
     super.key,
@@ -17,6 +19,7 @@ class CustomTextField2 extends StatelessWidget {
     this.maxLines = 1,
     this.keyboardType = TextInputType.text,
     this.errorText,
+    this.onChanged,
   });
 
   @override
@@ -53,6 +56,7 @@ class CustomTextField2 extends StatelessWidget {
                   child: TextField(
                     controller: controller,
                     keyboardType: keyboardType,
+                    onChanged: onChanged,
                     maxLines: maxLines,
                     decoration: InputDecoration(
                       hintText: hint,

@@ -220,4 +220,37 @@ class PerkembanganBalitaRepository {
       return Left("Terjadi kesalahan saat mengambil laporan khusus");
     }
   }
+
+  Future<Either<String, bool>> cekPerkembanganBulanIni({
+    required String nikBalita,
+  }) async {
+    try {
+      final now = DateTime.now();
+      final bulan = now.month;
+      final tahun = now.year;
+
+      final response = await _service.get(
+        "perkembangan/cek?nik=$nikBalita&bulan=$bulan&tahun=$tahun",
+      );
+
+      final jsonResponse = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        if (jsonResponse is Map &&
+            jsonResponse["success"] == true &&
+            jsonResponse.containsKey("sudah_input")) {
+          return Right(jsonResponse["sudah_input"] == true);
+        } else {
+          return Left("Format data tidak sesuai dari server");
+        }
+      } else {
+        return Left(
+          jsonResponse["message"] ?? "Gagal mengecek data perkembangan",
+        );
+      }
+    } catch (e) {
+      log("Exception cekPerkembanganBulanIni: $e");
+      return Left("Terjadi kesalahan saat mengecek data perkembangan");
+    }
+  }
 }

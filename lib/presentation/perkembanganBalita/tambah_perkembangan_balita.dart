@@ -38,6 +38,18 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   String? _vitaminA;
   String? _asiEks;
 
+  bool _formBerubah() {
+    return _beratController.text.isNotEmpty ||
+        _tinggiController.text.isNotEmpty ||
+        _lingkarLenganController.text.isNotEmpty ||
+        _lingkarKepalaController.text.isNotEmpty ||
+        (_caraUkur != "Berdiri") ||
+        (_kms != null) ||
+        (_imd != null) ||
+        (_asiEks != null) ||
+        (_vitaminA != null);
+  }
+
   bool _isLoading = false;
   final _repo = PerkembanganBalitaRepository();
 
@@ -67,6 +79,33 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
 
     _beratController.addListener(_hitungKMS);
     _tinggiController.addListener(_hitungKMS);
+  }
+
+  Future<bool> _konfirmasiKeluar() async {
+    if (!_formBerubah()) return true;
+
+    final keluar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Perubahan Belum Disimpan"),
+        content: const Text(
+          "Anda memiliki perubahan yang belum disimpan. Keluar tanpa menyimpan?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Keluar", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    return keluar ?? false;
   }
 
   @override
@@ -146,7 +185,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         beratBadan: double.tryParse(_beratController.text) ?? 0.0,
         caraUkur: _caraUkur ?? "-",
         vitaminA: _vitaminA ?? "-",
-        kms: _kms ?? "-", 
+        kms: _kms ?? "-",
         imd: _imd ?? "-",
         asiEks: _asiEks ?? "-",
         tanggalPerubahan: tanggalPerubahan,
@@ -194,194 +233,209 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   Widget build(BuildContext context) {
     final isUpdate = widget.existingData != null;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0,
+    return WillPopScope(
+      onWillPop: () async {
+        return await _konfirmasiKeluar();
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          isUpdate
-              ? "Perbarui Data Perkembangan"
-              : "Tambah Data Perkembangan Balita",
-          style: const TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+            onPressed: () async {
+              if (await _konfirmasiKeluar()) {
+                Navigator.pop(context);
+              }
+            },
           ),
+          title: Text(
+            isUpdate
+                ? "Perbarui Data Perkembangan"
+                : "Tambah Data Perkembangan Balita",
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          centerTitle: true,
         ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isUpdate
-                  ? "Perbarui data perkembangan ${widget.namaBalita}"
-                  : "Halo, ${widget.namaBalita}! Gimana perkembangan kamu bulan ini?",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            GestureDetector(
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _selectedDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now(),
-                  locale: const Locale('id', 'ID'),
-                );
-                if (picked != null) {
-                  setState(() => _selectedDate = picked);
-                }
-              },
-              child: AbsorbPointer(
-                child: CustomTextFieldBalita(
-                  label: "Tanggal Perkembangan",
-                  hint: "Pilih tanggal perkembangan",
-                  controller: TextEditingController(
-                    text:
-                        "${_selectedDate.day} ${_bulanIndo(_selectedDate.month)} ${_selectedDate.year}",
-                  ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isUpdate
+                    ? "Perbarui data perkembangan ${widget.namaBalita}"
+                    : "Halo, ${widget.namaBalita}! Gimana perkembangan kamu bulan ini?",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
-            ),
+              const SizedBox(height: 20),
 
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: CustomTextField2(
-                    label: "Berat Badan",
-                    hint: "0 kg",
-                    controller: _beratController,
-                    keyboardType: TextInputType.number,
+              GestureDetector(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _selectedDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                    locale: const Locale('id', 'ID'),
+                  );
+                  if (picked != null) {
+                    setState(() => _selectedDate = picked);
+                  }
+                },
+                child: AbsorbPointer(
+                  child: CustomTextFieldBalita(
+                    label: "Tanggal Perkembangan",
+                    hint: "Pilih tanggal perkembangan",
+                    controller: TextEditingController(
+                      text:
+                          "${_selectedDate.day} ${_bulanIndo(_selectedDate.month)} ${_selectedDate.year}",
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: CustomTextField2(
-                    label: "Tinggi Badan",
-                    hint: "0 cm",
-                    controller: _tinggiController,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: CustomTextField2(
-                    label: "Lingkar Lengan",
-                    hint: "0 cm",
-                    controller: _lingkarLenganController,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: CustomTextField2(
-                    label: "Lingkar Kepala",
-                    hint: "0 cm",
-                    controller: _lingkarKepalaController,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-            CustomDropdownField(
-              label: "Cara Ukur",
-              value: _caraUkur,
-              items: const ["Berdiri", "Terlentang"],
-              onChanged: (val) => setState(() => _caraUkur = val),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: CustomDropdownField2(
-                    label: "KMS",
-                    value: _kms,
-                    items: const ["Merah", "Hijau", "Kuning"],
-                    onChanged: (val) => setState(() => _kms = val),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: CustomDropdownField2(
-                    label: "IMD",
-                    value: _imd,
-                    items: const ["Ya", "Tidak"],
-                    onChanged: (val) => setState(() => _imd = val),
-                    enabled: isSpecialMonth,
-                    iconColor: isSpecialMonth ? AppColors.primary : Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: CustomDropdownField2(
-                    label: "Vitamin A",
-                    value: _vitaminA,
-                    items: const ["Merah", "Biru"],
-                    onChanged: (val) => setState(() => _vitaminA = val),
-                    enabled: isSpecialMonth,
-                    iconColor: isSpecialMonth ? AppColors.primary : Colors.grey,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: CustomDropdownField2(
-                    label: "ASI Eksklusif",
-                    value: _asiEks,
-                    items: const ["Ya", "Tidak"],
-                    onChanged: (val) => setState(() => _asiEks = val),
-                    enabled: isSpecialMonth,
-                    iconColor: isSpecialMonth ? AppColors.primary : Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: Text(
-                  _isLoading
-                      ? "Menyimpan..."
-                      : (isUpdate ? "Perbarui Data" : "Simpan"),
-                  style: const TextStyle(color: Colors.white),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomTextField2(
+                      label: "Berat Badan",
+                      hint: "0 kg",
+                      controller: _beratController,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CustomTextField2(
+                      label: "Tinggi Badan",
+                      hint: "0 cm",
+                      controller: _tinggiController,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomTextField2(
+                      label: "Lingkar Lengan",
+                      hint: "0 cm",
+                      controller: _lingkarLenganController,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CustomTextField2(
+                      label: "Lingkar Kepala",
+                      hint: "0 cm",
+                      controller: _lingkarKepalaController,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+              CustomDropdownField(
+                label: "Cara Ukur",
+                value: _caraUkur,
+                items: const ["Berdiri", "Terlentang"],
+                onChanged: (val) => setState(() => _caraUkur = val),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomDropdownField2(
+                      label: "KMS",
+                      value: _kms,
+                      items: const ["Merah", "Hijau", "Kuning"],
+                      onChanged: (val) => setState(() => _kms = val),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CustomDropdownField2(
+                      label: "IMD",
+                      value: _imd,
+                      items: const ["Ya", "Tidak"],
+                      onChanged: (val) => setState(() => _imd = val),
+                      enabled: isSpecialMonth,
+                      iconColor: isSpecialMonth
+                          ? AppColors.primary
+                          : Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomDropdownField2(
+                      label: "Vitamin A",
+                      value: _vitaminA,
+                      items: const ["Merah", "Biru"],
+                      onChanged: (val) => setState(() => _vitaminA = val),
+                      enabled: isSpecialMonth,
+                      iconColor: isSpecialMonth
+                          ? AppColors.primary
+                          : Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CustomDropdownField2(
+                      label: "ASI Eksklusif",
+                      value: _asiEks,
+                      items: const ["Ya", "Tidak"],
+                      onChanged: (val) => setState(() => _asiEks = val),
+                      enabled: isSpecialMonth,
+                      iconColor: isSpecialMonth
+                          ? AppColors.primary
+                          : Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: Text(
+                    _isLoading
+                        ? "Menyimpan..."
+                        : (isUpdate ? "Perbarui Data" : "Simpan"),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

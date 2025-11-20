@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_radio_button.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/components/custom_texfield2.dart';
 import 'package:posyandu_app/core/components/custom_textfield.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
@@ -164,13 +165,16 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
       result.fold(
         (err) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Gagal: $err"), backgroundColor: Colors.red),
+            CustomSnackBar.show(
+              message: ("Gagal: $err"),
+              type: SnackBarType.error,
+            ),
           );
           setState(() => _isLoading = false);
         },
         (msg) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.green),
+            CustomSnackBar.show(message: (msg), type: SnackBarType.success),
           );
           Navigator.of(context).pop(true);
         },
@@ -183,13 +187,16 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
     result.fold(
       (err) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal: $err"), backgroundColor: Colors.red),
+          CustomSnackBar.show(
+            message: ("Gagal: $err"),
+            type: SnackBarType.error,
+          ),
         );
         setState(() => _isLoading = false);
       },
       (msg) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.green),
+          CustomSnackBar.show(message: (msg), type: SnackBarType.success),
         );
         Navigator.pushReplacement(
           context,

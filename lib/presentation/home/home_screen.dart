@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/presentation/kelulusan/kelulusan_balita_screen.dart';
 import 'package:posyandu_app/presentation/vaksin/vaksin_balita_screen.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
@@ -90,7 +91,10 @@ class _HomeScreenState extends State<HomeScreen> {
     result.fold(
       (error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal memuat data grafik: $error")),
+          CustomSnackBar.show(
+            message: ("Gagal memuat data grafik: $error"),
+            type: SnackBarType.error,
+          ),
         );
         setState(() => _isLoadingChart = false);
       },
@@ -401,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
             title: "Kelulusan Balita",
             subtitle: "Data balita yang telah lulus posyandu",
             imagePath: "lib/core/assets/kelulusan_balita.png",
-            gradientColors: const [Color(0xFF0096FF), Color(0xFF00B4D8)],
+            gradientColors: const [AppColors.primary, AppColors.accent],
             onTap: () {
               Navigator.push(
                 context,

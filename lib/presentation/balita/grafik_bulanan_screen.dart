@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_item.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_khusus_item.dart';
 import 'package:posyandu_app/presentation/balita/laporan_bulanan.dart';
@@ -75,7 +76,10 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     result.fold(
       (error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal memuat data grafik: $error")),
+          CustomSnackBar.show(
+            message: ("Gagal memuat data grafik: $error"),
+            type: SnackBarType.error,
+          ),
         );
         setState(() => _isLoadingChart = false);
       },
@@ -103,8 +107,9 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           });
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Format data tidak sesuai struktur API baru: $e"),
+            CustomSnackBar.show(
+              message: ("Format data tidak sesuai: $e"),
+              type: SnackBarType.error,
             ),
           );
           setState(() => _isLoadingChart = false);
@@ -178,7 +183,6 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
       final Uint8List pdfBytes;
 
       if (isLaporanKhusus) {
-        // 1. AMBIL DATA LAPORAN KHUSUS
         final result = await _repository.getLaporanKhusus(
           bulan: bulanIndex,
           tahun: _tahunDipilih,
@@ -197,14 +201,12 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           },
         );
 
-        // 2. KIRIM DATA KHUSUS KE GENERATE PDF
         pdfBytes = await LaporanPosyandu.generatePdfKhusus(
           data: listKhusus,
           bulanNama: _bulanDipilih,
           tahun: _tahunDipilih,
         );
       } else {
-        // LAPORAN BULANAN BIASA
         pdfBytes = await LaporanPosyandu.generatePdf(
           detail: detailData,
           bulanMulai: bulanMulai,
@@ -214,25 +216,23 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         );
       }
 
-      // SIMPAN & SHARE FILE
       await LaporanPosyandu.saveAndShare(
         pdfBytes,
         "laporan_posyandu_bulan_$_bulanDipilih.pdf",
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "PDF ${isLaporanKhusus ? 'khusus ' : ''}berhasil di-generate dan siap dicetak",
-          ),
-          backgroundColor: Colors.green,
+        CustomSnackBar.show(
+          message:
+              ("PDF ${isLaporanKhusus ? 'khusus ' : ''}berhasil di-generate dan siap dicetak"),
+          type: SnackBarType.success,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Gagal generate PDF: $e"),
-          backgroundColor: Colors.red,
+        CustomSnackBar.show(
+          message: ("Gagal generate PDF: $e"),
+          type: SnackBarType.error,
         ),
       );
     } finally {

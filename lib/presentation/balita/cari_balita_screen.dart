@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
-import 'package:posyandu_app/presentation/home/home_root.dart';
 import 'package:posyandu_app/presentation/balita/detail_balita_screen.dart';
 import 'package:dartz/dartz.dart' hide State;
 import 'package:intl/intl.dart';
@@ -37,9 +37,12 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
     result.fold(
       (error) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Gagal memuat data: $error")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(
+            message: "Gagal memuat data: $error",
+            type: SnackBarType.error,
+          ),
+        );
       },
       (data) {
         setState(() {

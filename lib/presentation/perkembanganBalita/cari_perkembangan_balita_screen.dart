@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/constant/constants.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
@@ -41,9 +42,12 @@ class _CariPerkembanganBalitaScreenState
     result.fold(
       (error) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Gagal memuat data: $error")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(
+            message: ("Gagal memuat data: $error"),
+            type: SnackBarType.error,
+          ),
+        );
       },
       (data) {
         setState(() {
@@ -322,10 +326,9 @@ class _CariPerkembanganBalitaScreenState
                                                   ScaffoldMessenger.of(
                                                     context,
                                                   ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(error),
-                                                      backgroundColor:
-                                                          Colors.red,
+                                                    CustomSnackBar.show(
+                                                      message: (error),
+                                                      type: SnackBarType.error,
                                                     ),
                                                   );
                                                 },

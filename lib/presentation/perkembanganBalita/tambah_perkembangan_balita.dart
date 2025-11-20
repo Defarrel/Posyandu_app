@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/components/custom_texfield2.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_field.dart';
 import 'package:posyandu_app/core/components/custom_textfield.dart';
@@ -165,7 +166,10 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         _lingkarLenganController.text.isEmpty ||
         _lingkarKepalaController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Harap isi semua data terlebih dahulu")),
+        CustomSnackBar.show(
+          message: ("Harap isi semua data terlebih dahulu"),
+          type: SnackBarType.error,
+        ),
       );
       return;
     }
@@ -195,14 +199,17 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         final result = await _repo.tambahPerkembangan(model);
         result.fold(
           (error) => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Gagal: $error"),
-              backgroundColor: Colors.red,
+            CustomSnackBar.show(
+              message: ("Gagal: $error"),
+              type: SnackBarType.error,
             ),
           ),
           (message) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(message), backgroundColor: Colors.green),
+              CustomSnackBar.show(
+                message: (message),
+                type: SnackBarType.success,
+              ),
             );
             Navigator.pop(context, true);
           },
@@ -212,14 +219,17 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         final result = await _repo.updatePerkembangan(id, model);
         result.fold(
           (error) => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Gagal: $error"),
-              backgroundColor: Colors.red,
+            CustomSnackBar.show(
+              message: ("Gagal: $error"),
+              type: SnackBarType.error,
             ),
           ),
           (message) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(message), backgroundColor: Colors.green),
+              CustomSnackBar.show(
+                message: (message),
+                type: SnackBarType.success,
+              ),
             );
             Navigator.pop(context, true);
           },
@@ -227,9 +237,12 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       }
     } catch (e) {
       log("Exception form: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar.show(
+          message: ("Terjadi kesalahan: $e"),
+          type: SnackBarType.error,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

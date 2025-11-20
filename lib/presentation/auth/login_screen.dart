@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/request/auth/login_request_model.dart';
 import 'package:posyandu_app/data/repository/auth_repository.dart';
@@ -80,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen>
     result.fold(
       (error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: Colors.red),
+          CustomSnackBar.show(message: (error), type: SnackBarType.error),
         );
       },
       (response) async {
@@ -102,9 +103,9 @@ class _LoginScreenState extends State<LoginScreen>
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Login berhasil"),
-            backgroundColor: Colors.green,
+          CustomSnackBar.show(
+            message: ("Login berhasil"),
+            type: SnackBarType.success,
           ),
         );
 

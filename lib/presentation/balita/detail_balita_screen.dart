@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
@@ -107,7 +108,10 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       (error) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal memuat data perkembangan: $error")),
+          CustomSnackBar.show(
+            message: "Gagal memuat data perkembangan: $error",
+            type: SnackBarType.error,
+          ),
         );
       },
       (dataList) {
@@ -177,15 +181,18 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       balitaResult.fold(
         (error) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Gagal memuat ulang data balita: $error")),
+            CustomSnackBar.show(
+              message: ("Gagal memuat ulang data balita: $error"),
+              type: SnackBarType.error,
+            ),
           );
         },
         (newBalita) {
           setState(() {
-            _balitaData = newBalita; 
+            _balitaData = newBalita;
           });
 
-          _fetchPerkembangan(); 
+          _fetchPerkembangan();
         },
       );
     }
@@ -222,15 +229,15 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     result.fold(
       (error) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Gagal menghapus balita: $error"),
-            backgroundColor: Colors.red,
+          CustomSnackBar.show(
+            message: ("Gagal menghapus balita: $error"),
+            type: SnackBarType.error,
           ),
         );
       },
       (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(success), backgroundColor: Colors.green),
+          CustomSnackBar.show(message: (success), type: SnackBarType.success),
         );
 
         Navigator.of(context).pop(true);
@@ -241,8 +248,9 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   Future<void> _handleUpdatePerkembangan() async {
     if (_filteredPerkembangan == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Tidak ada data perkembangan untuk diperbarui."),
+        CustomSnackBar.show(
+          message: ("Tidak ada data perkembangan untuk diperbarui."),
+          type: SnackBarType.error,
         ),
       );
       return;
@@ -293,13 +301,13 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         _filteredPerkembangan!.id,
       );
       result.fold(
-        (error) => ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error))),
+        (error) => ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(message: (error), type: SnackBarType.error),
+        ),
         (success) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(success)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar.show(message: (success), type: SnackBarType.success),
+          );
           _fetchPerkembangan();
         },
       );

@@ -6,7 +6,6 @@ import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/request/balita/balita_request_model.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
-import 'package:dartz/dartz.dart' hide State;
 import 'package:posyandu_app/presentation/perkembanganBalita/tambah_perkembangan_balita.dart';
 
 class TambahBalitaScreen extends StatefulWidget {
@@ -164,15 +163,15 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
       result.fold(
         (err) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Gagal: $err")));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Gagal: $err"), backgroundColor: Colors.red),
+          );
           setState(() => _isLoading = false);
         },
         (msg) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(msg)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), backgroundColor: Colors.green),
+          );
           Navigator.of(context).pop(true);
         },
       );
@@ -183,15 +182,15 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
     result.fold(
       (err) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Gagal: $err")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal: $err"), backgroundColor: Colors.red),
+        );
         setState(() => _isLoading = false);
       },
       (msg) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.green),
+        );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -327,11 +326,14 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
               ),
             ),
             if (_jenisKelaminError != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 8, top: 4),
-                child: Text(
-                  _jenisKelaminError!,
-                  style: const TextStyle(color: Colors.red, fontSize: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    _jenisKelaminError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
                 ),
               ),
 

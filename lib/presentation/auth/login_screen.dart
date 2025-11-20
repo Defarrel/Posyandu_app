@@ -79,9 +79,9 @@ class _LoginScreenState extends State<LoginScreen>
 
     result.fold(
       (error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
       },
       (response) async {
         await _storage.write(key: 'token', value: response.token ?? '');

@@ -194,13 +194,16 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       if (widget.existingData == null) {
         final result = await _repo.tambahPerkembangan(model);
         result.fold(
-          (error) => ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Gagal: $error"))),
+          (error) => ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Gagal: $error"),
+              backgroundColor: Colors.red,
+            ),
+          ),
           (message) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(message)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(message), backgroundColor: Colors.green),
+            );
             Navigator.pop(context, true);
           },
         );
@@ -208,13 +211,16 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         final id = widget.existingData!.id;
         final result = await _repo.updatePerkembangan(id, model);
         result.fold(
-          (error) => ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Gagal: $error"))),
+          (error) => ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Gagal: $error"),
+              backgroundColor: Colors.red,
+            ),
+          ),
           (message) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(message)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(message), backgroundColor: Colors.green),
+            );
             Navigator.pop(context, true);
           },
         );

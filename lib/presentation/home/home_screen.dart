@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:posyandu_app/presentation/kelulusan/kelulusan_balita_screen.dart';
+import 'package:posyandu_app/presentation/vaksin/vaksin_balita_screen.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:posyandu_app/core/components/buttons.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
@@ -151,10 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary.withOpacity(0.95),
-              AppColors.accent,
-            ],
+            colors: [AppColors.primary.withOpacity(0.95), AppColors.accent],
           ),
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
@@ -385,9 +384,9 @@ class _HomeScreenState extends State<HomeScreen> {
             imagePath: "lib/core/assets/vaksin_balita.png",
             gradientColors: const [AppColors.primary, AppColors.accent],
             onTap: () {
-              // TODO: Navigate to Vaksin Screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Menu Vaksin Balita")),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const VaksinBalitaScreen()),
               );
             },
           ),
@@ -398,9 +397,9 @@ class _HomeScreenState extends State<HomeScreen> {
             imagePath: "lib/core/assets/kelulusan_balita.png",
             gradientColors: const [Color(0xFF0096FF), Color(0xFF00B4D8)],
             onTap: () {
-              // TODO: Navigate to Kelulusan Screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Menu Kelulusan Balita")),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const KelulusanBalitaScreen()),
               );
             },
           ),

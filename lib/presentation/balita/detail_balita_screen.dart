@@ -67,10 +67,12 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   String _selectedBulan = "";
   int _selectedTahun = DateTime.now().year;
   Color _warnaNama = Colors.black;
+  late BalitaResponseModel _balitaData;
 
   @override
   void initState() {
     super.initState();
+    _balitaData = widget.balita;
     initializeDateFormatting('id_ID', null);
     _selectedBulan = _bulanList[DateTime.now().month - 1];
     _fetchPerkembangan();
@@ -163,12 +165,29 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     final updated = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => TambahBalitaScreen(isEdit: true, data: widget.balita),
+        builder: (_) => TambahBalitaScreen(isEdit: true, data: _balitaData),
       ),
     );
 
     if (updated == true) {
-      _fetchPerkembangan();
+      final balitaResult = await _balitaRepository.getBalitaByNIK(
+        _balitaData.nikBalita,
+      );
+
+      balitaResult.fold(
+        (error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Gagal memuat ulang data balita: $error")),
+          );
+        },
+        (newBalita) {
+          setState(() {
+            _balitaData = newBalita; 
+          });
+
+          _fetchPerkembangan(); 
+        },
+      );
     }
   }
 
@@ -330,7 +349,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                           ),
                           children: [
                             TextSpan(
-                              text: widget.balita.namaBalita,
+                              text: _balitaData.namaBalita,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: _warnaNama,
@@ -343,14 +362,14 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                     ),
                     _buildRow(
                       "Tanggal Lahir",
-                      _formatTanggalIndonesia(widget.balita.tanggalLahir),
+                      _formatTanggalIndonesia(_balitaData.tanggalLahir),
                     ),
-                    _buildRow("NIK Balita", widget.balita.nikBalita),
-                    _buildRow("Jenis Kelamin", widget.balita.jenisKelamin),
-                    _buildRow("Nama Orang Tua", widget.balita.namaOrtu),
-                    _buildRow("NIK Orang Tua", widget.balita.nikOrtu),
-                    _buildRow("Nomor Telepon", widget.balita.nomorTelpOrtu),
-                    _buildRow("Alamat", widget.balita.alamat),
+                    _buildRow("NIK Balita", _balitaData.nikBalita),
+                    _buildRow("Jenis Kelamin", _balitaData.jenisKelamin),
+                    _buildRow("Nama Orang Tua", _balitaData.namaOrtu),
+                    _buildRow("NIK Orang Tua", _balitaData.nikOrtu),
+                    _buildRow("Nomor Telepon", _balitaData.nomorTelpOrtu),
+                    _buildRow("Alamat", _balitaData.alamat),
                   ]),
                   const SizedBox(height: 20),
                   _buildActionButtonsBalita(),

@@ -179,36 +179,42 @@ class _HomeScreenState extends State<HomeScreen> {
                     letterSpacing: 0.3,
                   ),
                 ),
-                Flexible(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CustomDropdownButton(
-                        value: _bulanDipilih ?? _bulanList.first,
-                        items: _bulanList,
-                        isCompact: true,
-                        textColor: Colors.white,
-                        onChanged: (value) async {
-                          setState(() => _bulanDipilih = value);
-                          await _fetchStatistik();
-                        },
+
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        children: [
+                          CustomDropdownButton(
+                            value: _bulanDipilih ?? _bulanList.first,
+                            items: _bulanList,
+                            isCompact: true,
+                            textColor: Colors.white,
+                            onChanged: (value) async {
+                              setState(() => _bulanDipilih = value);
+                              await _fetchStatistik();
+                            },
+                          ),
+                          const SizedBox(width: 4),
+                          CustomDropdownButton(
+                            value: _tahunDipilih.toString(),
+                            items: _tahunList.map((t) => t.toString()).toList(),
+                            isCompact: true,
+                            textColor: Colors.white,
+                            onChanged: (value) async {
+                              setState(() {
+                                _tahunDipilih =
+                                    int.tryParse(value ?? '') ??
+                                    DateTime.now().year;
+                              });
+                              await _fetchStatistik();
+                            },
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      CustomDropdownButton(
-                        value: _tahunDipilih.toString(),
-                        items: _tahunList.map((t) => t.toString()).toList(),
-                        isCompact: true,
-                        textColor: Colors.white,
-                        onChanged: (value) async {
-                          setState(
-                            () => _tahunDipilih =
-                                int.tryParse(value ?? '') ??
-                                DateTime.now().year,
-                          );
-                          await _fetchStatistik();
-                        },
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],
@@ -399,7 +405,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const KelulusanBalitaScreen()),
+                MaterialPageRoute(
+                  builder: (_) => const KelulusanBalitaScreen(),
+                ),
               );
             },
           ),

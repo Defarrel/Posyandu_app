@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 
 class CustomDropdownButton extends StatelessWidget {
   final String value;
@@ -24,7 +25,6 @@ class CustomDropdownButton extends StatelessWidget {
       return DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          dropdownColor: Colors.white,
           icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
           selectedItemBuilder: (BuildContext context) {
             return items.map((String item) {
@@ -33,7 +33,7 @@ class CustomDropdownButton extends StatelessWidget {
                 child: Text(
                   item,
                   style: const TextStyle(
-                    color: Colors.white, 
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -44,13 +44,7 @@ class CustomDropdownButton extends StatelessWidget {
           items: items.map((item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(
-                item,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Text(item, style: const TextStyle(color: Colors.black)),
             );
           }).toList(),
           onChanged: onChanged,
@@ -75,7 +69,7 @@ class CustomDropdownButton extends StatelessWidget {
           fontSize: fontSize,
           fontWeight: FontWeight.bold,
         ),
-        dropdownColor: Colors.white,
+        dropdownColor: AppColors.background,
         items: items
             .map(
               (item) => DropdownMenuItem<String>(

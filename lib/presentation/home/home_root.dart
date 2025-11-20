@@ -18,25 +18,39 @@ class HomeRoot extends StatefulWidget {
 
 class _HomeRootState extends State<HomeRoot> {
   int _currentIndex = 1;
+  bool _isNavigatingFromTap = false;
+
   late final PageController _pageController = PageController(
     initialPage: _currentIndex,
   );
 
   final List<Widget> _screens = const [
-    _KeepAlivePage(child: CariBalitaScreen()),
-    _KeepAlivePage(child: HomeScreen()),
-    _KeepAlivePage(child: ProfileScreen()),
+    CariBalitaScreen(),
+    HomeScreen(),
+    ProfileScreen(),
   ];
 
   void _onTap(int index) {
     if (index == _currentIndex) return;
 
+    _isNavigatingFromTap = true;
+
     setState(() => _currentIndex = index);
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-    );
+
+    if ((index - _currentIndex).abs() > 1) {
+      _pageController.jumpToPage(index);
+      _isNavigatingFromTap = false;
+    } else {
+      _pageController
+          .animateToPage(
+            index,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+          )
+          .then((_) {
+            _isNavigatingFromTap = false;
+          });
+    }
   }
 
   @override
@@ -48,59 +62,22 @@ class _HomeRootState extends State<HomeRoot> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Navigator(
-        onGenerateRoute: (settings) {
-          return MaterialPageRoute(
-            builder: (context) => PageView(
-              controller: _pageController,
-              physics: CustomPageViewScrollPhysics(
-                currentIndex: _currentIndex,
-                maxIndex: _screens.length - 1,
-              ),
-              onPageChanged: (index) {
-                setState(() => _currentIndex = index);
-              },
-              children: _screens,
-            ),
-          );
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          if (!_isNavigatingFromTap) {
+            setState(() => _currentIndex = index);
+          }
         },
+        children: _screens.map((screen) {
+          return _KeepAlivePage(child: screen);
+        }).toList(),
       ),
       bottomNavigationBar: CustomNavbarBot(
         currentIndex: _currentIndex,
         onTap: _onTap,
       ),
     );
-  }
-}
-
-class CustomPageViewScrollPhysics extends BouncingScrollPhysics {
-  final int currentIndex;
-  final int maxIndex;
-
-  const CustomPageViewScrollPhysics({
-    required this.currentIndex,
-    required this.maxIndex,
-    ScrollPhysics? parent,
-  }) : super(parent: parent);
-
-  @override
-  CustomPageViewScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return CustomPageViewScrollPhysics(
-      currentIndex: currentIndex,
-      maxIndex: maxIndex,
-      parent: buildParent(ancestor),
-    );
-  }
-
-  @override
-  double applyBoundaryConditions(ScrollMetrics position, double value) {
-    if (currentIndex == 0 && value < position.pixels) {
-      return value - position.pixels;
-    }
-    if (currentIndex == maxIndex && value > position.pixels) {
-      return value - position.pixels;
-    }
-    return super.applyBoundaryConditions(position, value);
   }
 }
 

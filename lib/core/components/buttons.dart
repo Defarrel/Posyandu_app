@@ -17,10 +17,10 @@ class MenuButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        double size = constraints.maxWidth * 0.42;
+        double size = constraints.maxWidth * 0.45;
 
         if (size < 120) {
-          size = MediaQuery.of(context).size.width * 0.42;
+          size = MediaQuery.of(context).size.width * 0.45;
         }
 
         return GestureDetector(
@@ -29,7 +29,7 @@ class MenuButton extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeInOut,
             width: size,
-            height: size * 0.75,
+            height: size * 0.90,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [AppColors.accent, AppColors.primary],

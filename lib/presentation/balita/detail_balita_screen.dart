@@ -139,6 +139,18 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     }
   }
 
+  String _formatJenisKelamin(String raw) {
+    final jk = raw.toLowerCase().replaceAll(" ", "");
+
+    if (jk == "l" || jk == "lakilaki") {
+      return "Laki-laki";
+    } else if (jk == "p" || jk == "perempuan") {
+      return "Perempuan";
+    }
+
+    return raw;
+  }
+
   String _formatTanggalIndonesia(String? rawDate) {
     if (rawDate == null || rawDate.isEmpty) return "-";
     try {
@@ -373,7 +385,12 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                       _formatTanggalIndonesia(_balitaData.tanggalLahir),
                     ),
                     _buildRow("NIK Balita", _balitaData.nikBalita),
-                    _buildRow("Jenis Kelamin", _balitaData.jenisKelamin),
+                    _buildRow(
+                      "Jenis Kelamin",
+                      _formatJenisKelamin(_balitaData.jenisKelamin),
+                    ),
+                    _buildRow("Anak Ke", _balitaData.anakKeBerapa),
+                    _buildRow("Nomor KK", _balitaData.nomorKk),
                     _buildRow("Nama Orang Tua", _balitaData.namaOrtu),
                     _buildRow("NIK Orang Tua", _balitaData.nikOrtu),
                     _buildRow("Nomor Telepon", _balitaData.nomorTelpOrtu),

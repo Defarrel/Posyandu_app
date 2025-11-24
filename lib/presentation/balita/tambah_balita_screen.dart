@@ -61,7 +61,13 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
       _namaController.text = b.namaBalita;
       _nikBalitaController.text = b.nikBalita;
-      _jenisKelamin = b.jenisKelamin;
+      final jk = b.jenisKelamin.toLowerCase().replaceAll(" ", "");
+
+      if (jk == "lakilaki" || jk == "l") {
+        _jenisKelamin = "Laki-laki";
+      } else {
+        _jenisKelamin = "Perempuan";
+      }
 
       _selectedDate = DateTime.tryParse(b.tanggalLahir);
       if (_selectedDate != null) {
@@ -317,21 +323,21 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
             const SizedBox(height: 12),
 
-            IgnorePointer(
-              ignoring: widget.isEdit,
-              child: Opacity(
-                opacity: widget.isEdit ? 0.5 : 1,
-                child: CustomRadioBalita(
-                  groupValue: _jenisKelamin,
-                  onChanged: (value) {
-                    setState(() {
-                      _jenisKelamin = value;
-                      _jenisKelaminError = null;
-                    });
-                  },
-                ),
+            Opacity(
+              opacity: widget.isEdit ? 0.5 : 1,
+              child: CustomRadioBalita(
+                groupValue: _jenisKelamin,
+                onChanged: widget.isEdit
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _jenisKelamin = value;
+                          _jenisKelaminError = null;
+                        });
+                      },
               ),
             ),
+
             if (_jenisKelaminError != null)
               Align(
                 alignment: Alignment.centerLeft,

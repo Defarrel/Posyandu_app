@@ -354,26 +354,26 @@ class _CariPerkembanganBalitaScreenState
                                                                     .min,
                                                             children: [
                                                               const Text(
-                                                                "Perhatian",
+                                                                "Perhatian !",
                                                                 style: TextStyle(
                                                                   fontSize: 18,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .bold,
-                                                                  color: AppColors
-                                                                      .primary,
+                                                                  color: Colors.red,
                                                                 ),
                                                               ),
                                                               const SizedBox(
                                                                 height: 12,
                                                               ),
-                                                              Text(
-                                                                "Perkembangan bulan ini sudah diinput.\nSilakan cek di halaman detail balita.",
+                                                              const Text(
+                                                                "Data perkembangan bulan ini sudah ditambahkan.\n"
+                                                                "Apakah Anda yakin ingin menambah data baru?",
                                                                 textAlign:
                                                                     TextAlign
                                                                         .center,
                                                                 style:
-                                                                    const TextStyle(
+                                                                    TextStyle(
                                                                       fontSize:
                                                                           14,
                                                                     ),
@@ -381,29 +381,74 @@ class _CariPerkembanganBalitaScreenState
                                                               const SizedBox(
                                                                 height: 20,
                                                               ),
-                                                              ElevatedButton(
-                                                                style: ElevatedButton.styleFrom(
-                                                                  backgroundColor:
-                                                                      AppColors
-                                                                          .primary,
-                                                                  shape: RoundedRectangleBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                          12,
+
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
+                                                                children: [
+                                                                  Expanded(
+                                                                    child: ElevatedButton(
+                                                                      style: ElevatedButton.styleFrom(
+                                                                        backgroundColor:
+                                                                            Colors.red,
+                                                                        shape: RoundedRectangleBorder(
+                                                                          borderRadius: BorderRadius.circular(
+                                                                            12,
+                                                                          ),
                                                                         ),
-                                                                  ),
-                                                                ),
-                                                                onPressed: () =>
-                                                                    Navigator.pop(
-                                                                      context,
+                                                                      ),
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                            context,
+                                                                          ),
+                                                                      child: const Text(
+                                                                        "Batal",
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              Colors.white,
+                                                                        ),
+                                                                      ),
                                                                     ),
-                                                                child: const Text(
-                                                                  "OK",
-                                                                  style: TextStyle(
-                                                                    color: Colors
-                                                                        .white,
                                                                   ),
-                                                                ),
+                                                                  const SizedBox(
+                                                                    width: 10,
+                                                                  ),
+                                                                  Expanded(
+                                                                    child: ElevatedButton(
+                                                                      style: ElevatedButton.styleFrom(
+                                                                        backgroundColor:
+                                                                            AppColors.primary,
+                                                                        shape: RoundedRectangleBorder(
+                                                                          borderRadius: BorderRadius.circular(
+                                                                            12,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      onPressed: () {
+                                                                        Navigator.pop(
+                                                                          context,
+                                                                        ); 
+                                                                        Navigator.push(
+                                                                          context,
+                                                                          MaterialPageRoute(
+                                                                            builder: (_) => TambahPerkembanganBalita(
+                                                                              nikBalita: balita.nikBalita,
+                                                                              namaBalita: balita.namaBalita,
+                                                                            ),
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                      child: const Text(
+                                                                        "Tambah",
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              Colors.white,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
                                                               ),
                                                             ],
                                                           ),

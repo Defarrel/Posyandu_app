@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class CustomRadioBalita extends StatelessWidget {
   final String? groupValue;
-  final ValueChanged<String?> onChanged;
+  final ValueChanged<String?>? onChanged; // <- dibuat nullable
 
   const CustomRadioBalita({
     super.key,
     required this.groupValue,
-    required this.onChanged,
+    this.onChanged, 
   });
 
   @override
@@ -22,7 +22,6 @@ class CustomRadioBalita extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
-            
             Container(
               width: 110,
               height: 100,
@@ -39,13 +38,13 @@ class CustomRadioBalita extends StatelessWidget {
               ),
             ),
 
-            
+            // Kolom kanan
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Wrap(
+                  spacing: 12,
                   alignment: WrapAlignment.start,
-                  spacing: 12, 
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Row(
@@ -54,7 +53,7 @@ class CustomRadioBalita extends StatelessWidget {
                         Radio<String>(
                           value: "Laki-laki",
                           groupValue: groupValue,
-                          onChanged: onChanged,
+                          onChanged: onChanged, // <- Bisa null, aman
                           activeColor: const Color(0xFF0098F8),
                         ),
                         const Text("Laki - laki"),
@@ -66,7 +65,7 @@ class CustomRadioBalita extends StatelessWidget {
                         Radio<String>(
                           value: "Perempuan",
                           groupValue: groupValue,
-                          onChanged: onChanged,
+                          onChanged: onChanged, 
                           activeColor: const Color(0xFF0098F8),
                         ),
                         const Text("Perempuan"),

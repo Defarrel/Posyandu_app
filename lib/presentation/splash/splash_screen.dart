@@ -110,7 +110,7 @@ class _SplashScreenState extends State<SplashScreen>
                       Hero(
                         tag: 'logo_posyandu',
                         child: Image.asset(
-                          'lib/core/assets/ibu_bayi.png',
+                          'lib/core/assets/logo.png',
                           height: 180,
                           fit: BoxFit.contain,
                         ),

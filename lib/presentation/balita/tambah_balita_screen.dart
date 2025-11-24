@@ -268,6 +268,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             ),
             const SizedBox(height: 12),
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: widget.isEdit
                   ? null
                   : () async {
@@ -278,6 +279,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
                         firstDate: DateTime(2000),
                         lastDate: DateTime.now(),
                       );
+
                       if (pickedDate != null) {
                         _selectedDate = pickedDate;
                         _ttlController.text =
@@ -285,16 +287,14 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
                         setState(() => _ttlError = null);
                       }
                     },
-              child: AbsorbPointer(
-                absorbing: widget.isEdit,
-                child: Opacity(
-                  opacity: widget.isEdit ? 0.5 : 1,
-                  child: CustomTextFieldBalita(
-                    label: "Tanggal Lahir",
-                    hint: "Pilih tanggal lahir",
-                    controller: _ttlController,
-                    errorText: _ttlError,
-                  ),
+              child: Opacity(
+                opacity: widget.isEdit ? 0.5 : 1,
+                child: CustomTextFieldBalita(
+                  label: "Tanggal Lahir",
+                  hint: "Pilih tanggal lahir",
+                  controller: _ttlController,
+                  ignorePointer: true,
+                  errorText: _ttlError,
                 ),
               ),
             ),

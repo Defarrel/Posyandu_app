@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
-import 'package:posyandu_app/data/models/request/auth/login_request_model.dart';
+import 'package:posyandu_app/data/models/request/auth/auth_request_model.dart';
 import 'package:posyandu_app/data/repository/auth_repository.dart';
 import 'package:posyandu_app/presentation/home/home_root.dart';
 import 'package:posyandu_app/services/services_http_client.dart';

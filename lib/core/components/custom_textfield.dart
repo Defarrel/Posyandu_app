@@ -9,6 +9,7 @@ class CustomTextFieldBalita extends StatelessWidget {
   final TextInputType keyboardType;
   final String? errorText;
   final Function(String)? onChanged;
+  final bool ignorePointer;
 
   const CustomTextFieldBalita({
     super.key,
@@ -19,6 +20,7 @@ class CustomTextFieldBalita extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.errorText,
     this.onChanged,
+    this.ignorePointer = false,
   });
 
   @override
@@ -51,28 +53,34 @@ class CustomTextFieldBalita extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                // FIX: TextField tidak menerima tap
                 Expanded(
-                  child: TextField(
-                    controller: controller,
-                    keyboardType: keyboardType,
-                    onChanged: onChanged,
-                    maxLines: maxLines,
-                    decoration: InputDecoration(
-                      hintText: hint,
-                      hintStyle: const TextStyle(color: Colors.black45),
-                      filled: true,
-                      fillColor: const Color(0xFFD9D9D9),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
+                  child: IgnorePointer(
+                    ignoring: ignorePointer,
+                    child: TextField(
+                      controller: controller,
+                      keyboardType: keyboardType,
+                      onChanged: onChanged,
+                      maxLines: maxLines,
+                      decoration: InputDecoration(
+                        hintText: hint,
+                        hintStyle: const TextStyle(color: Colors.black45),
+                        filled: true,
+                        fillColor: const Color(0xFFD9D9D9),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
+                        border: InputBorder.none,
                       ),
-                      border: InputBorder.none,
                     ),
                   ),
                 ),
               ],
             ),
           ),
+
           if (errorText != null)
             Padding(
               padding: const EdgeInsets.only(left: 8, top: 4),

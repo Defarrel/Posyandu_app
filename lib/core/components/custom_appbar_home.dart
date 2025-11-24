@@ -1,27 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:posyandu_app/core/constant/constants.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
+import 'package:posyandu_app/data/models/response/auth/auth_response_model.dart'; // Pastikan import Model User
+import 'package:posyandu_app/data/repository/auth_repository.dart';
+import 'package:posyandu_app/services/services_http_client.dart';
+import 'package:posyandu_app/services/user_notifier.dart'; // Import Notifier
 
-class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
-  final String nama;
+class CustomAppBarHome extends StatefulWidget implements PreferredSizeWidget {
   final String posyandu;
   final VoidCallback? onMenuTap;
 
   const CustomAppBarHome({
     super.key,
-    required this.nama,
     required this.posyandu,
     this.onMenuTap,
+    String? nama,
   });
 
   @override
   Size get preferredSize => const Size.fromHeight(230);
 
   @override
+  State<CustomAppBarHome> createState() => _CustomAppBarHomeState();
+}
+
+class _CustomAppBarHomeState extends State<CustomAppBarHome> {
+  final AuthRepository _repo = AuthRepository(ServiceHttpClient());
+
+  @override
+  void initState() {
+    super.initState();
+    _repo.getUserProfile();
+  }
+
+  String _getPhotoUrl(String filename) {
+    String baseUrl = ServiceHttpClient().baseUrl;
+    if (baseUrl.endsWith("api/")) {
+      baseUrl = baseUrl.replaceAll("api/", "uploads/");
+    } else if (baseUrl.endsWith("api")) {
+      baseUrl = baseUrl.replaceAll("api", "uploads/");
+    } else {
+      baseUrl = "$baseUrl/uploads/";
+    }
+    return "$baseUrl$filename";
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ClipPath(
       clipper: SlightUpCurveClipper(),
       child: Container(
-        height: preferredSize.height,
+        height: widget.preferredSize.height,
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -39,52 +67,83 @@ class CustomAppBarHome extends StatelessWidget implements PreferredSizeWidget {
                 top: 20,
                 bottom: 25,
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const CircleAvatar(
-                    radius: 35,
-                    backgroundImage: AssetImage('lib/core/assets/profile.jpg'),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Halo, Selamat Datang',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
+              child: ValueListenableBuilder<User?>(
+                valueListenable: UserNotifier.user,
+                builder: (context, user, child) {
+                  final String namaTampil = user?.username ?? "Kader Posyandu";
+
+                  ImageProvider imageProvider;
+                  if (user?.fotoProfile != null &&
+                      user!.fotoProfile!.isNotEmpty) {
+                    imageProvider = NetworkImage(
+                      _getPhotoUrl(user.fotoProfile!),
+                    );
+                  } else {
+                    imageProvider = const AssetImage(
+                      'lib/core/assets/profile.jpg',
+                    );
+                  }
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.8),
+                            width: 2,
                           ),
                         ),
-                        Text(
-                          nama,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                        child: CircleAvatar(
+                          radius: 35,
+                          backgroundColor: Colors.grey[300],
+                          backgroundImage: imageProvider,
+                          onBackgroundImageError: (_, __) {},
                         ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.notifications_none,
-                      color: Colors.white,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: onMenuTap,
-                    icon: const Icon(
-                      Icons.more_vert,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+                      ),
+
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Halo, Selamat Datang',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              namaTampil,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(
+                          Icons.notifications_none,
+                          color: Colors.white,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: widget.onMenuTap,
+                        icon: const Icon(Icons.more_vert, color: Colors.white),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -98,7 +157,6 @@ class SlightUpCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-
     path.lineTo(0, size.height - 25);
     path.quadraticBezierTo(
       size.width / 2,
@@ -106,10 +164,8 @@ class SlightUpCurveClipper extends CustomClipper<Path> {
       size.width,
       size.height - 25,
     );
-
     path.lineTo(size.width, 0);
     path.close();
-
     return path;
   }
 

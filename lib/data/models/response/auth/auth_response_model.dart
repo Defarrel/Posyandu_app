@@ -27,15 +27,35 @@ class User {
   final int? id;
   final String? username;
   final String? role;
+  final String? fotoProfile;
 
-  User({this.id, this.username, this.role});
+  User({this.id, this.username, this.role, this.fotoProfile});
 
-  factory User.fromMap(Map<String, dynamic> json) =>
-      User(id: json["id"], username: json["username"], role: json["role"]);
+  factory User.fromMap(Map<String, dynamic> json) => User(
+    id: json["id"],
+    username: json["username"],
+    role: json["role"],
+    fotoProfile: json["foto_profile"],
+  );
 
   Map<String, dynamic> toMap() => {
     "id": id,
     "username": username,
     "role": role,
+    "foto_profile": fotoProfile,
   };
+
+  User copyWith({
+    int? id,
+    String? username,
+    String? role,
+    String? fotoProfile,
+  }) {
+    return User(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      role: role ?? this.role,
+      fotoProfile: fotoProfile ?? this.fotoProfile,
+    );
+  }
 }

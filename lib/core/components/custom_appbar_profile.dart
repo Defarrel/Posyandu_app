@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:posyandu_app/core/constant/constants.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
+import 'package:posyandu_app/data/models/response/auth/auth_response_model.dart';
+import 'package:posyandu_app/data/repository/auth_repository.dart';
 import 'package:posyandu_app/presentation/auth/login_screen.dart';
+import 'package:posyandu_app/services/services_http_client.dart';
+import 'package:posyandu_app/services/user_notifier.dart';
 
 class CustomAppBarProfile extends StatefulWidget {
   final String posyandu;
@@ -14,20 +18,24 @@ class CustomAppBarProfile extends StatefulWidget {
 }
 
 class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
-  String _namaKader = "Memuat...";
+  final AuthRepository _repo = AuthRepository(ServiceHttpClient());
 
   @override
   void initState() {
     super.initState();
-    _loadNama();
+    _repo.getUserProfile();
   }
 
-  Future<void> _loadNama() async {
-    const storage = FlutterSecureStorage();
-    final nama = await storage.read(key: 'username');
-    setState(() {
-      _namaKader = nama ?? "Kader Posyandu";
-    });
+  String _getPhotoUrl(String filename) {
+    String baseUrl = ServiceHttpClient().baseUrl;
+    if (baseUrl.endsWith("api/")) {
+      baseUrl = baseUrl.replaceAll("api/", "uploads/");
+    } else if (baseUrl.endsWith("api")) {
+      baseUrl = baseUrl.replaceAll("api", "uploads/");
+    } else {
+      baseUrl = "$baseUrl/uploads/";
+    }
+    return "$baseUrl$filename";
   }
 
   Future<void> _handleLogout(BuildContext context) async {
@@ -53,6 +61,8 @@ class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
     if (confirm == true) {
       const storage = FlutterSecureStorage();
       await storage.deleteAll();
+
+      UserNotifier.update(null);
 
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
@@ -84,7 +94,6 @@ class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
         ),
         child: Stack(
           children: [
-
             Positioned(
               right: 10,
               top: 30,
@@ -96,27 +105,64 @@ class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
 
             Align(
               alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircleAvatar(
-                    radius: 40,
-                    backgroundImage: AssetImage('lib/core/assets/profile.jpg'),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _namaKader,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    widget.posyandu,
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                ],
+              child: ValueListenableBuilder<User?>(
+                valueListenable:
+                    UserNotifier.user,
+                builder: (context, user, child) {
+                  final String namaTampil = user?.username ?? "Kader Posyandu";
+
+                  ImageProvider imageProvider;
+                  if (user?.fotoProfile != null &&
+                      user!.fotoProfile!.isNotEmpty) {
+                    imageProvider = NetworkImage(
+                      _getPhotoUrl(user.fotoProfile!),
+                    );
+                  } else {
+                    imageProvider = const AssetImage(
+                      'lib/core/assets/profile.jpg',
+                    );
+                  }
+
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.8),
+                            width: 2,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 35,
+                          backgroundColor: Colors.grey[300],
+                          backgroundImage: imageProvider,
+                          onBackgroundImageError: (_, __) {},
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Text(
+                        namaTampil,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        widget.posyandu,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],

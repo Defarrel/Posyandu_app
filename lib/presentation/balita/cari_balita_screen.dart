@@ -81,7 +81,10 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
       return true;
     }).toList();
 
+    filteredList.sort((a, b) => a.namaBalita.compareTo(b.namaBalita));
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
       appBar: CustomAppBarCari(
         searchController: _searchController,
@@ -97,46 +100,6 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
               padding: const EdgeInsets.only(left: 16, right: 16),
               child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 8,
-                    ),
-                    child: const Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            "Nama",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: Text(
-                            "NIK",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            "Nama Ortu",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   Expanded(
                     child: filteredList.isEmpty
                         ? const Center(
@@ -152,6 +115,10 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                               itemCount: filteredList.length,
                               itemBuilder: (context, index) {
                                 final balita = filteredList[index];
+                                final umurBulan = _hitungUmurBulan(
+                                  balita.tanggalLahir,
+                                );
+
                                 return GestureDetector(
                                   onTap: () => Navigator.push(
                                     context,
@@ -160,47 +127,90 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                                           DetailBalitaScreen(balita: balita),
                                     ),
                                   ),
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                      horizontal: 8,
-                                    ),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    curve: Curves.easeOut,
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
                                       color: AppColors.background,
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                                     ),
                                     child: Row(
                                       children: [
-                                        Expanded(
-                                          flex: 3,
-                                          child: Text(
-                                            balita.namaBalita,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.black,
+                                        Container(
+                                          width: 50,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary
+                                                .withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              "$umurBulan\nBulan",
+                                              textAlign: TextAlign.center,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primary,
+                                              ),
                                             ),
                                           ),
                                         ),
+
+                                        const SizedBox(width: 14),
+
                                         Expanded(
-                                          flex: 4,
-                                          child: Text(
-                                            balita.nikBalita,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.black,
-                                            ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                balita.namaBalita,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  color: Colors.black87,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                "NIK: ${balita.nikBalita}",
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "Ortu: ${balita.namaOrtu}",
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        Expanded(
-                                          flex: 3,
-                                          child: Text(
-                                            balita.namaOrtu,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.black,
-                                            ),
-                                          ),
+
+                                        const SizedBox(width: 10),
+
+                                        Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          size: 18,
+                                          color: Colors.grey.shade400,
                                         ),
                                       ],
                                     ),

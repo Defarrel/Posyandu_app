@@ -260,7 +260,7 @@ class _CariPerkembanganBalitaScreenState
                                     horizontal: 8,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[200],
+                                    color: AppColors.background,
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Row(
@@ -480,7 +480,7 @@ class _CariPerkembanganBalitaScreenState
                                                     horizontal: 13,
                                                   ),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFF5AC05E),
+                                                color: AppColors.primaryLight,
                                                 borderRadius:
                                                     BorderRadius.circular(20),
                                               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:lottie/lottie.dart';
 import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/presentation/kelulusan/kelulusan_balita_screen.dart';
 import 'package:posyandu_app/presentation/vaksin/vaksin_balita_screen.dart';
@@ -21,6 +22,44 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+class LottieWarningDot extends StatelessWidget {
+  final String kms;
+
+  const LottieWarningDot({Key? key, required this.kms}) : super(key: key);
+
+  String _getLottiePath() {
+    if (kms == "merah") return 'lib/core/assets/lottie/dot_red.json';
+    if (kms == "kuning") return 'lib/core/assets/lottie/dot_orange.json';
+    return 'lib/core/assets/lottie/dot_green.json';
+  }
+
+  Color _getColor() {
+    if (kms == "merah") return Colors.redAccent;
+    if (kms == "kuning") return const Color.fromARGB(255, 255, 171, 64);
+    return const Color.fromARGB(255, 76, 175, 80);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        SizedBox(
+          width: 30,
+          height: 30,
+          child: Lottie.asset(_getLottiePath(), repeat: true, animate: true),
+        ),
+
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: _getColor(), shape: BoxShape.circle),
+        ),
+      ],
+    );
+  }
+}
+
 class _HomeScreenState extends State<HomeScreen> {
   final List<String> _bulanList = const [
     'Januari',
@@ -37,6 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
     'Desember',
   ];
 
+  List<Map<String, dynamic>> _balitaTrending = [];
+  bool _loadingTrending = true;
+
   String? _bulanDipilih;
   int? _tahunDipilih;
   late List<int> _tahunList;
@@ -50,6 +92,29 @@ class _HomeScreenState extends State<HomeScreen> {
   final PerkembanganBalitaRepository _repository =
       PerkembanganBalitaRepository();
 
+  late ScrollController _autoScrollController;
+  int _currentAutoIndex = 0;
+
+  void _startAutoScroll() {
+    Future.delayed(const Duration(seconds: 2), () async {
+      if (!mounted || _balitaTrending.isEmpty) return;
+
+      final maxIndex = _balitaTrending.length - 1;
+
+      _currentAutoIndex = (_currentAutoIndex < maxIndex)
+          ? _currentAutoIndex + 1
+          : 0;
+
+      await _autoScrollController.animateTo(
+        _currentAutoIndex * 260.0,
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeInOut,
+      );
+
+      _startAutoScroll();
+    });
+  }
+
   int _normal = 0;
   int _kurang = 0;
   int _obesitas = 0;
@@ -57,15 +122,25 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _autoScrollController = ScrollController();
+
     _bulanDipilih = _bulanList[DateTime.now().month - 1];
     _tahunDipilih = DateTime.now().year;
     _tahunList = List.generate(5, (i) => DateTime.now().year - i);
+
     _loadNamaKader();
     _fetchStatistik();
+
+    _loadBalitaTrending().then((_) {
+      if (_balitaTrending.isNotEmpty) {
+        _startAutoScroll();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _autoScrollController.dispose();
     super.dispose();
   }
 
@@ -74,6 +149,25 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _namaKader = nama ?? "Kader";
     });
+  }
+
+  Future<void> _loadBalitaTrending() async {
+    final result = await _repository.getBalitaPerluPerhatian();
+
+    result.fold(
+      (err) {
+        setState(() {
+          _loadingTrending = false;
+        });
+      },
+      (data) {
+        setState(() {
+          _balitaTrending = data.map((e) => e.toMap()).toList();
+
+          _loadingTrending = false;
+        });
+      },
+    );
   }
 
   Future<void> _fetchStatistik() async {
@@ -129,6 +223,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildGrafikCard(),
                 const SizedBox(height: 20),
+
+                _buildBalitaTrendingSection(),
+                const SizedBox(height: 20),
+
                 _buildMenuSection(context),
                 const SizedBox(height: 20),
                 _buildAdditionalMenuSection(context),
@@ -154,11 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primary.withOpacity(0.95), AppColors.accent],
-          ),
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
@@ -315,10 +409,127 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildBalitaTrendingSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            "Informasi Balita",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        const SizedBox(height: 7),
+
+        if (_loadingTrending)
+          const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          )
+        else if (_balitaTrending.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              "Semua balita dalam kondisi baik bulan ini 🎉",
+              style: TextStyle(color: Colors.black54),
+            ),
+          )
+        else
+          SizedBox(
+            height: 120,
+            child: ListView.builder(
+              controller: _autoScrollController,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              itemCount: _balitaTrending.length,
+              itemBuilder: (context, index) {
+                final item = _balitaTrending[index];
+
+                final kms = (item["kms"] ?? "").toString().toLowerCase();
+
+                Color statusColor = kms == "merah"
+                    ? Colors.redAccent
+                    : kms == "kuning"
+                    ? Colors.orangeAccent
+                    : Colors.green;
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 500),
+                  width: 250,
+                  margin: const EdgeInsets.only(right: 16),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26.withOpacity(0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      LottieWarningDot(kms: kms),
+
+                      const SizedBox(width: 12),
+
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item["nama"] ?? "-",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "NIK: ${item["nik"]}",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item["alasan"] ?? "-",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: statusColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildMenuSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Menu Utama',
@@ -378,6 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Menu Lainnya',
@@ -392,7 +604,6 @@ class _HomeScreenState extends State<HomeScreen> {
             title: "Vaksin Balita",
             subtitle: "Kelola jadwal dan riwayat vaksinasi",
             imagePath: "lib/core/assets/vaksin_balita.png",
-            gradientColors: const [AppColors.primary, AppColors.accent],
             onTap: () {
               Navigator.push(
                 context,
@@ -405,7 +616,6 @@ class _HomeScreenState extends State<HomeScreen> {
             title: "Kelulusan Balita",
             subtitle: "Data balita yang telah lulus posyandu",
             imagePath: "lib/core/assets/kelulusan_balita.png",
-            gradientColors: const [AppColors.primary, AppColors.accent],
             onTap: () {
               Navigator.push(
                 context,
@@ -426,7 +636,6 @@ class ModernMenuCard extends StatefulWidget {
   final String title;
   final String subtitle;
   final String imagePath;
-  final List<Color> gradientColors;
   final VoidCallback onTap;
 
   const ModernMenuCard({
@@ -434,7 +643,6 @@ class ModernMenuCard extends StatefulWidget {
     required this.title,
     required this.subtitle,
     required this.imagePath,
-    required this.gradientColors,
     required this.onTap,
   }) : super(key: key);
 
@@ -460,17 +668,13 @@ class _ModernMenuCardState extends State<ModernMenuCard>
         curve: Curves.easeInOut,
         transform: Matrix4.identity()..scale(_isPressed ? 0.97 : 1.0),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: widget.gradientColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: widget.gradientColors[0].withOpacity(0.3),
-              blurRadius: _isPressed ? 8 : 12,
-              offset: Offset(0, _isPressed ? 2 : 6),
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -497,7 +701,7 @@ class _ModernMenuCardState extends State<ModernMenuCard>
                     Text(
                       widget.title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Colors.black87,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -506,7 +710,7 @@ class _ModernMenuCardState extends State<ModernMenuCard>
                     Text(
                       widget.subtitle,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.black54.withOpacity(0.9),
                         fontSize: 13,
                       ),
                     ),
@@ -517,7 +721,7 @@ class _ModernMenuCardState extends State<ModernMenuCard>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

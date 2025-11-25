@@ -26,10 +26,9 @@ class CustomAppBarCari extends StatelessWidget implements PreferredSizeWidget {
         height: preferredSize.height,
         width: double.infinity,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.accent, AppColors.primary],
-            begin: Alignment.bottomLeft,
-            end: Alignment.topRight,
+          image: DecorationImage(
+            image: AssetImage('lib/core/assets/kiri.png'),
+            fit: BoxFit.cover,
           ),
         ),
         child: SafeArea(

@@ -94,7 +94,7 @@ class CustomNavbarBot extends StatelessWidget {
             child: Icon(
               icon,
               size: 32,
-              color: isActive ? AppColors.primaryDark : Colors.white,
+              color: isActive ? AppColors.primary : Colors.white,
             ),
           ),
         ),

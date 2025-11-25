@@ -309,14 +309,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary.withOpacity(0.95),
-                      AppColors.accent,
-                    ],
-                  ),
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(

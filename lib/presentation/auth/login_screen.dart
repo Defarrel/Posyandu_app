@@ -198,10 +198,16 @@ class _LoginScreenState extends State<LoginScreen>
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                          ),
+                        ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                            color: AppColors.primaryDark,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -235,10 +241,16 @@ class _LoginScreenState extends State<LoginScreen>
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: AppColors.primary,
+                          ),
+                        ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                            color: AppColors.primaryDark,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -254,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen>
                           onChanged: (value) =>
                               setState(() => _rememberMe = value ?? false),
                           activeColor: Colors.white,
-                          checkColor: Colors.blue,
+                          checkColor: AppColors.primary,
                           side: const BorderSide(color: Colors.white),
                         ),
                         const Text(
@@ -281,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 height: 22,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  color: Colors.blue,
+                                  color: AppColors.primary,
                                 ),
                               )
                             : const Text(
@@ -289,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
+                                  color: AppColors.primary,
                                 ),
                               ),
                       ),

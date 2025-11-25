@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 
 class CustomRadioBalita extends StatelessWidget {
   final String? groupValue;
-  final ValueChanged<String?>? onChanged; // <- dibuat nullable
+  final ValueChanged<String?>? onChanged; 
 
   const CustomRadioBalita({
     super.key,
@@ -26,7 +27,7 @@ class CustomRadioBalita extends StatelessWidget {
               width: 110,
               height: 100,
               alignment: Alignment.center,
-              color: const Color(0xFF0098F8),
+              color: AppColors.primary,
               child: const Text(
                 "Jenis Kelamin",
                 textAlign: TextAlign.center,

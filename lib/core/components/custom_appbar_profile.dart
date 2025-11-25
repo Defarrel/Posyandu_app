@@ -86,10 +86,9 @@ class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
         height: 230,
         width: double.infinity,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.accent, AppColors.primary],
-            begin: Alignment.bottomLeft,
-            end: Alignment.topRight,
+          image: DecorationImage(
+            image: AssetImage('lib/core/assets/Kanan.png'),
+            fit: BoxFit.cover,
           ),
         ),
         child: Stack(
@@ -106,8 +105,7 @@ class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
             Align(
               alignment: Alignment.center,
               child: ValueListenableBuilder<User?>(
-                valueListenable:
-                    UserNotifier.user,
+                valueListenable: UserNotifier.user,
                 builder: (context, user, child) {
                   final String namaTampil = user?.username ?? "Kader Posyandu";
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:posyandu_app/data/models/request/perkembangan_balita/perkembangan_request_model.dart';
+import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_attention_response.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
 import 'package:posyandu_app/services/services_http_client.dart';
 import 'package:dartz/dartz.dart';
@@ -164,7 +165,7 @@ class PerkembanganBalitaRepository {
   }) async {
     try {
       final response = await _service.get(
-        "perkembangan/bulanan/detail?bulan=$bulan&tahun=$tahun",
+        "report/bulanan/detail?bulan=$bulan&tahun=$tahun",
       );
       final jsonResponse = json.decode(response.body);
 
@@ -195,7 +196,7 @@ class PerkembanganBalitaRepository {
   }) async {
     try {
       final response = await _service.get(
-        "perkembangan/laporan/khusus?bulan=$bulan&tahun=$tahun",
+        "report/laporan/khusus?bulan=$bulan&tahun=$tahun",
       );
 
       final jsonResponse = json.decode(response.body);
@@ -251,6 +252,25 @@ class PerkembanganBalitaRepository {
     } catch (e) {
       log("Exception cekPerkembanganBulanIni: $e");
       return Left("Terjadi kesalahan saat mengecek data perkembangan");
+    }
+  }
+
+  Future<Either<String, List<PerkembanganAttentionResponse>>>
+  getBalitaPerluPerhatian() async {
+    try {
+      final response = await _service.get("perkembangan/perlu-diperhatikan");
+      final jsonResponse = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        List data = jsonResponse["data"];
+        return Right(
+          data.map((e) => PerkembanganAttentionResponse.fromMap(e)).toList(),
+        );
+      }
+
+      return Left(jsonResponse["message"] ?? "Gagal memuat data");
+    } catch (e) {
+      return Left("Kesalahan: $e");
     }
   }
 }

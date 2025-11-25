@@ -31,11 +31,7 @@ class MenuButton extends StatelessWidget {
             width: size,
             height: size * 0.90,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.accent, AppColors.primary],
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-              ),
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(18),
               boxShadow: const [
                 BoxShadow(

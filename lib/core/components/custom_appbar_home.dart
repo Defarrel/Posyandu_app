@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
-import 'package:posyandu_app/data/models/response/auth/auth_response_model.dart'; // Pastikan import Model User
+import 'package:posyandu_app/data/models/response/auth/auth_response_model.dart';
 import 'package:posyandu_app/data/repository/auth_repository.dart';
 import 'package:posyandu_app/services/services_http_client.dart';
-import 'package:posyandu_app/services/user_notifier.dart'; // Import Notifier
+import 'package:posyandu_app/services/user_notifier.dart';
 
 class CustomAppBarHome extends StatefulWidget implements PreferredSizeWidget {
   final String posyandu;
@@ -52,12 +52,12 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
         height: widget.preferredSize.height,
         width: double.infinity,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.primary, AppColors.accent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          image: DecorationImage(
+            image: AssetImage('lib/core/assets/tengah.png'),
+            fit: BoxFit.cover,
           ),
         ),
+
         child: Stack(
           children: [
             Padding(
@@ -105,6 +105,7 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
                       ),
 
                       const SizedBox(width: 16),
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,6 +131,7 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
                           ],
                         ),
                       ),
+
                       IconButton(
                         onPressed: () {},
                         icon: const Icon(
@@ -137,6 +139,7 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
                           color: Colors.white,
                         ),
                       ),
+
                       IconButton(
                         onPressed: widget.onMenuTap,
                         icon: const Icon(Icons.more_vert, color: Colors.white),

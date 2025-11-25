@@ -54,7 +54,6 @@ class CustomTextFieldBalita extends StatelessWidget {
                   ),
                 ),
 
-                // FIX: TextField tidak menerima tap
                 Expanded(
                   child: IgnorePointer(
                     ignoring: ignorePointer,

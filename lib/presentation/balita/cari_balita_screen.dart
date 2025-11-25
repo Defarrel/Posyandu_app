@@ -167,7 +167,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                                       horizontal: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[200],
+                                      color: AppColors.background,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Row(

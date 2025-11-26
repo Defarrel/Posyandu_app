@@ -133,7 +133,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                                     margin: const EdgeInsets.only(bottom: 12),
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                      color: AppColors.background,
+                                      color: Colors.white,
                                       borderRadius: BorderRadius.circular(16),
                                       boxShadow: [
                                         BoxShadow(

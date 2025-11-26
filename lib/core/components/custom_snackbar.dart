@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 
 enum SnackBarType { success, error, info }
 
@@ -22,7 +23,7 @@ class CustomSnackBar {
         break;
 
       default:
-        bgColor = Colors.blue;
+        bgColor = AppColors.primaryLight;
         icon = Icons.info_outline;
     }
 

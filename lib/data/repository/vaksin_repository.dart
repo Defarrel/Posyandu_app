@@ -26,16 +26,15 @@ class VaksinRepository {
 
   // GET Riwayat vaksin balita
   Future<Either<String, List<VaksinRiwayatModel>>> getRiwayatVaksin(
-      String nik) async {
+    String nik,
+  ) async {
     try {
       final response = await _service.get("vaksin/riwayat/$nik");
       final jsonResponse = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
         final List data = jsonResponse["data"];
-        return Right(
-          data.map((e) => VaksinRiwayatModel.fromJson(e)).toList(),
-        );
+        return Right(data.map((e) => VaksinRiwayatModel.fromJson(e)).toList());
       } else {
         return Left(jsonResponse["message"] ?? "Gagal memuat riwayat vaksin");
       }
@@ -47,10 +46,7 @@ class VaksinRepository {
   // POST Tambah vaksin balita
   Future<Either<String, String>> tambahVaksin(VaksinRequestModel model) async {
     try {
-      final response = await _service.postWithToken(
-        "vaksin",
-        model.toJson(), // <- langsung map, sama seperti repository BALITA
-      );
+      final response = await _service.postWithToken("vaksin", model.toJson());
 
       final jsonResponse = jsonDecode(response.body);
 

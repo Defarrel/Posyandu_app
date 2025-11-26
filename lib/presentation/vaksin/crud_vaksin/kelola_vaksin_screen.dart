@@ -3,7 +3,7 @@ import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/response/vaksin/vaksin_master_response_model.dart';
 import 'package:posyandu_app/data/repository/vaksin_master_repository.dart';
-import 'package:posyandu_app/presentation/vaksin/tambah_vaksin_screen.dart';
+import 'package:posyandu_app/presentation/vaksin/crud_vaksin/tambah_vaksin_screen.dart';
 
 class KelolaVaksinScreen extends StatefulWidget {
   const KelolaVaksinScreen({super.key});

@@ -24,19 +24,46 @@ class VaksinRepository {
     }
   }
 
-  // GET Riwayat vaksin balita
-  Future<Either<String, List<VaksinRiwayatModel>>> getRiwayatVaksin(
+  // GET detail vaksin balita dengan progress
+  Future<Either<String, VaksinDetailResponseModel>> getVaksinBalita(
     String nik,
   ) async {
     try {
       final response = await _service.get("vaksin/riwayat/$nik");
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+
+        if (jsonResponse['success'] == true) {
+          return Right(VaksinDetailResponseModel.fromJson(jsonResponse));
+        } else {
+          return Left(
+            jsonResponse["message"] ?? "Gagal memuat data vaksin balita",
+          );
+        }
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return Left(jsonResponse["message"] ?? "Terjadi kesalahan server");
+      }
+    } catch (e) {
+      return Left("Kesalahan: $e");
+    }
+  }
+
+  // GET rekomendasi vaksin selanjutnya
+  Future<Either<String, VaksinRekomendasiResponseModel>> getRekomendasiVaksin(
+    String nik,
+  ) async {
+    try {
+      final response = await _service.get("vaksin/rekomendasi/$nik");
       final jsonResponse = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        final List data = jsonResponse["data"];
-        return Right(data.map((e) => VaksinRiwayatModel.fromJson(e)).toList());
+        return Right(VaksinRekomendasiResponseModel.fromJson(jsonResponse));
       } else {
-        return Left(jsonResponse["message"] ?? "Gagal memuat riwayat vaksin");
+        return Left(
+          jsonResponse["message"] ?? "Gagal memuat rekomendasi vaksin",
+        );
       }
     } catch (e) {
       return Left("Kesalahan: $e");
@@ -46,11 +73,13 @@ class VaksinRepository {
   // POST Tambah vaksin balita
   Future<Either<String, String>> tambahVaksin(VaksinRequestModel model) async {
     try {
-      final response = await _service.postWithToken("vaksin", model.toJson());
-
+      final response = await _service.postWithToken(
+        "vaksin/balita",
+        model.toJson(),
+      );
       final jsonResponse = jsonDecode(response.body);
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return Right(jsonResponse["message"]);
       } else {
         return Left(jsonResponse["message"] ?? "Gagal menambah vaksin");
@@ -60,10 +89,31 @@ class VaksinRepository {
     }
   }
 
+  // PUT Update vaksin balita
+  Future<Either<String, String>> updateVaksin(
+    int id,
+    VaksinRequestModel model,
+  ) async {
+    try {
+      final response = await _service.put("vaksin/balita/$id", model.toJson());
+      final jsonResponse = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return Right(
+          jsonResponse["message"] ?? "Data vaksin berhasil diupdate",
+        );
+      } else {
+        return Left(jsonResponse["message"] ?? "Gagal mengupdate vaksin");
+      }
+    } catch (e) {
+      return Left("Kesalahan: $e");
+    }
+  }
+
   // DELETE Hapus vaksin balita
   Future<Either<String, String>> deleteVaksin(int id) async {
     try {
-      final response = await _service.delete("vaksin/$id");
+      final response = await _service.delete("vaksin/balita/$id");
       final jsonResponse = jsonDecode(response.body);
 
       if (response.statusCode == 200) {

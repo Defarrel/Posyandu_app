@@ -1,9 +1,15 @@
+// vaksin_detail_screen.dart
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
+import 'package:posyandu_app/data/models/request/vaksin/vaksin_request_model.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/models/response/vaksin/vaksin_respone_model.dart';
+import 'package:posyandu_app/data/repository/auth_repository.dart';
 import 'package:posyandu_app/data/repository/vaksin_repository.dart';
+import 'package:intl/intl.dart';
+import 'package:posyandu_app/presentation/vaksin/tambah_vaksin_balita.dart';
+import 'package:posyandu_app/services/services_http_client.dart';
 
 class VaksinDetailScreen extends StatefulWidget {
   final BalitaResponseModel balita;
@@ -15,49 +21,86 @@ class VaksinDetailScreen extends StatefulWidget {
 }
 
 class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
-  final VaksinRepository _repo = VaksinRepository();
+  final VaksinRepository _vaksinRepo = VaksinRepository();
+  final AuthRepository _authRepo = AuthRepository(ServiceHttpClient());
 
+  VaksinDetailResponseModel? _vaksinData;
+  VaksinRekomendasiResponseModel? _rekomendasiData;
   bool _loading = true;
-
-  List<VaksinRiwayatModel> _riwayat = [];
-  List<VaksinMasterModel> _master = [];
+  bool _loadingRekomendasi = false;
+  bool _addingVaksin = false;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _fetchAllData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _fetchAllData() async {
     setState(() => _loading = true);
 
-    final result1 = await _repo.getVaksinMaster();
-    final result2 = await _repo.getRiwayatVaksin(widget.balita.nikBalita);
-
-    result1.fold((err) => print(err), (data) => _master = data);
-    result2.fold((err) => print(err), (data) => _riwayat = data);
+    await Future.wait([_fetchVaksinData(), _fetchRekomendasiVaksin()]);
 
     setState(() => _loading = false);
   }
 
-  int _umurBulan() {
-    final lahir = DateFormat("yyyy-MM-dd").parse(widget.balita.tanggalLahir);
-    return ((DateTime.now().difference(lahir).inDays) / 30.4).floor();
+  Future<void> _fetchVaksinData() async {
+    final result = await _vaksinRepo.getVaksinBalita(widget.balita.nikBalita);
+
+    result.fold(
+      (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(message: error, type: SnackBarType.error),
+        );
+      },
+      (data) {
+        setState(() {
+          _vaksinData = data;
+        });
+      },
+    );
+  }
+
+  Future<void> _fetchRekomendasiVaksin() async {
+    setState(() => _loadingRekomendasi = true);
+
+    final result = await _vaksinRepo.getRekomendasiVaksin(
+      widget.balita.nikBalita,
+    );
+
+    result.fold(
+      (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(message: error, type: SnackBarType.error),
+        );
+      },
+      (data) {
+        setState(() {
+          _rekomendasiData = data;
+        });
+      },
+    );
+
+    setState(() => _loadingRekomendasi = false);
+  }
+
+  Future<void> _refreshData() async {
+    await _fetchAllData();
+  }
+
+  int _hitungUmurBulan() {
+    try {
+      final lahir = DateFormat("yyyy-MM-dd").parse(widget.balita.tanggalLahir);
+      final now = DateTime.now();
+      return (now.difference(lahir).inDays / 30.4375).floor();
+    } catch (_) {
+      return 0;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final balita = widget.balita;
-
-    final sudah = _riwayat;
-
-    final belum = _master.where((m) {
-      return !sudah.any((r) => r.vaksinId == m.id);
-    }).toList();
-
-    final double progress = _master.isEmpty
-        ? 0
-        : (sudah.length / _master.length);
+    final umur = _hitungUmurBulan();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -69,6 +112,7 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
         leading: IconButton(
@@ -76,221 +120,890 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TambahVaksinBalita(balita: widget.balita),
+            ),
+          ).then((refresh) {
+            if (refresh == true) {
+              _refreshData();
+            }
+          });
+        },
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             )
-          : ListView(
-              padding: const EdgeInsets.all(16),
+          : RefreshIndicator(
+              onRefresh: _refreshData,
+              color: AppColors.primary,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoBalita(umur),
+                    const SizedBox(height: 20),
+
+                    _buildProgressSection(),
+                    const SizedBox(height: 20),
+
+                    if (_rekomendasiData?.vaksinSelanjutnya?.isNotEmpty ??
+                        false)
+                      _buildRekomendasiSection(),
+
+                    _buildRiwayatSection(),
+
+                    const SizedBox(height: 80),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildInfoBalita(int umur) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withOpacity(0.9),
+                  AppColors.primary.withOpacity(0.7),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.child_care, size: 36, color: Colors.white),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.balita.namaBalita,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                _buildInfoItem(Icons.cake_outlined, "$umur bulan"),
+                const SizedBox(height: 4),
+                Text(
+                  "Lahir: ${DateFormat('dd MMM yyyy').format(DateTime.parse(widget.balita.tanggalLahir))}",
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(IconData icon, String text) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 140),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressSection() {
+    final progress = _vaksinData?.progress ?? 0;
+    final sudahDiambil = _vaksinData?.sudahDiambil ?? 0;
+    final totalVaksin = _vaksinData?.totalVaksin ?? 0;
+    final percentage = (progress * 100).toInt();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.medical_services,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  "Progress Vaksinasi",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "$percentage%",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.white.withOpacity(0.3),
+            color: Colors.white,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "$sudahDiambil dari $totalVaksin vaksin",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                "${_vaksinData?.sudahDiambil ?? 0}/${_vaksinData?.totalVaksin ?? 0}",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRekomendasiSection() {
+    final rekomendasi = _rekomendasiData?.vaksinSelanjutnya ?? [];
+    final usiaBulan = _rekomendasiData?.usiaBulan ?? 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.recommend,
+                  color: AppColors.accent.withOpacity(0.8),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  "Rekomendasi Vaksin Berikutnya",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              if (_loadingRekomendasi)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "Berdasarkan usia $usiaBulan bulan, berikut vaksin yang direkomendasikan:",
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 12),
+          ...rekomendasi.take(3).map((vaksin) => _buildRekomendasiItem(vaksin)),
+          if (rekomendasi.length > 3) ...[
+            const SizedBox(height: 8),
+            Text(
+              "+ ${rekomendasi.length - 3} vaksin lainnya",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade500,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRekomendasiItem(VaksinMasterModel vaksin) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.vaccines,
+              color: AppColors.accent.withOpacity(0.8),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  vaksin.namaVaksin,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "Usia ${vaksin.usiaBulan} bulan • ${vaksin.kode}",
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                if (vaksin.keterangan != null &&
+                    vaksin.keterangan!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    vaksin.keterangan!,
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (_addingVaksin)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            IconButton(
+              onPressed: () => _showKonfirmasiTambahVaksin(vaksin),
+              icon: Icon(
+                Icons.arrow_forward_ios,
+                color: AppColors.accent.withOpacity(0.8),
+                size: 16,
+              ),
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showKonfirmasiTambahVaksin(VaksinMasterModel vaksin) async {
+    String petugasInfo = "Petugas Posyandu";
+    String lokasiInfo = "Posyandu Dahlia X";
+
+    final userResult = await _authRepo.getUserProfile();
+    userResult.fold(
+      (error) {
+      },
+      (user) {
+        if (user.username != null && user.username!.isNotEmpty) {
+          petugasInfo = user.username!;
+        }
+      },
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.vaccines, color: AppColors.primary),
+            const SizedBox(width: 8),
+            const Text("Tambah Vaksin"),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Apakah Anda yakin ingin memberikan vaksin:",
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    vaksin.namaVaksin,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Kode: ${vaksin.kode}",
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                  Text(
+                    "Usia: ${vaksin.usiaBulan} bulan",
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 6),
+                  Divider(color: Colors.grey.shade300, height: 1),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Petugas: $petugasInfo",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    "Lokasi: $lokasiInfo",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    "Tanggal: ${DateFormat('dd MMM yyyy').format(DateTime.now())}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Vaksin akan langsung ditambahkan ke riwayat ${widget.balita.namaBalita}",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _tambahVaksinDariRekomendasi(vaksin);
+            },
+            child: const Text(
+              "Ya, Tambahkan",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _tambahVaksinDariRekomendasi(VaksinMasterModel vaksin) async {
+    if (_addingVaksin) return;
+
+    setState(() => _addingVaksin = true);
+
+    try {
+      final userResult = await _authRepo.getUserProfile();
+
+      String petugas = "Petugas Posyandu";
+      String lokasi = "Posyandu";
+
+      userResult.fold(
+        (error) {
+          print("Gagal ambil data user: $error");
+        },
+        (user) {
+          if (user.username != null && user.username!.isNotEmpty) {
+            petugas = user.username!;
+          } else {
+            petugas = "Petugas Posyandu";
+          }
+        },
+      );
+
+      final request = VaksinRequestModel(
+        nik_balita: widget.balita.nikBalita,
+        vaksin_id: vaksin.id,
+        tanggal: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+        petugas: petugas,
+        batch_no: null,
+        lokasi: lokasi,
+      );
+
+      final result = await _vaksinRepo.tambahVaksin(request);
+
+      result.fold(
+        (error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar.show(message: error, type: SnackBarType.error),
+          );
+        },
+        (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar.show(
+              message: "Vaksin ${vaksin.namaVaksin} berhasil ditambahkan",
+              type: SnackBarType.success,
+            ),
+          );
+          _refreshData(); 
+        },
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar.show(
+          message: "Terjadi kesalahan: $e",
+          type: SnackBarType.error,
+        ),
+      );
+    } finally {
+      setState(() => _addingVaksin = false);
+    }
+  }
+
+  Widget _buildRiwayatSection() {
+    final riwayat = _vaksinData?.data ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.history, color: AppColors.primary, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                "Riwayat Vaksin",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            Text(
+              "${riwayat.length} item",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade500,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (riwayat.isEmpty)
+          _buildEmptyState()
+        else
+          Column(
+            children: riwayat
+                .map((vaksin) => _buildRiwayatItem(vaksin))
+                .toList(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.vaccines_outlined, size: 64, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          const Text(
+            "Belum Ada Riwayat Vaksin",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Tambahkan vaksin pertama untuk ${widget.balita.namaBalita}",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRiwayatItem(VaksinRiwayatModel vaksin) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.check_circle_rounded,
+              color: Colors.green,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 35,
-                      backgroundColor: AppColors.primary.withOpacity(0.2),
-                      child: const Icon(
-                        Icons.child_care,
-                        size: 36,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            balita.namaBalita,
+                            vaksin.namaVaksin,
                             style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                              fontSize: 15,
                             ),
                           ),
-                          Text(
-                            "NIK: ${balita.nikBalita}",
-                            style: const TextStyle(color: Colors.black54),
-                          ),
-                          Text(
-                            "${_umurBulan()} bulan",
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              _buildDetailChip(
+                                "Usia ${vaksin.usiaBulan} bln",
+                                AppColors.primaryLight,
+                                Colors.white,
+                              ),
+                              _buildDetailChip(
+                                vaksin.kode,
+                                Colors.grey.shade100,
+                                Colors.grey.shade700,
+                              ),
+                            ],
                           ),
                         ],
                       ),
+                    ),
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        Icons.more_vert,
+                        color: Colors.grey.shade500,
+                        size: 20,
+                      ),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.edit_outlined,
+                                color: Colors.blue,
+                                size: 18,
+                              ),
+                              SizedBox(width: 8),
+                              Text('Edit'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                                size: 18,
+                              ),
+                              SizedBox(width: 8),
+                              Text('Hapus'),
+                            ],
+                          ),
+                        ),
+                      ],
+                      onSelected: (value) {
+                        if (value == 'delete') {
+                          _showDeleteDialog(vaksin.id);
+                        } else if (value == 'edit') {
+                          _navigateToEditVaksin(vaksin);
+                        }
+                      },
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 25),
-
-                const Text(
-                  "Progress Vaksin",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                    fontSize: 16,
-                  ),
-                ),
                 const SizedBox(height: 8),
-
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 14,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                  ),
-                ),
-                const SizedBox(height: 6),
                 Text(
-                  "${sudah.length} dari ${_master.length} vaksin selesai",
-                  style: const TextStyle(color: Colors.black54),
+                  "Diberikan: ${DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.parse(vaksin.tanggal))}",
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
-
-                const SizedBox(height: 30),
-
-                const Text(
-                  "Sudah Diambil",
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                if (sudah.isEmpty)
-                  const Text(
-                    "Belum ada riwayat vaksin",
-                    style: TextStyle(color: Colors.black54),
-                  )
-                else
-                  ...sudah.map((v) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(14),
+                if (vaksin.catatan.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      vaksin.catatan,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                            size: 26,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  v.namaVaksin,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                Text(
-                                  "Tanggal: ${v.tanggalPemberian}",
-                                  style: const TextStyle(color: Colors.black54),
-                                ),
-                                Text(
-                                  "Catatan: ${v.catatan}",
-                                  style: const TextStyle(color: Colors.black45),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-
-                const SizedBox(height: 20),
-
-                const Text(
-                  "Belum Diambil",
-                  style: TextStyle(
-                    color: Colors.redAccent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                if (belum.isEmpty)
-                  const Text(
-                    "Semua vaksin sudah lengkap 🎉",
-                    style: TextStyle(color: Colors.black54),
-                  )
-                else
-                  ...belum.map((v) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.error,
-                            color: Colors.redAccent,
-                            size: 26,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  v.namaVaksin,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                Text(
-                                  "Usia rekomendasi: ${v.usiaBulan} bulan",
-                                  style: const TextStyle(color: Colors.black54),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-
-                const SizedBox(height: 30),
-
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  onPressed: () {
-                    // TODO: buka form tambah vaksin
-                  },
-                  child: const Text(
-                    "Tambah Catatan Vaksin",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
+                ],
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToEditVaksin(VaksinRiwayatModel vaksin) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TambahVaksinBalita(
+          balita: widget.balita,
+          vaksinData: vaksin,
+          isEdit: true,
+        ),
+      ),
+    ).then((refresh) {
+      if (refresh == true) {
+        _refreshData();
+      }
+    });
+  }
+
+  Widget _buildDetailChip(String text, Color bgColor, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          color: textColor,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(int vaksinId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Text("Hapus Vaksin"),
+          ],
+        ),
+        content: const Text(
+          "Data vaksin yang sudah dihapus tidak dapat dikembalikan. Yakin ingin menghapus?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteVaksin(vaksinId);
+            },
+            child: const Text("Hapus", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteVaksin(int id) async {
+    final result = await _vaksinRepo.deleteVaksin(id);
+
+    result.fold(
+      (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(message: error, type: SnackBarType.error),
+        );
+      },
+      (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(message: success, type: SnackBarType.success),
+        );
+        _refreshData();
+      },
     );
   }
 }

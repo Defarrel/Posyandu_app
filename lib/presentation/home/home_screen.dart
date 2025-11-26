@@ -128,6 +128,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _tahunDipilih = DateTime.now().year;
     _tahunList = List.generate(5, (i) => DateTime.now().year - i);
 
+    _refreshAll();
+
     _loadNamaKader();
     _fetchStatistik();
 
@@ -149,6 +151,13 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _namaKader = nama ?? "Kader";
     });
+  }
+
+  Future<void> _refreshAll() async {
+    await _loadNamaKader();
+    await _fetchStatistik();
+    await _loadBalitaTrending();
+    setState(() {});
   }
 
   Future<void> _loadBalitaTrending() async {
@@ -212,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         top: false,
         child: RefreshIndicator(
-          onRefresh: _fetchStatistik,
+          onRefresh: _refreshAll,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(
@@ -229,6 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 _buildMenuSection(context),
                 const SizedBox(height: 20),
+
                 _buildAdditionalMenuSection(context),
               ],
             ),
@@ -434,7 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Text(
-              "Semua balita dalam kondisi baik bulan ini 🎉",
+              "Semua balita dalam kondisi baik bulan ini",
               style: TextStyle(color: Colors.black54),
             ),
           )
@@ -551,7 +561,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const TambahBalitaScreen()),
-                ),
+                ).then((_) => _refreshAll()),
               ),
               MenuButton(
                 title: "Tambah Data\nPerkembangan",
@@ -561,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(
                     builder: (_) => const CariPerkembanganBalitaScreen(),
                   ),
-                ),
+                ).then((_) => _refreshAll()),
               ),
               MenuButton(
                 title: "Grafik Bulanan\nBalita",
@@ -571,7 +581,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(
                     builder: (_) => const GrafikBulananScreen(),
                   ),
-                ),
+                ).then((_) => _refreshAll()),
               ),
               MenuButton(
                 title: "Cari Data\nBalita",
@@ -608,7 +618,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const VaksinBalitaScreen()),
-              );
+              ).then((_) => _refreshAll());
             },
           ),
           const SizedBox(height: 16),
@@ -622,7 +632,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(
                   builder: (_) => const KelulusanBalitaScreen(),
                 ),
-              );
+              ).then((_) => _refreshAll());
             },
           ),
           const SizedBox(height: 30),

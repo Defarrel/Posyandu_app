@@ -5,7 +5,7 @@ import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:dartz/dartz.dart' hide State;
 import 'package:posyandu_app/presentation/vaksin/vaksin_detail_screen.dart';
-import 'package:posyandu_app/presentation/vaksin/kelola_vaksin_screen.dart';
+import 'package:posyandu_app/presentation/vaksin/crud_vaksin/kelola_vaksin_screen.dart';
 import 'package:intl/intl.dart';
 
 class VaksinBalitaScreen extends StatefulWidget {
@@ -142,28 +142,41 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: "Cari nama atau NIK balita...",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.grey[200],
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              onChanged: (v) {
-                setState(() => _search = v);
-                // Scroll ke data balita ketika search
-                if (v.isNotEmpty) {
-                  Future.delayed(const Duration(milliseconds: 300), () {
-                    _scrollToBalitaSection();
-                  });
-                }
-              },
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: "Cari nama / NIK balita",
+                  prefixIcon: const Icon(Icons.search, color: Colors.black54),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() => _search = value);
+
+                  if (value.isNotEmpty) {
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      _scrollToBalitaSection();
+                    });
+                  }
+                },
+              ),
             ),
             const SizedBox(height: 20),
 
@@ -186,41 +199,77 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-          SliverToBoxAdapter(
-            child: Container(
-              key: _balitaSectionKey,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Data Balita",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  if (totalBalita > 5)
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _showAllBalita = !_showAllBalita;
-                        });
-                      },
-                      child: Text(
-                        _showAllBalita
-                            ? "Lihat Lebih Sedikit"
-                            : "Lihat Semua ($totalBalita)",
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
+          if (_showAllBalita)
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _StickyHeaderDelegate(
+                child: Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Data Balita",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _showAllBalita = false;
+                          });
+                        },
+                        child: const Text(
+                          "Lihat Lebih Sedikit",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverToBoxAdapter(
+              child: Container(
+                key: _balitaSectionKey,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Data Balita",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                ],
+                    if (totalBalita > 5)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _showAllBalita = true;
+                          });
+                        },
+                        child: Text(
+                          "Lihat Semua ($totalBalita)",
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
@@ -271,7 +320,6 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
                   ),
                   child: Row(
                     children: [
-                      // Avatar
                       Container(
                         width: 50,
                         height: 50,
@@ -431,7 +479,10 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
                 buttonText: "Lihat Jadwal",
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Fitur Jadwal Vaksin")),
+                    CustomSnackBar.show(
+                      message: "Fitur Belum Tersedia",
+                      type: SnackBarType.info,
+                    ),
                   );
                 },
               ),
@@ -473,10 +524,7 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withOpacity(0.9),
-            AppColors.primary.withOpacity(0.7),
-          ],
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -544,5 +592,44 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
         ],
       ),
     );
+  }
+}
+
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _StickyHeaderDelegate({required this.child});
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          if (shrinkOffset > 0)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  @override
+  double get maxExtent => 60;
+
+  @override
+  double get minExtent => 60;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) {
+    return true;
   }
 }

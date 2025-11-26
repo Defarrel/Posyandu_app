@@ -126,7 +126,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                                       builder: (_) =>
                                           DetailBalitaScreen(balita: balita),
                                     ),
-                                  ),
+                                  ).then((_) => _fetchBalita()),
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
                                     curve: Curves.easeOut,

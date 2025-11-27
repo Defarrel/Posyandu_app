@@ -40,6 +40,8 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
   String? _vaksinError;
   String? _tanggalError;
 
+  List<VaksinRiwayatModel> _riwayatVaksin = [];
+
   @override
   void initState() {
     super.initState();
@@ -47,6 +49,7 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
     if (widget.isEdit && widget.vaksinData != null) {
       _populateFormData();
     }
+    _loadRiwayatVaksin();
   }
 
   void _populateFormData() {
@@ -61,6 +64,20 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
     } catch (e) {
       _selectedDate = DateTime.now();
     }
+  }
+
+  Future<void> _loadRiwayatVaksin() async {
+    final result = await _repo.getVaksinBalita(widget.balita.nikBalita);
+    result.fold(
+      (error) {
+        print("Gagal load riwayat vaksin: $error");
+      },
+      (data) {
+        setState(() {
+          _riwayatVaksin = data.data ?? [];
+        });
+      },
+    );
   }
 
   Future<void> _loadVaksinMaster() async {
@@ -100,6 +117,21 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
     }
   }
 
+  bool _isVaksinSudahDiberikan() {
+    if (_selectedVaksin == null) return false;
+
+    final vaksinSudahAda = _riwayatVaksin.any(
+      (riwayat) => riwayat.vaksinId == _selectedVaksin!.id,
+    );
+
+    if (widget.isEdit && widget.vaksinData != null) {
+      return vaksinSudahAda &&
+          widget.vaksinData!.vaksinId != _selectedVaksin!.id;
+    }
+
+    return vaksinSudahAda;
+  }
+
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -127,6 +159,17 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
 
     if (_vaksinError != null || _tanggalError != null) return;
 
+    if (!widget.isEdit && _isVaksinSudahDiberikan()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar.show(
+          message:
+              "Vaksin ${_selectedVaksin!.namaVaksin} sudah pernah diberikan kepada ${widget.balita.namaBalita}",
+          type: SnackBarType.error,
+        ),
+      );
+      return;
+    }
+
     setState(() => _loading = true);
 
     final request = VaksinRequestModel(
@@ -134,7 +177,6 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
       vaksin_id: widget.isEdit
           ? (_selectedVaksin?.id ?? widget.vaksinData!.vaksinId)
           : _selectedVaksin!.id,
-
       tanggal: DateFormat('yyyy-MM-dd').format(_selectedDate!),
       petugas: _petugasController.text.isEmpty ? null : _petugasController.text,
       batch_no: _batchNoController.text.isEmpty
@@ -230,6 +272,9 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
                   _buildFormSection(isEdit),
                   const SizedBox(height: 30),
 
+                  if (!isEdit && _isVaksinSudahDiberikan())
+                    _buildWarningDuplikasi(),
+
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
@@ -249,6 +294,51 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildWarningDuplikasi() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.accent.withOpacity(0.8),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Vaksin Sudah Pernah Diberikan",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.accent.withOpacity(0.8),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Vaksin ${_selectedVaksin?.namaVaksin ?? ''} sudah pernah diberikan kepada ${widget.balita.namaBalita}. Tekan simpan untuk tetap menambahkannya.",
+                  style: TextStyle(
+                    color: AppColors.accent.withOpacity(0.8),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -338,15 +428,52 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
                         : "Pilih jenis vaksin",
                   ),
                   items: _listVaksin.map((VaksinMasterModel vaksin) {
+                    final sudahDiberikan = _riwayatVaksin.any(
+                      (riwayat) => riwayat.vaksinId == vaksin.id,
+                    );
+
                     return DropdownMenuItem<VaksinMasterModel>(
                       value: vaksin,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            vaksin.namaVaksin,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  vaksin.namaVaksin,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: sudahDiberikan && !isEdit
+                                        ? Colors.orange.shade700
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              if (sudahDiberikan && !isEdit)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: Colors.orange.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    "SUDAH DIBERIKAN",
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.orange.shade700,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                           Text(
                             "Usia ${vaksin.usiaBulan} bulan - ${vaksin.kode}",

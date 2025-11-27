@@ -49,7 +49,6 @@ class LottieWarningDot extends StatelessWidget {
           height: 30,
           child: Lottie.asset(_getLottiePath(), repeat: true, animate: true),
         ),
-
         Container(
           width: 8,
           height: 8,
@@ -95,26 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
   late ScrollController _autoScrollController;
   int _currentAutoIndex = 0;
 
-  void _startAutoScroll() {
-    Future.delayed(const Duration(seconds: 2), () async {
-      if (!mounted || _balitaTrending.isEmpty) return;
-
-      final maxIndex = _balitaTrending.length - 1;
-
-      _currentAutoIndex = (_currentAutoIndex < maxIndex)
-          ? _currentAutoIndex + 1
-          : 0;
-
-      await _autoScrollController.animateTo(
-        _currentAutoIndex * 260.0,
-        duration: const Duration(milliseconds: 900),
-        curve: Curves.easeInOut,
-      );
-
-      _startAutoScroll();
-    });
-  }
-
   int _normal = 0;
   int _kurang = 0;
   int _obesitas = 0;
@@ -129,14 +108,29 @@ class _HomeScreenState extends State<HomeScreen> {
     _tahunList = List.generate(5, (i) => DateTime.now().year - i);
 
     _refreshAll();
+  }
 
-    _loadNamaKader();
-    _fetchStatistik();
+  void _startAutoScroll() {
+    if (!mounted || _balitaTrending.isEmpty) return;
 
-    _loadBalitaTrending().then((_) {
-      if (_balitaTrending.isNotEmpty) {
-        _startAutoScroll();
+    Future.delayed(const Duration(seconds: 3), () async {
+      if (!mounted || _balitaTrending.isEmpty) return;
+
+      final maxIndex = _balitaTrending.length - 1;
+
+      _currentAutoIndex = (_currentAutoIndex < maxIndex)
+          ? _currentAutoIndex + 1
+          : 0;
+
+      if (_autoScrollController.hasClients) {
+        await _autoScrollController.animateTo(
+          _currentAutoIndex * 266.0,
+          duration: const Duration(milliseconds: 900),
+          curve: Curves.easeInOut,
+        );
       }
+
+      _startAutoScroll();
     });
   }
 
@@ -148,39 +142,45 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadNamaKader() async {
     final nama = await _storage.read(key: 'username');
-    setState(() {
-      _namaKader = nama ?? "Kader";
-    });
+    if (mounted) {
+      setState(() {
+        _namaKader = nama ?? "Kader";
+      });
+    }
   }
 
   Future<void> _refreshAll() async {
     await _loadNamaKader();
     await _fetchStatistik();
-    await _loadBalitaTrending();
-    setState(() {});
+    await _loadBalitaTrending().then((_) {
+      if (_balitaTrending.isNotEmpty) {
+        _startAutoScroll();
+      }
+    });
   }
 
   Future<void> _loadBalitaTrending() async {
     final result = await _repository.getBalitaPerluPerhatian();
 
-    result.fold(
-      (err) {
-        setState(() {
-          _loadingTrending = false;
-        });
-      },
-      (data) {
-        setState(() {
-          _balitaTrending = data.map((e) => e.toMap()).toList();
-
-          _loadingTrending = false;
-        });
-      },
-    );
+    if (mounted) {
+      result.fold(
+        (err) {
+          setState(() {
+            _loadingTrending = false;
+          });
+        },
+        (data) {
+          setState(() {
+            _balitaTrending = data.map((e) => e.toMap()).toList();
+            _loadingTrending = false;
+          });
+        },
+      );
+    }
   }
 
   Future<void> _fetchStatistik() async {
-    setState(() => _isLoadingChart = true);
+    if (mounted) setState(() => _isLoadingChart = true);
 
     final bulanIndex =
         _bulanList.indexOf(_bulanDipilih ?? _bulanList.first) + 1;
@@ -191,25 +191,27 @@ class _HomeScreenState extends State<HomeScreen> {
       tahun: tahun,
     );
 
-    result.fold(
-      (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar.show(
-            message: ("Gagal memuat data grafik: $error"),
-            type: SnackBarType.error,
-          ),
-        );
-        setState(() => _isLoadingChart = false);
-      },
-      (data) {
-        setState(() {
-          _normal = data["normal"];
-          _kurang = data["kurang"];
-          _obesitas = data["obesitas"];
-          _isLoadingChart = false;
-        });
-      },
-    );
+    if (mounted) {
+      result.fold(
+        (error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar.show(
+              message: ("Gagal memuat data grafik: $error"),
+              type: SnackBarType.error,
+            ),
+          );
+          setState(() => _isLoadingChart = false);
+        },
+        (data) {
+          setState(() {
+            _normal = data["normal"];
+            _kurang = data["kurang"];
+            _obesitas = data["obesitas"];
+            _isLoadingChart = false;
+          });
+        },
+      );
+    }
   }
 
   @override
@@ -231,14 +233,11 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               children: [
                 _buildGrafikCard(),
-                const SizedBox(height: 20),
-
+                const SizedBox(height: 30),
                 _buildBalitaTrendingSection(),
-                const SizedBox(height: 20),
-
+                const SizedBox(height: 30),
                 _buildMenuSection(context),
-                const SizedBox(height: 20),
-
+                const SizedBox(height: 30),
                 _buildAdditionalMenuSection(context),
               ],
             ),
@@ -257,43 +256,82 @@ class _HomeScreenState extends State<HomeScreen> {
       _GrafikData('Normal', _normal, Colors.green),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text(
-                  'Grafik Balita Bulan ',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 17,
-                    letterSpacing: 0.3,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withOpacity(0.7),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
+                child: const Icon(
+                  Icons.bar_chart_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Grafik Balita Bulan",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
 
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           CustomDropdownButton(
                             value: _bulanDipilih ?? _bulanList.first,
@@ -323,99 +361,88 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: _isLoadingChart
+                      ? const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        )
+                      : SfCartesianChart(
+                          plotAreaBorderWidth: 0,
+                          primaryXAxis: CategoryAxis(
+                            labelStyle: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          primaryYAxis: NumericAxis(
+                            labelStyle: const TextStyle(color: Colors.black),
+                            axisLine: const AxisLine(width: 0),
+                            majorGridLines: MajorGridLines(
+                              color: Colors.black.withOpacity(0.3),
+                              width: 0.5,
+                            ),
+                            interval: 1,
+                          ),
+                          tooltipBehavior: TooltipBehavior(enable: true),
+                          series: <CartesianSeries<_GrafikData, String>>[
+                            ColumnSeries<_GrafikData, String>(
+                              animationDuration: 1300,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(10),
+                                topRight: Radius.circular(10),
+                              ),
+                              width: 0.55,
+                              dataSource: chartData,
+                              xValueMapper: (data, _) => data.kategori,
+                              yValueMapper: (data, _) => data.jumlah,
+                              pointColorMapper: (data, _) => data.warna,
+                              dataLabelSettings: const DataLabelSettings(
+                                isVisible: true,
+                                labelAlignment: ChartDataLabelAlignment.middle,
+                                textStyle: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+                const SizedBox(height: 14),
+
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.group, color: Colors.white, size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        "Total Balita: $totalBalita",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 16),
-
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: _isLoadingChart
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                      ),
-                    )
-                  : SfCartesianChart(
-                      plotAreaBorderWidth: 0,
-                      primaryXAxis: CategoryAxis(
-                        labelStyle: const TextStyle(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      primaryYAxis: NumericAxis(
-                        labelStyle: const TextStyle(color: Colors.black87),
-                        axisLine: const AxisLine(width: 0),
-                        majorGridLines: const MajorGridLines(
-                          color: Colors.grey,
-                          width: 0.3,
-                        ),
-                        interval: 1,
-                      ),
-                      tooltipBehavior: TooltipBehavior(enable: true),
-                      series: <CartesianSeries<_GrafikData, String>>[
-                        ColumnSeries<_GrafikData, String>(
-                          animationDuration: 1300,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                          ),
-                          width: 0.55,
-                          dataSource: chartData,
-                          xValueMapper: (data, _) => data.kategori,
-                          yValueMapper: (data, _) => data.jumlah,
-                          pointColorMapper: (data, _) => data.warna,
-                          dataLabelSettings: const DataLabelSettings(
-                            isVisible: true,
-                            labelAlignment: ChartDataLabelAlignment.middle,
-                            textStyle: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-
-            const SizedBox(height: 14),
-
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.group, color: Colors.white, size: 18),
-                  const SizedBox(width: 6),
-                  Text(
-                    "Total Balita: $totalBalita",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -423,19 +450,49 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            "Informasi Balita",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withOpacity(0.7),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.info_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Informasi Balita",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 7),
-
         if (_loadingTrending)
           const Center(
             child: CircularProgressIndicator(color: AppColors.primary),
@@ -459,7 +516,6 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: _balitaTrending.length,
               itemBuilder: (context, index) {
                 final item = _balitaTrending[index];
-
                 final kms = (item["kms"] ?? "").toString().toLowerCase();
 
                 Color statusColor = kms == "merah"
@@ -474,7 +530,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   margin: const EdgeInsets.only(right: 16),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -487,9 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       LottieWarningDot(kms: kms),
-
                       const SizedBox(width: 12),
-
                       Expanded(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -539,15 +593,46 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text(
-            'Menu Utama',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withOpacity(0.7),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.dashboard_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Menu Utama',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -601,13 +686,44 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Menu Lainnya',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withOpacity(0.7),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.more_horiz_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Menu Lainnya',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           ModernMenuCard(
@@ -678,7 +794,7 @@ class _ModernMenuCardState extends State<ModernMenuCard>
         curve: Curves.easeInOut,
         transform: Matrix4.identity()..scale(_isPressed ? 0.97 : 1.0),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(

@@ -175,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _buildModernInfoCard(List<dynamic> items) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -211,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       gradient: LinearGradient(
                         colors: [
                           AppColors.primary.withOpacity(0.15),
-                          AppColors.accent.withOpacity(0.1),
+                          AppColors.primary.withOpacity(0.4),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),

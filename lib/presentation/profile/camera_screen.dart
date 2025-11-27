@@ -61,7 +61,6 @@ class _CameraScreenState extends State<CameraScreen> {
   Future<void> _captureImage() async {
     final XFile file = await _controller!.takePicture();
 
-    // SIMPAN secara permanen
     final saved = await StorageHelper.saveImage(File(file.path), "CAM_");
 
     Navigator.pop(context, saved);

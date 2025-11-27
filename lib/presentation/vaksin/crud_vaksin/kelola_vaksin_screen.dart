@@ -249,10 +249,9 @@ class _KelolaVaksinScreenState extends State<KelolaVaksinScreen> {
         ),
       ),
 
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text("Tambah", style: TextStyle(color: Colors.white)),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
         onPressed: () {
           Navigator.push(
             context,

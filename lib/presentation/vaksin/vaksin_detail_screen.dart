@@ -1,4 +1,3 @@
-// vaksin_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
@@ -38,15 +37,12 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
 
   Future<void> _fetchAllData() async {
     setState(() => _loading = true);
-
     await Future.wait([_fetchVaksinData(), _fetchRekomendasiVaksin()]);
-
     setState(() => _loading = false);
   }
 
   Future<void> _fetchVaksinData() async {
     final result = await _vaksinRepo.getVaksinBalita(widget.balita.nikBalita);
-
     result.fold(
       (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -63,11 +59,9 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
 
   Future<void> _fetchRekomendasiVaksin() async {
     setState(() => _loadingRekomendasi = true);
-
     final result = await _vaksinRepo.getRekomendasiVaksin(
       widget.balita.nikBalita,
     );
-
     result.fold(
       (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +74,6 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
         });
       },
     );
-
     setState(() => _loadingRekomendasi = false);
   }
 
@@ -101,6 +94,8 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final umur = _hitungUmurBulan();
+    final bool showRekomendasi =
+        _rekomendasiData?.vaksinSelanjutnya?.isNotEmpty ?? false;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -143,28 +138,198 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
           : RefreshIndicator(
               onRefresh: _refreshData,
               color: AppColors.primary,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildInfoBalita(umur),
-                    const SizedBox(height: 20),
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          _buildInfoBalita(umur),
+                          const SizedBox(height: 20),
+                          _buildProgressSection(),
+                          const SizedBox(height: 10),
+                        ],
+                      ),
+                    ),
+                  ),
 
-                    _buildProgressSection(),
-                    const SizedBox(height: 20),
+                  if (showRekomendasi)
+                    SliverMainAxisGroup(
+                      slivers: [
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _SectionHeaderDelegate(
+                            child: _buildRekomendasiHeader(),
+                            height: 60,
+                          ),
+                        ),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _buildRekomendasiContent(),
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      ],
+                    ),
 
-                    if (_rekomendasiData?.vaksinSelanjutnya?.isNotEmpty ??
-                        false)
-                      _buildRekomendasiSection(),
+                  SliverMainAxisGroup(
+                    slivers: [
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _SectionHeaderDelegate(
+                          child: _buildRiwayatHeader(),
+                          height: 60,
+                        ),
+                      ),
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final riwayat = _vaksinData?.data ?? [];
+                            if (riwayat.isEmpty) {
+                              if (index == 0) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: _buildEmptyState(),
+                                );
+                              }
+                              return null;
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: _buildRiwayatItem(riwayat[index]),
+                            );
+                          },
+                          childCount: (_vaksinData?.data?.isEmpty ?? true)
+                              ? 1
+                              : _vaksinData!.data!.length,
+                        ),
+                      ),
+                    ],
+                  ),
 
-                    _buildRiwayatSection(),
-
-                    const SizedBox(height: 80),
-                  ],
-                ),
+                  // Spacer Bawah
+                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                ],
               ),
             ),
+    );
+  }
+
+  Widget _buildRekomendasiHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: Colors.white, // Penting agar content di belakang tidak terlihat
+      alignment: Alignment.centerLeft,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.recommend,
+              color: AppColors.accent.withOpacity(0.8),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              "Rekomendasi Vaksin",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          if (_loadingRekomendasi)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRiwayatHeader() {
+    final riwayat = _vaksinData?.data ?? [];
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: Colors.white, // Penting agar content di belakang tidak terlihat
+      alignment: Alignment.centerLeft,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.history,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              "Riwayat Vaksin",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Text(
+            "${riwayat.length} item",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRekomendasiContent() {
+    final rekomendasi = _rekomendasiData?.vaksinSelanjutnya ?? [];
+    final usiaBulan = _rekomendasiData?.usiaBulan ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Berdasarkan usia $usiaBulan bulan, berikut vaksin yang direkomendasikan:",
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 12),
+        ...rekomendasi.take(3).map((vaksin) => _buildRekomendasiItem(vaksin)),
+        if (rekomendasi.length > 3) ...[
+          const SizedBox(height: 8),
+          Text(
+            "+ ${rekomendasi.length - 3} vaksin lainnya",
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade500,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+        const SizedBox(height: 10),
+      ],
     );
   }
 
@@ -359,71 +524,6 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
     );
   }
 
-  Widget _buildRekomendasiSection() {
-    final rekomendasi = _rekomendasiData?.vaksinSelanjutnya ?? [];
-    final usiaBulan = _rekomendasiData?.usiaBulan ?? 0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.recommend,
-                  color: AppColors.accent.withOpacity(0.8),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  "Rekomendasi Vaksin Berikutnya",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-              if (_loadingRekomendasi)
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            "Berdasarkan usia $usiaBulan bulan, berikut vaksin yang direkomendasikan:",
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 12),
-          ...rekomendasi.take(3).map((vaksin) => _buildRekomendasiItem(vaksin)),
-          if (rekomendasi.length > 3) ...[
-            const SizedBox(height: 8),
-            Text(
-              "+ ${rekomendasi.length - 3} vaksin lainnya",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade500,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   Widget _buildRekomendasiItem(VaksinMasterModel vaksin) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -504,15 +604,13 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
     String lokasiInfo = "Posyandu Dahlia X";
 
     final userResult = await _authRepo.getUserProfile();
-    userResult.fold(
-      (error) {
-      },
-      (user) {
-        if (user.username != null && user.username!.isNotEmpty) {
-          petugasInfo = user.username!;
-        }
-      },
-    );
+    userResult.fold((error) {}, (user) {
+      if (user.username != null && user.username!.isNotEmpty) {
+        petugasInfo = user.username!;
+      }
+    });
+
+    if (!mounted) return;
 
     showDialog(
       context: context,
@@ -676,7 +774,7 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
               type: SnackBarType.success,
             ),
           );
-          _refreshData(); 
+          _refreshData();
         },
       );
     } catch (e) {
@@ -689,56 +787,6 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
     } finally {
       setState(() => _addingVaksin = false);
     }
-  }
-
-  Widget _buildRiwayatSection() {
-    final riwayat = _vaksinData?.data ?? [];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(Icons.history, color: AppColors.primary, size: 24),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                "Riwayat Vaksin",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            Text(
-              "${riwayat.length} item",
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        if (riwayat.isEmpty)
-          _buildEmptyState()
-        else
-          Column(
-            children: riwayat
-                .map((vaksin) => _buildRiwayatItem(vaksin))
-                .toList(),
-          ),
-      ],
-    );
   }
 
   Widget _buildEmptyState() {
@@ -1005,5 +1053,37 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
         _refreshData();
       },
     );
+  }
+}
+
+class _SectionHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _SectionHeaderDelegate({required this.child, required this.height});
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      color: Colors.white,
+      height: height,
+      alignment: Alignment.center,
+      child: child,
+    );
+  }
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  bool shouldRebuild(covariant _SectionHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child;
   }
 }

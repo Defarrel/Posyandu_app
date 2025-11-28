@@ -19,14 +19,13 @@ class _CariPerkembanganBalitaScreenState
     extends State<CariPerkembanganBalitaScreen> {
   final TextEditingController _searchController = TextEditingController();
   final BalitaRepository _repository = BalitaRepository();
-  final ScrollController _scrollController =
-      ScrollController(); 
+  final ScrollController _scrollController = ScrollController();
 
   List<BalitaResponseModel> _balitaList = [];
   String _searchQuery = "";
   String _filterValue = "Semua";
   bool _isLoading = true;
-  bool _isStickyVisible = false; 
+  bool _isStickyVisible = false;
   @override
   void initState() {
     super.initState();
@@ -68,6 +67,11 @@ class _CariPerkembanganBalitaScreenState
         }
       },
       (data) {
+        data.sort(
+          (a, b) =>
+              a.namaBalita.toLowerCase().compareTo(b.namaBalita.toLowerCase()),
+        );
+
         if (mounted) {
           setState(() {
             _balitaList = data;
@@ -95,7 +99,6 @@ class _CariPerkembanganBalitaScreenState
       return 0;
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -152,13 +155,11 @@ class _CariPerkembanganBalitaScreenState
                     SliverToBoxAdapter(
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        color: Colors.white, 
+                        color: Colors.white,
                         child: Column(
                           children: [
                             _buildSearchFilterRow(isSticky: false),
-
                             const SizedBox(height: 12),
-
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -198,7 +199,6 @@ class _CariPerkembanganBalitaScreenState
                         ),
                       ),
                     ),
-
                     filteredList.isEmpty
                         ? SliverFillRemaining(
                             child: Center(
@@ -244,7 +244,6 @@ class _CariPerkembanganBalitaScreenState
                           ),
                   ],
                 ),
-
                 AnimatedSlide(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOutCubic,
@@ -432,7 +431,6 @@ class _CariPerkembanganBalitaScreenState
                 ),
               ),
               const SizedBox(width: 16),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,9 +490,7 @@ class _CariPerkembanganBalitaScreenState
                   ],
                 ),
               ),
-
               const SizedBox(width: 8),
-
               Material(
                 color: Colors.transparent,
                 child: InkWell(

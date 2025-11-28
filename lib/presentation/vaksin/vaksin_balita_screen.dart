@@ -60,6 +60,11 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
         setState(() => _loading = false);
       },
       (data) {
+        data.sort(
+          (a, b) =>
+              a.namaBalita.toLowerCase().compareTo(b.namaBalita.toLowerCase()),
+        );
+
         setState(() {
           _list = data;
           _loading = false;
@@ -469,7 +474,6 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
       ),
     );
   }
-
 
   Widget _buildVaksinasiSection() {
     return Column(

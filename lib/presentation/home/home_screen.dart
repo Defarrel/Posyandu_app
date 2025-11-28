@@ -4,6 +4,7 @@ import 'package:lottie/lottie.dart';
 import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/presentation/kelulusan/kelulusan_balita_screen.dart';
 import 'package:posyandu_app/presentation/vaksin/vaksin_balita_screen.dart';
+import 'package:posyandu_app/services/services_http_client.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:posyandu_app/core/components/buttons.dart';
 import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
@@ -191,27 +192,36 @@ class _HomeScreenState extends State<HomeScreen> {
       tahun: tahun,
     );
 
-    if (mounted) {
-      result.fold(
-        (error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            CustomSnackBar.show(
-              message: ("Gagal memuat data grafik: $error"),
-              type: SnackBarType.error,
-            ),
-          );
-          setState(() => _isLoadingChart = false);
-        },
-        (data) {
+    if (!mounted) return;
+
+    result.fold(
+      (error) async {
+        if (error.toString().toLowerCase().contains("token")) {
+          final client = ServiceHttpClient();
+          await client.handleTokenExpiredFromOutside();
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(
+            message: "Gagal memuat data grafik: $error",
+            type: SnackBarType.error,
+          ),
+        );
+
+        if (mounted) setState(() => _isLoadingChart = false);
+      },
+      (data) {
+        if (mounted) {
           setState(() {
             _normal = data["normal"];
             _kurang = data["kurang"];
             _obesitas = data["obesitas"];
             _isLoadingChart = false;
           });
-        },
-      );
-    }
+        }
+      },
+    );
   }
 
   @override
@@ -812,6 +822,7 @@ class _ModernMenuCardState extends State<ModernMenuCard>
                 width: 70,
                 height: 70,
                 decoration: BoxDecoration(
+                  color: AppColors.primaryLight.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Padding(

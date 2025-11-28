@@ -67,16 +67,6 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
     }
   }
 
-  String _formatNIK(String nik) {
-    if (nik.length <= 12) return nik;
-    final chunks = <String>[];
-    for (int i = 0; i < nik.length; i += 4) {
-      final end = i + 4;
-      chunks.add(nik.substring(i, end < nik.length ? end : nik.length));
-    }
-    return chunks.join(' ');
-  }
-
   @override
   Widget build(BuildContext context) {
     var filteredList = _balitaList.where((balita) {
@@ -99,7 +89,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       appBar: CustomAppBarCari(
         searchController: _searchController,
         filterValue: _filterKategori,
@@ -239,7 +229,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            _formatNIK(balita.nikBalita),
+                            (balita.nikBalita),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,

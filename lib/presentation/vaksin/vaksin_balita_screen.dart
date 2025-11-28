@@ -402,7 +402,7 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
-                                          "NIK: ${_formatNIK(b.nikBalita)}",
+                                          "NIK: ${(b.nikBalita)}",
                                           style: TextStyle(
                                             fontSize: 13,
                                             color: Colors.grey.shade600,
@@ -470,16 +470,6 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
     );
   }
 
-  String _formatNIK(String nik) {
-    if (nik.length <= 12) return nik;
-
-    final chunks = <String>[];
-    for (int i = 0; i < nik.length; i += 4) {
-      final end = i + 4;
-      chunks.add(nik.substring(i, end < nik.length ? end : nik.length));
-    }
-    return chunks.join(' ');
-  }
 
   Widget _buildVaksinasiSection() {
     return Column(

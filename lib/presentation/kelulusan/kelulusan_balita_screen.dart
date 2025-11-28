@@ -133,7 +133,11 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.primary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -492,7 +496,7 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
     final statusColor = _getStatusColor(item.status);
     final statusIcon = _getStatusIcon(item.status);
     final shortStatus = _getShortStatus(item.status);
-    final formattedNIK = _formatNIK(item.nikBalita);
+    final formattedNIK = (item.nikBalita);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -655,7 +659,7 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
       ),
     );
   }
-  
+
   String _getShortStatus(String status) {
     switch (status) {
       case "LULUS":
@@ -667,17 +671,6 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
       default:
         return status;
     }
-  }
-
-  String _formatNIK(String nik) {
-    if (nik.length <= 12) return nik;
-
-    final chunks = <String>[];
-    for (int i = 0; i < nik.length; i += 4) {
-      final end = i + 4;
-      chunks.add(nik.substring(i, end < nik.length ? end : nik.length));
-    }
-    return chunks.join(' ');
   }
 
   Color _getStatusColor(String status) {

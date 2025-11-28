@@ -10,7 +10,7 @@ import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
 import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
 import 'package:posyandu_app/presentation/perkembanganBalita/tambah_perkembangan_balita.dart';
-import 'package:posyandu_app/presentation/balita/tambah_balita_screen.dart'; // Import tambahan
+import 'package:posyandu_app/presentation/balita/tambah_balita_screen.dart';
 
 class DetailBalitaScreen extends StatefulWidget {
   final BalitaResponseModel balita;
@@ -29,22 +29,40 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   int _hitungUmurBulan(DateTime tglLahir) {
     final now = DateTime.now();
     int bulan = (now.year - tglLahir.year) * 12 + (now.month - tglLahir.month);
-
     if (now.day < tglLahir.day) bulan--;
-
     return bulan < 0 ? 0 : bulan;
   }
 
   Color _warnaVitaminABerdasarkanUmur(DateTime tglLahir) {
     final umurBulan = _hitungUmurBulan(tglLahir);
+    if (umurBulan >= 6 && umurBulan <= 11) return const Color(0xFF2196F3);
+    if (umurBulan >= 12 && umurBulan <= 59) return const Color(0xFFF44336);
+    return Colors.grey.shade400;
+  }
 
-    if (umurBulan >= 6 && umurBulan <= 11) {
-      return Colors.blue;
-    } else if (umurBulan >= 12 && umurBulan <= 60) {
-      return Colors.red;
+  String _labelVitaminABerdasarkanUmur(DateTime tglLahir) {
+    final umurBulan = _hitungUmurBulan(tglLahir);
+    if (umurBulan >= 6 && umurBulan <= 11) return "Vit A Biru";
+    if (umurBulan >= 12 && umurBulan <= 59) return "Vit A Merah";
+    return "Non Vit-A";
+  }
+
+  String _formatPhone(String phone) {
+    if (phone.isEmpty) return "-";
+    String cleanPhone = phone.replaceAll("-", "").replaceAll(" ", "");
+    if (cleanPhone.length <= 4) return cleanPhone;
+    List<String> chunks = [];
+    for (int i = 0; i < cleanPhone.length; i += 4) {
+      int end = (i + 4 < cleanPhone.length) ? i + 4 : cleanPhone.length;
+      chunks.add(cleanPhone.substring(i, end));
     }
+    return chunks.join("-");
+  }
 
-    return Colors.black;
+  String _formatJenisKelamin(String jk) {
+    if (jk.toUpperCase() == 'L') return "Laki-laki";
+    if (jk.toUpperCase() == 'P') return "Perempuan";
+    return jk;
   }
 
   List<PerkembanganBalitaResponseModel> _perkembanganList = [];
@@ -65,15 +83,17 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     "November",
     "Desember",
   ];
-  String _selectedBulan = "";
-  int _selectedTahun = DateTime.now().year;
-  Color _warnaNama = Colors.black;
+
+  late String _selectedBulan;
+  late int _selectedTahun;
   late BalitaResponseModel _balitaData;
+  String _selectedChartType = "Berat Badan (kg)";
 
   @override
   void initState() {
     super.initState();
     _balitaData = widget.balita;
+    _selectedTahun = DateTime.now().year;
     initializeDateFormatting('id_ID', null);
     _selectedBulan = _bulanList[DateTime.now().month - 1];
     _fetchPerkembangan();
@@ -83,36 +103,24 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     final balitaResult = await _balitaRepository.getBalitaByNIK(
       widget.balita.nikBalita,
     );
-
-    balitaResult.fold(
-      (error) {
-        log("Gagal memuat data balita terbaru: $error");
-      },
-      (updatedBalita) {
-        try {
-          final tglLahir = DateTime.parse(updatedBalita.tanggalLahir);
-          setState(() {
-            _warnaNama = _warnaVitaminABerdasarkanUmur(tglLahir);
-          });
-        } catch (e) {
-          setState(() => _warnaNama = Colors.black);
-        }
-      },
-    );
+    balitaResult.fold((l) => log("Error refresh balita: $l"), (r) {
+      if (mounted) setState(() => _balitaData = r);
+    });
 
     final result = await _repository.getPerkembanganByNIK(
       widget.balita.nikBalita,
     );
-
     result.fold(
       (error) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar.show(
-            message: "Gagal memuat data perkembangan: $error",
-            type: SnackBarType.error,
-          ),
-        );
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar.show(
+              message: "Gagal: $error",
+              type: SnackBarType.error,
+            ),
+          );
+        }
       },
       (dataList) {
         dataList.sort((a, b) {
@@ -121,11 +129,13 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           return dateB.compareTo(dateA);
         });
 
-        setState(() {
-          _perkembanganList = dataList;
-          _applyFilter();
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _perkembanganList = dataList;
+            _applyFilter();
+            _isLoading = false;
+          });
+        }
       },
     );
   }
@@ -139,28 +149,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     }
   }
 
-  String _formatJenisKelamin(String raw) {
-    final jk = raw.toLowerCase().replaceAll(" ", "");
-
-    if (jk == "l" || jk == "lakilaki") {
-      return "Laki-laki";
-    } else if (jk == "p" || jk == "perempuan") {
-      return "Perempuan";
-    }
-
-    return raw;
-  }
-
-  String _formatTanggalIndonesia(String? rawDate) {
-    if (rawDate == null || rawDate.isEmpty) return "-";
-    try {
-      final date = DateTime.parse(rawDate);
-      return DateFormat("d MMMM yyyy", "id_ID").format(date);
-    } catch (e) {
-      return rawDate;
-    }
-  }
-
   void _applyFilter() {
     final bulanIndex = _bulanList.indexOf(_selectedBulan) + 1;
     final filtered = _perkembanganList.where((data) {
@@ -168,704 +156,848 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       return tgl.month == bulanIndex && tgl.year == _selectedTahun;
     }).toList();
 
-    log(
-      "[DEBUG] Filter: $_selectedBulan $_selectedTahun -> ditemukan ${filtered.length} data",
-    );
-
     setState(() {
-      _filteredPerkembangan = filtered.isNotEmpty ? filtered.last : null;
+      _filteredPerkembangan = filtered.isNotEmpty ? filtered.first : null;
     });
   }
 
-  Future<void> _handleUpdateBalita() async {
+  Future<void> _handleEditBalita() async {
     final updated = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => TambahBalitaScreen(isEdit: true, data: _balitaData),
       ),
     );
-
-    if (updated == true) {
-      final balitaResult = await _balitaRepository.getBalitaByNIK(
-        _balitaData.nikBalita,
-      );
-
-      balitaResult.fold(
-        (error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            CustomSnackBar.show(
-              message: ("Gagal memuat ulang data balita: $error"),
-              type: SnackBarType.error,
-            ),
-          );
-        },
-        (newBalita) {
-          setState(() {
-            _balitaData = newBalita;
-          });
-
-          _fetchPerkembangan();
-        },
-      );
-    }
+    if (updated == true) _fetchPerkembangan();
   }
 
   Future<void> _handleDeleteBalita() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Konfirmasi Hapus"),
-        content: Text(
-          "Apakah kamu yakin ingin menghapus data balita ${widget.balita.namaBalita}?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Batal"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Hapus", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+    final confirm = await _showConfirmDialog(
+      "Hapus Data Balita?",
+      "Data yang dihapus tidak dapat dikembalikan.",
     );
+    if (!confirm) return;
 
-    if (confirm != true) return;
-
-    final result = await _balitaRepository.deleteBalita(
-      widget.balita.nikBalita,
-    );
-
+    final result = await _balitaRepository.deleteBalita(_balitaData.nikBalita);
     result.fold(
-      (error) {
+      (l) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(CustomSnackBar.show(message: l, type: SnackBarType.error)),
+      (r) {
         ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar.show(
-            message: ("Gagal menghapus balita: $error"),
-            type: SnackBarType.error,
-          ),
+          CustomSnackBar.show(message: r, type: SnackBarType.success),
         );
-      },
-      (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar.show(message: (success), type: SnackBarType.success),
-        );
-
-        Navigator.of(context).pop(true);
+        Navigator.pop(context, true);
       },
     );
   }
 
+  // --- PERBAIKAN DI SINI ---
   Future<void> _handleUpdatePerkembangan() async {
-    if (_filteredPerkembangan == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        CustomSnackBar.show(
-          message: ("Tidak ada data perkembangan untuk diperbarui."),
-          type: SnackBarType.error,
-        ),
-      );
-      return;
-    }
+    // Saya MENGHAPUS baris: if (_filteredPerkembangan == null) return;
+    // Sekarang fungsi ini bisa jalan meskipun _filteredPerkembangan null (mode tambah data)
 
     final updated = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => TambahPerkembanganBalita(
-          nikBalita: widget.balita.nikBalita,
-          namaBalita: widget.balita.namaBalita,
-          existingData: _filteredPerkembangan,
+          nikBalita: _balitaData.nikBalita,
+          namaBalita: _balitaData.namaBalita,
+          existingData:
+              _filteredPerkembangan, // Jika null, halaman Tambah akan otomatis jadi mode "Input Baru"
         ),
       ),
     );
-
-    if (updated == true) {
-      _fetchPerkembangan();
-    }
+    if (updated == true) _fetchPerkembangan();
   }
 
   Future<void> _handleDeletePerkembangan() async {
     if (_filteredPerkembangan == null) return;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Konfirmasi Hapus"),
-        content: const Text(
-          "Apakah kamu yakin ingin menghapus data perkembangan ini?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Batal"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Hapus", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+    final confirm = await _showConfirmDialog(
+      "Hapus Perkembangan?",
+      "Data bulan ini akan dihapus.",
     );
+    if (!confirm) return;
 
-    if (confirm == true) {
-      final result = await _repository.deletePerkembangan(
-        _filteredPerkembangan!.id,
-      );
-      result.fold(
-        (error) => ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar.show(message: (error), type: SnackBarType.error),
-        ),
-        (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            CustomSnackBar.show(message: (success), type: SnackBarType.success),
-          );
-          _fetchPerkembangan();
-        },
-      );
-    }
+    final result = await _repository.deletePerkembangan(
+      _filteredPerkembangan!.id,
+    );
+    result.fold(
+      (l) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(CustomSnackBar.show(message: l, type: SnackBarType.error)),
+      (r) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(message: r, type: SnackBarType.success),
+        );
+        _fetchPerkembangan();
+      },
+    );
+  }
+
+  Future<bool> _showConfirmDialog(String title, String content) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(title),
+            content: Text(content),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text("Batal"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  "Hapus",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
         title: const Text(
-          "Detail Data Balita",
+          "Detail Balita",
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            color: AppColors.primary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle("Biodata Balita"),
-                  _buildContentCard([
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: RichText(
-                        text: TextSpan(
-                          text: "Nama Balita: ",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            fontSize: 14,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: _balitaData.namaBalita,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _warnaNama,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    _buildRow(
-                      "Tanggal Lahir",
-                      _formatTanggalIndonesia(_balitaData.tanggalLahir),
-                    ),
-                    _buildRow("NIK Balita", _balitaData.nikBalita),
-                    _buildRow(
-                      "Jenis Kelamin",
-                      _formatJenisKelamin(_balitaData.jenisKelamin),
-                    ),
-                    _buildRow("Anak Ke", _balitaData.anakKeBerapa),
-                    _buildRow("Nomor KK", _balitaData.nomorKk),
-                    _buildRow("Nama Orang Tua", _balitaData.namaOrtu),
-                    _buildRow("NIK Orang Tua", _balitaData.nikOrtu),
-                    _buildRow("Nomor Telepon", _balitaData.nomorTelpOrtu),
-                    _buildRow("Alamat", _balitaData.alamat),
-                  ]),
-                  const SizedBox(height: 20),
-                  _buildActionButtonsBalita(),
-                  const SizedBox(height: 20),
-
-                  _buildSectionTitle("Data Perkembangan Balita"),
-                  _buildContentCard([
-                    _buildGrafikPerkembangan(),
-                    const SizedBox(height: 8),
-                    _filteredPerkembangan == null
-                        ? const Text(
-                            "Belum ada data perkembangan untuk bulan ini.",
-                            style: TextStyle(color: Colors.black54),
-                          )
-                        : _buildPerkembanganDetail(),
-                  ]),
-                  const SizedBox(height: 30),
-
-                  _buildActionButtonsPerkembangan(),
-                ],
-              ),
-            ),
-    );
-  }
-
-  Widget _buildActionButtonsBalita() => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Expanded(
-        child: ElevatedButton(
-          onPressed: _handleUpdateBalita,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [Text("Perbarui Data Balita")],
-          ),
-        ),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: ElevatedButton(
-          onPressed: _handleDeleteBalita,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [Text("Hapus Data Balita")],
-          ),
-        ),
-      ),
-    ],
-  );
-
-  Widget _buildActionButtonsPerkembangan() => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Expanded(
-        child: ElevatedButton(
-          onPressed: _handleUpdatePerkembangan,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [Text("Perbarui Perkembangan")],
-          ),
-        ),
-      ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: ElevatedButton(
-          onPressed: _handleDeletePerkembangan,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [Text("Hapus Perkembangan")],
-          ),
-        ),
-      ),
-    ],
-  );
-
-  Widget _buildGrafikPerkembangan() {
-    if (_perkembanganList.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: const Center(
-          child: Text(
-            "Belum ada data perkembangan balita.",
-            style: TextStyle(color: Colors.black54),
-          ),
-        ),
-      );
-    }
-
-    final List<String> jenisDataList = [
-      "Berat Badan (kg)",
-      "Tinggi Badan (cm)",
-      "Lingkar Lengan (cm)",
-      "Lingkar Kepala (cm)",
-    ];
-
-    String selectedJenis = "Berat Badan (kg)";
-
-    return StatefulBuilder(
-      builder: (context, setLocalState) {
-        final selectedMonthIndex = _bulanList.indexOf(_selectedBulan) + 1;
-        final selectedYear = _selectedTahun;
-
-        List<DateTime> lastFiveMonths = List.generate(5, (i) {
-          final date = DateTime(selectedYear, selectedMonthIndex - 4 + i);
-          return DateTime(date.year, date.month);
-        });
-
-        final filteredData = _perkembanganList.where((e) {
-          final date = _safeParseDate(e.tanggalPerubahan);
-          return lastFiveMonths.any(
-            (m) => m.month == date.month && m.year == date.year,
-          );
-        }).toList();
-
-        List<_GrafikBalitaData> chartData = lastFiveMonths.map((month) {
-          final bulanNama = _bulanList[(month.month - 1) % 12].substring(0, 3);
-          final dataBulan = filteredData.firstWhere(
-            (d) {
-              final tgl = _safeParseDate(d.tanggalPerubahan);
-              return tgl.month == month.month && tgl.year == month.year;
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.black87),
+            onSelected: (val) {
+              if (val == 'edit') _handleEditBalita();
+              if (val == 'delete') _handleDeleteBalita();
             },
-            orElse: () => PerkembanganBalitaResponseModel(
-              id: 0,
-              tanggalPerubahan: '',
-              caraUkur: '',
-              imd: '',
-              kms: '',
-              vitaminA: '',
-              asiEks: '',
-              createdAt: '',
-              nikBalita: '',
-              beratBadan: 0,
-              tinggiBadan: 0,
-              lingkarLengan: 0,
-              lingkarKepala: 0,
-            ),
-          );
-
-          double value;
-          switch (selectedJenis) {
-            case "Tinggi Badan (cm)":
-              value = dataBulan.tinggiBadan.toDouble();
-              break;
-            case "Lingkar Lengan (cm)":
-              value = dataBulan.lingkarLengan.toDouble();
-              break;
-            case "Lingkar Kepala (cm)":
-              value = dataBulan.lingkarKepala.toDouble();
-              break;
-            default:
-              value = dataBulan.beratBadan.toDouble();
-          }
-
-          return _GrafikBalitaData("$bulanNama\n${month.year}", value);
-        }).toList();
-
-        return Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, color: AppColors.primary, size: 18),
+                    SizedBox(width: 8),
+                    Text("Edit Biodata"),
+                  ],
+                ),
               ),
-            ],
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _modernDropdown<String>(
-                      label: "Bulan",
-                      value: _selectedBulan,
-                      items: _bulanList,
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedBulan = val;
-                            _applyFilter();
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _modernDropdown<int>(
-                      label: "Tahun",
-                      value: _selectedTahun,
-                      items: List.generate(6, (i) => DateTime.now().year - i),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedTahun = val;
-                            _applyFilter();
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 10),
-
-              _modernDropdown<String>(
-                label: "Jenis Data",
-                value: selectedJenis,
-                items: jenisDataList,
-                onChanged: (val) {
-                  if (val != null) {
-                    setLocalState(() => selectedJenis = val);
-                  }
-                },
-              ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                height: 250,
-                child: SfCartesianChart(
-                  plotAreaBorderWidth: 0,
-                  backgroundColor: Colors.transparent,
-                  primaryXAxis: CategoryAxis(
-                    labelStyle: const TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                    axisLine: const AxisLine(width: 0),
-                    majorGridLines: const MajorGridLines(width: 0),
-                  ),
-                  primaryYAxis: NumericAxis(
-                    labelStyle: const TextStyle(
-                      color: Colors.black54,
-                      fontSize: 11,
-                    ),
-                    axisLine: const AxisLine(width: 0),
-                    majorGridLines: const MajorGridLines(
-                      color: Color(0xFFE0E0E0),
-                      width: 0.6,
-                    ),
-                  ),
-                  tooltipBehavior: TooltipBehavior(
-                    enable: true,
-                    color: Colors.white,
-                    borderColor: Colors.grey.shade300,
-                    borderWidth: 0.8,
-                    textStyle: const TextStyle(color: Colors.black),
-                    canShowMarker: false,
-                  ),
-                  series: <CartesianSeries<_GrafikBalitaData, String>>[
-                    SplineSeries<_GrafikBalitaData, String>(
-                      dataSource: chartData,
-                      xValueMapper: (data, _) => data.bulan,
-                      yValueMapper: (data, _) => data.nilai,
-                      width: 3,
-                      color: AppColors.primary,
-                      markerSettings: const MarkerSettings(
-                        isVisible: true,
-                        shape: DataMarkerType.circle,
-                        borderWidth: 2,
-                        borderColor: AppColors.primary,
-                        height: 8,
-                        width: 8,
-                      ),
-                      dataLabelSettings: const DataLabelSettings(
-                        isVisible: true,
-                        textStyle: TextStyle(
-                          color: Colors.black,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, color: Colors.red, size: 18),
+                    SizedBox(width: 8),
+                    Text("Hapus Balita", style: TextStyle(color: Colors.red)),
                   ],
                 ),
               ),
             ],
           ),
-        );
-      },
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
+          : RefreshIndicator(
+              onRefresh: _fetchPerkembangan,
+              color: AppColors.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildProfileHeader(),
+                    const SizedBox(height: 16),
+                    _buildBiodataCard(),
+                    const SizedBox(height: 24),
+                    _buildChartSection(),
+                    const SizedBox(height: 24),
+                    _buildMonthFilter(),
+                    const SizedBox(height: 16),
+                    _buildGrowthStatsGrid(),
+                    const SizedBox(height: 16),
+                    _buildAdditionalInfo(),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
-  Widget _modernDropdown<T>({
-    required String label,
-    required T value,
-    required List<T> items,
-    required Function(T?) onChanged,
-  }) {
+  Widget _buildProfileHeader() {
+    DateTime tglLahir = DateTime.now();
+    try {
+      tglLahir = DateTime.parse(_balitaData.tanggalLahir);
+    } catch (_) {}
+
+    Color vitaminColor = _warnaVitaminABerdasarkanUmur(tglLahir);
+    String vitaminLabel = _labelVitaminABerdasarkanUmur(tglLahir);
+
     return Container(
-      width: 150,
-      padding: const EdgeInsets.only(right: 4),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  _balitaData.namaBalita,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  vitaminLabel,
+                  style: TextStyle(
+                    color: vitaminColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            alignment: WrapAlignment.start,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildHeaderChip(
+                Icon(
+                  _balitaData.jenisKelamin.toLowerCase().contains('l')
+                      ? Icons.male
+                      : Icons.female,
+                  color: Colors.white,
+                  size: 14,
+                ),
+                _formatJenisKelamin(_balitaData.jenisKelamin),
+              ),
+              _buildHeaderChip(
+                const Icon(Icons.cake, color: Colors.white, size: 14),
+                _formatTanggal(_balitaData.tanggalLahir),
+              ),
+              _buildHeaderChip(
+                const Icon(Icons.child_care, color: Colors.white, size: 14),
+                "Anak ke-${_balitaData.anakKeBerapa}",
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderChip(Widget icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          const SizedBox(width: 4),
           Text(
             label,
+            style: const TextStyle(color: Colors.white, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBiodataCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader("Informasi Balita", Icons.person_outline),
+          _infoRow("NIK Balita", _balitaData.nikBalita),
+          _infoRow("Tanggal Lahir", _formatTanggal(_balitaData.tanggalLahir)),
+          _infoRow(
+            "Jenis Kelamin",
+            _formatJenisKelamin(_balitaData.jenisKelamin),
+          ),
+          _infoRow("Anak Ke-", "${_balitaData.anakKeBerapa}"),
+          _infoRow("Nomor KK", _balitaData.nomorKk),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(),
+          ),
+          _buildSectionHeader("Informasi Orang Tua", Icons.family_restroom),
+          _infoRow("Nama Orang Tua", _balitaData.namaOrtu),
+          _infoRow("NIK Orang Tua", _balitaData.nikOrtu),
+          _infoRow("No. Telepon", _formatPhone(_balitaData.nomorTelpOrtu)),
+          _infoRow("Alamat", _balitaData.alamat),
+          _infoRow("RT/RW", "${_balitaData.rt} / ${_balitaData.rw}"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Text(
+            title,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
+              fontSize: 14,
               color: Colors.black87,
-              fontSize: 13,
             ),
           ),
-          const SizedBox(height: 4),
-          Container(
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade100,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Grafik Pertumbuhan",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedChartType,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
+                  items:
+                      [
+                        "Berat Badan (kg)",
+                        "Tinggi Badan (cm)",
+                        "Lingkar Kepala (cm)",
+                        "Lingkar Lengan (cm)",
+                      ].map((e) {
+                        return DropdownMenuItem(value: e, child: Text(e));
+                      }).toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedChartType = val);
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(height: 220, child: _buildChartWidget()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartWidget() {
+    final selectedMonthIndex = _bulanList.indexOf(_selectedBulan) + 1;
+    List<DateTime> lastMonths = List.generate(6, (i) {
+      final date = DateTime(_selectedTahun, selectedMonthIndex - 5 + i);
+      return DateTime(date.year, date.month);
+    });
+
+    List<_ChartData> chartData = lastMonths.map((month) {
+      final bulanStr = _bulanList[(month.month - 1) % 12].substring(0, 3);
+      final data = _perkembanganList.firstWhere(
+        (d) {
+          final tgl = _safeParseDate(d.tanggalPerubahan);
+          return tgl.month == month.month && tgl.year == month.year;
+        },
+        orElse: () => PerkembanganBalitaResponseModel(
+          id: 0,
+          tanggalPerubahan: '',
+          beratBadan: 0,
+          tinggiBadan: 0,
+          lingkarLengan: 0,
+          lingkarKepala: 0,
+          caraUkur: '',
+          imd: '',
+          kms: '',
+          vitaminA: '',
+          asiEks: '',
+          createdAt: '',
+          nikBalita: '',
+        ),
+      );
+
+      double val = 0;
+      if (_selectedChartType.contains("Berat"))
+        val = data.beratBadan.toDouble();
+      else if (_selectedChartType.contains("Tinggi"))
+        val = data.tinggiBadan.toDouble();
+      else if (_selectedChartType.contains("Kepala"))
+        val = data.lingkarKepala.toDouble();
+      else
+        val = data.lingkarLengan.toDouble();
+
+      return _ChartData(
+        "$bulanStr\n${month.year.toString().substring(2)}",
+        val,
+      );
+    }).toList();
+
+    return SfCartesianChart(
+      plotAreaBorderWidth: 0,
+      primaryXAxis: CategoryAxis(
+        majorGridLines: const MajorGridLines(width: 0),
+        labelStyle: const TextStyle(fontSize: 10),
+      ),
+      primaryYAxis: NumericAxis(
+        axisLine: const AxisLine(width: 0),
+        majorGridLines: MajorGridLines(width: 0.5, color: Colors.grey.shade200),
+      ),
+      tooltipBehavior: TooltipBehavior(enable: true),
+      series: <CartesianSeries<_ChartData, String>>[
+        SplineAreaSeries<_ChartData, String>(
+          dataSource: chartData,
+          xValueMapper: (data, _) => data.label,
+          yValueMapper: (data, _) => data.value,
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary.withOpacity(0.2),
+              AppColors.primary.withOpacity(0.01),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderColor: AppColors.primary,
+          borderWidth: 2,
+          markerSettings: const MarkerSettings(
+            isVisible: true,
+            height: 8,
+            width: 8,
+            color: Colors.white,
+            borderColor: AppColors.primary,
+            borderWidth: 2,
+          ),
+          dataLabelSettings: const DataLabelSettings(
+            isVisible: true,
+            labelAlignment: ChartDataLabelAlignment.top,
+            textStyle: TextStyle(
+              color: AppColors.primary,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonthFilter() {
+    return Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF9F9F9),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey.shade300, width: 1),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
             ),
             child: DropdownButtonHideUnderline(
-              child: DropdownButton<T>(
+              child: DropdownButton<String>(
+                value: _selectedBulan,
                 isExpanded: true,
-                value: value,
-                items: items
-                    .map(
-                      (item) => DropdownMenuItem(
-                        value: item,
-                        child: Text(
-                          "$item",
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: onChanged,
+                items: _bulanList.map((e) {
+                  return DropdownMenuItem(
+                    value: e,
+                    child: Text(e, style: const TextStyle(fontSize: 14)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null)
+                    setState(() {
+                      _selectedBulan = val;
+                      _applyFilter();
+                    });
+                },
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 1,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: _selectedTahun,
+                isExpanded: true,
+                items: List.generate(5, (i) => DateTime.now().year - i).map((
+                  e,
+                ) {
+                  return DropdownMenuItem(
+                    value: e,
+                    child: Text("$e", style: const TextStyle(fontSize: 14)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null)
+                    setState(() {
+                      _selectedTahun = val;
+                      _applyFilter();
+                    });
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildPerkembanganDetail() {
+  Widget _buildGrowthStatsGrid() {
+    if (_filteredPerkembangan == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.grey.shade200,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.notes, size: 48, color: Colors.grey.shade300),
+            const SizedBox(height: 8),
+            Text(
+              "Statistik $_selectedBulan $_selectedTahun",
+              style: const TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _handleUpdatePerkembangan,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text("Input Data"),
+            ),
+          ],
+        ),
+      );
+    }
+
     final p = _filteredPerkembangan!;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildRow("Berat Badan", "${p.beratBadan} kg"),
-        _buildRow("Tinggi Badan", "${p.tinggiBadan} cm"),
-        _buildRow("Lingkar Lengan", "${p.lingkarLengan} cm"),
-        _buildRow("Lingkar Kepala", "${p.lingkarKepala} cm"),
-        _buildRow("Cara Ukur", p.caraUkur),
-        _buildRow("KMS", p.kms),
-        _buildRow("IMD", p.imd),
-        _buildRow("Vitamin A", p.vitaminA),
-        _buildRow("ASI Eksklusif", p.asiEks),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Statistik $_selectedBulan $_selectedTahun",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            Row(
+              children: [
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(
+                    Icons.edit,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                  onPressed: _handleUpdatePerkembangan,
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                  onPressed: _handleDeletePerkembangan,
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.5,
+          children: [
+            _statCard(
+              Icons.monitor_weight_outlined,
+              "Berat Badan",
+              "${p.beratBadan}",
+              "kg",
+              Colors.blue.shade50,
+              Colors.blue,
+            ),
+            _statCard(
+              Icons.height,
+              "Tinggi Badan",
+              "${p.tinggiBadan}",
+              "cm",
+              Colors.orange.shade50,
+              Colors.orange,
+            ),
+            _statCard(
+              Icons.circle_outlined,
+              "Lingkar Kepala",
+              "${p.lingkarKepala}",
+              "cm",
+              Colors.purple.shade50,
+              Colors.purple,
+            ),
+            _statCard(
+              Icons.accessibility_new,
+              "Lingkar Lengan",
+              "${p.lingkarLengan}",
+              "cm",
+              Colors.green.shade50,
+              Colors.green,
+            ),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildSectionTitle(String title) => Container(
-    width: double.infinity,
-    decoration: const BoxDecoration(
-      color: AppColors.primary,
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(12),
-        topRight: Radius.circular(12),
-      ),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    child: Text(
-      title,
-      style: const TextStyle(
+  Widget _statCard(
+    IconData icon,
+    String title,
+    String value,
+    String unit,
+    Color bgColor,
+    Color accentColor,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
         color: Colors.white,
-        fontWeight: FontWeight.bold,
-        fontSize: 16,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade100,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
       ),
-    ),
-  );
-
-  Widget _buildContentCard(List<Widget> children) => Container(
-    width: double.infinity,
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      borderRadius: const BorderRadius.only(
-        bottomLeft: Radius.circular(12),
-        bottomRight: Radius.circular(12),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.15),
-          blurRadius: 5,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    padding: const EdgeInsets.all(12),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
-    ),
-  );
-
-  Widget _buildRow(String title, String value) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: RichText(
-      text: TextSpan(
-        text: "$title: ",
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-          fontSize: 14,
-        ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          TextSpan(
-            text: value,
-            style: const TextStyle(
-              fontWeight: FontWeight.normal,
-              color: Colors.black,
-              fontSize: 14,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 18, color: accentColor),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                TextSpan(
+                  text: " $unit",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
             ),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _buildAdditionalInfo() {
+    if (_filteredPerkembangan == null) return const SizedBox();
+    final p = _filteredPerkembangan!;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Catatan Kesehatan",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const Divider(height: 20),
+          _infoRow("Cara Ukur", p.caraUkur),
+          _infoRow("Vitamin A", p.vitaminA),
+          _infoRow("ASI Eksklusif", p.asiEks),
+          _infoRow("IMD", p.imd),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTanggal(String raw) {
+    try {
+      final date = DateTime.parse(raw);
+      return DateFormat("d MMM yyyy", "id_ID").format(date);
+    } catch (_) {
+      return raw;
+    }
+  }
 }
 
-class _GrafikBalitaData {
-  final String bulan;
-  final double nilai;
-  _GrafikBalitaData(this.bulan, this.nilai);
+class _ChartData {
+  final String label;
+  final double value;
+  _ChartData(this.label, this.value);
 }

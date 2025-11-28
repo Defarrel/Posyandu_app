@@ -364,7 +364,7 @@ class _DetailKelulusanBalitaScreenState
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "NIK: ${_formatNIK(widget.nikBalita)}",
+                  "NIK: ${(widget.nikBalita)}",
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.white.withOpacity(0.9),
@@ -828,15 +828,6 @@ class _DetailKelulusanBalitaScreenState
     );
   }
 
-  String _formatNIK(String nik) {
-    if (nik.length <= 12) return nik;
-    final chunks = <String>[];
-    for (int i = 0; i < nik.length; i += 4) {
-      final end = i + 4;
-      chunks.add(nik.substring(i, end < nik.length ? end : nik.length));
-    }
-    return chunks.join(' ');
-  }
 
   Color _getStatusColor(String status) {
     switch (status) {

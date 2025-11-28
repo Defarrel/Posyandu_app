@@ -174,6 +174,20 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       return;
     }
 
+    final now = DateTime.now();
+
+    if (_selectedDate.year > now.year ||
+        (_selectedDate.year == now.year && _selectedDate.month > now.month)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar.show(
+          message:
+              "Tidak dapat input data untuk masa depan (${_bulanIndo(_selectedDate.month)} ${_selectedDate.year}).",
+          type: SnackBarType.error,
+        ),
+      );
+      return; 
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -262,7 +276,11 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
           elevation: 0,
           backgroundColor: Colors.white,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              color: AppColors.primary,
+              size: 20,
+            ),
             onPressed: () async {
               if (await _konfirmasiKeluar()) {
                 Navigator.pop(context);
@@ -305,7 +323,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                     context: context,
                     initialDate: _selectedDate,
                     firstDate: DateTime(2020),
-                    lastDate: DateTime.now(),
+                    lastDate: DateTime(2100),
                     locale: const Locale('id', 'ID'),
                   );
                   if (picked != null) {

@@ -209,14 +209,22 @@ class _ProfileScreenState extends State<ProfileScreen>
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
+                        begin: Alignment.topLeft,
                         colors: [
-                          AppColors.primary.withOpacity(0.15),
-                          AppColors.primary.withOpacity(0.4),
+                          AppColors.primary.withOpacity(0.1),
+                          AppColors.primary.withOpacity(0.6),
                         ],
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(icon, color: AppColors.primary, size: 24),
+                    child: Icon(icon, color: const Color.fromARGB(255, 30, 140, 148), size: 24),
                   ),
                   title: Text(
                     title,

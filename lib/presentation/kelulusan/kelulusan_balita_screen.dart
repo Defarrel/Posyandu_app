@@ -214,7 +214,7 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
                     color: AppColors.primary,
                     size: 20,
                   ),
-                  hintText: "Cari nama / NIK balita",
+                  hintText: "Cari Nama / NIK Balita",
                   hintStyle: TextStyle(
                     color: Colors.grey.shade500,
                     fontSize: 13,

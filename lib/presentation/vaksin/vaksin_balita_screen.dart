@@ -132,7 +132,11 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.primary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -144,26 +148,24 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+                border: Border.all(color: Colors.grey.shade300),
               ),
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: "Cari nama / NIK balita",
+                  hintText: "Cari Nama / NIK Balita",
+                  hintStyle: const TextStyle(
+                    color: Colors.black45,
+                    fontSize: 14,
+                  ),
                   prefixIcon: const Icon(
                     Icons.search,
                     color: AppColors.primary,
                   ),
                   filled: true,
-                  fillColor: Colors.grey[200],
+                  fillColor: Colors.grey[50],
                   contentPadding: const EdgeInsets.symmetric(vertical: 0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -313,7 +315,7 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
                     elevation: 2,
-                    shadowColor: Colors.black.withOpacity(0.1),
+                    shadowColor: Colors.black.withOpacity(0.3),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
                       onTap: () {

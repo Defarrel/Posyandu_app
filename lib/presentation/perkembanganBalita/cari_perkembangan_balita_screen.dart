@@ -19,19 +19,36 @@ class _CariPerkembanganBalitaScreenState
     extends State<CariPerkembanganBalitaScreen> {
   final TextEditingController _searchController = TextEditingController();
   final BalitaRepository _repository = BalitaRepository();
+  final ScrollController _scrollController =
+      ScrollController(); 
 
   List<BalitaResponseModel> _balitaList = [];
   String _searchQuery = "";
   String _filterValue = "Semua";
   bool _isLoading = true;
-
+  bool _isStickyVisible = false; 
   @override
   void initState() {
     super.initState();
     _fetchBalita();
-    Future.delayed(const Duration(milliseconds: 200), () {
-      FocusScope.of(context).unfocus();
-    });
+
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.offset > 80 && !_isStickyVisible) {
+      setState(() => _isStickyVisible = true);
+    } else if (_scrollController.offset <= 80 && _isStickyVisible) {
+      setState(() => _isStickyVisible = false);
+    }
   }
 
   Future<void> _fetchBalita() async {
@@ -40,19 +57,23 @@ class _CariPerkembanganBalitaScreenState
 
     result.fold(
       (error) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar.show(
-            message: ("Gagal memuat data: $error"),
-            type: SnackBarType.error,
-          ),
-        );
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar.show(
+              message: ("Gagal memuat data: $error"),
+              type: SnackBarType.error,
+            ),
+          );
+        }
       },
       (data) {
-        setState(() {
-          _balitaList = data;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _balitaList = data;
+            _isLoading = false;
+          });
+        }
       },
     );
   }
@@ -132,170 +153,243 @@ class _CariPerkembanganBalitaScreenState
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             )
-          : Column(
+          : Stack(
               children: [
-                Container(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  color: Colors.white,
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 4,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                style: const TextStyle(color: Colors.black),
-                                decoration: const InputDecoration(
-                                  prefixIcon: Icon(
-                                    Icons.search,
-                                    color: AppColors.primary,
-                                  ),
-                                  hintText: "Nama / NIK Balita",
-                                  hintStyle: TextStyle(color: Colors.grey),
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
-                                  ),
-                                ),
-                                onChanged: _onSearchChanged,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 2,
-                            child: Container(
+                CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        color: Colors.white, 
+                        child: Column(
+                          children: [
+                            _buildSearchFilterRow(isSticky: false),
+
+                            const SizedBox(height: 12),
+
+                            Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
+                                vertical: 10,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(12),
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.primary.withOpacity(0.2),
+                                ),
                               ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: _filterValue,
-                                  isExpanded: true,
-                                  icon: const Icon(
-                                    Icons.filter_list,
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.info_outline,
                                     color: AppColors.primary,
                                     size: 20,
                                   ),
-                                  style: const TextStyle(
-                                    color: Colors.black87,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      "Tekan tombol (+) pada kartu untuk input data.",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.primary.withOpacity(
+                                          0.8,
+                                        ),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
                                   ),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: "Semua",
-                                      child: Text("Semua"),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: "Balita",
-                                      child: Text("Balita"),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: "Baduta",
-                                      child: Text("Baduta"),
-                                    ),
-                                  ],
-                                  onChanged: _onFilterChanged,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: AppColors.primary.withOpacity(0.2),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.info_outline,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "Tekan tombol (+) di sebelah kanan untuk input data perkembangan.",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.primary.withOpacity(0.8),
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+
+                    filteredList.isEmpty
+                        ? SliverFillRemaining(
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.person_search_outlined,
+                                    size: 64,
+                                    color: Colors.grey[300],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    "Data balita tidak ditemukan",
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : SliverPadding(
+                            padding: const EdgeInsets.all(16),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                index,
+                              ) {
+                                final balita = filteredList[index];
+                                final umurBulan = _hitungUmurBulan(
+                                  balita.tanggalLahir,
+                                );
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildBalitaCard(balita, umurBulan),
+                                );
+                              }, childCount: filteredList.length),
+                            ),
+                          ),
+                  ],
                 ),
 
-                Expanded(
-                  child: filteredList.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.person_search_outlined,
-                                size: 64,
-                                color: Colors.grey[300],
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                "Data balita tidak ditemukan",
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                AnimatedSlide(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOutCubic,
+                  offset: _isStickyVisible
+                      ? const Offset(0, 0)
+                      : const Offset(0, -1.0),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _isStickyVisible ? 1.0 : 0.0,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            offset: const Offset(0, 4),
+                            blurRadius: 10,
                           ),
-                        )
-                      : RefreshIndicator(
-                          color: AppColors.primary,
-                          onRefresh: _fetchBalita,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: filteredList.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final balita = filteredList[index];
-                              final umurBulan = _hitungUmurBulan(
-                                balita.tanggalLahir,
-                              );
-
-                              return _buildBalitaCard(balita, umurBulan);
-                            },
-                          ),
+                        ],
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade200),
                         ),
+                      ),
+                      child: _buildSearchFilterRow(isSticky: true),
+                    ),
+                  ),
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildSearchFilterRow({required bool isSticky}) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 4,
+          child: Container(
+            height: 45,
+            decoration: BoxDecoration(
+              color: isSticky ? Colors.grey[100] : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: isSticky
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+              border: isSticky ? null : Border.all(color: Colors.grey.shade200),
+            ),
+            child: TextField(
+              controller: _searchController,
+              style: const TextStyle(color: Colors.black),
+              decoration: const InputDecoration(
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+                hintText: "Cari Nama / NIK Balita",
+                hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 10),
+              ),
+              onChanged: _onSearchChanged,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 2,
+          child: Container(
+            height: 45,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: isSticky ? Colors.grey[100] : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: isSticky
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+              border: isSticky ? null : Border.all(color: Colors.grey.shade200),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _filterValue,
+                isExpanded: true,
+                icon: Icon(
+                  Icons.filter_list,
+                  color: isSticky ? AppColors.primary : AppColors.primary,
+                  size: 20,
+                ),
+                style: TextStyle(
+                  color: isSticky ? Colors.white : Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                dropdownColor: Colors.white,
+                items: const [
+                  DropdownMenuItem(
+                    value: "Semua",
+                    child: Text(
+                      "Semua",
+                      style: TextStyle(color: Colors.black87),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: "Balita",
+                    child: Text(
+                      "Balita",
+                      style: TextStyle(color: Colors.black87),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: "Baduta",
+                    child: Text(
+                      "Baduta",
+                      style: TextStyle(color: Colors.black87),
+                    ),
+                  ),
+                ],
+                onChanged: _onFilterChanged,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -341,7 +435,7 @@ class _CariPerkembanganBalitaScreenState
                   ],
                 ),
                 child: const Icon(
-                  Icons.show_chart_rounded, 
+                  Icons.show_chart_rounded,
                   color: Colors.white,
                   size: 24,
                 ),

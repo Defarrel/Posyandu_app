@@ -83,11 +83,11 @@ class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
     return ClipPath(
       clipper: SlightDownCurveClipper(),
       child: Container(
-        height: 230,
+        height: 200,
         width: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('lib/core/assets/Kanan.png'),
+            image: AssetImage('lib/core/assets/profile.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -117,7 +117,7 @@ class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
                     );
                   } else {
                     imageProvider = const AssetImage(
-                      'lib/core/assets/profile.jpg',
+                      'lib/core/assets/default_profile.png',
                     );
                   }
 

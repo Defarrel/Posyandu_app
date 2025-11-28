@@ -17,7 +17,7 @@ class CustomAppBarHome extends StatefulWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(230);
+  Size get preferredSize => const Size.fromHeight(200);
 
   @override
   State<CustomAppBarHome> createState() => _CustomAppBarHomeState();
@@ -53,7 +53,7 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
         width: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('lib/core/assets/tengah.png'),
+            image: AssetImage('lib/core/assets/home.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -80,7 +80,7 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
                     );
                   } else {
                     imageProvider = const AssetImage(
-                      'lib/core/assets/profile.jpg',
+                      'lib/core/assets/default_profile.png',
                     );
                   }
 

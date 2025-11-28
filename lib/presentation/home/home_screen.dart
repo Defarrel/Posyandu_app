@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _namaKader = "Memuat...";
   bool _isLoadingChart = true;
 
-  static const double _curvedAppBarHeight = 230.0;
+  static const double _curvedAppBarHeight = 200;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final PerkembanganBalitaRepository _repository =
       PerkembanganBalitaRepository();

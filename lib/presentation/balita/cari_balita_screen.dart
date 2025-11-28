@@ -101,7 +101,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
               child: CircularProgressIndicator(color: AppColors.primary),
             )
           : Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 210),
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 182),
               child: Column(
                 children: [
                   Expanded(

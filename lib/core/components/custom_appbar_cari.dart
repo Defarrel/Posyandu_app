@@ -16,7 +16,7 @@ class CustomAppBarCari extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(230);
+  Size get preferredSize => const Size.fromHeight(200);
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class CustomAppBarCari extends StatelessWidget implements PreferredSizeWidget {
         width: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('lib/core/assets/kiri.png'),
+            image: AssetImage('lib/core/assets/cari.png'),
             fit: BoxFit.cover,
           ),
         ),

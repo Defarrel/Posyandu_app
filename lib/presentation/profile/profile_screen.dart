@@ -58,7 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 250, 20, 30),
+                padding: const EdgeInsets.fromLTRB(20, 220, 20, 30),
                 children: [
                   _buildSectionHeader(
                     icon: Icons.person_rounded,

@@ -270,7 +270,7 @@ class _PengaturanProfileScreenState extends State<PengaturanProfileScreen> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: _openBottomSheet, // Tekan icon → buka bottom sheet
+                  onTap: _openBottomSheet, 
                   child: Container(
                     width: 45,
                     height: 45,

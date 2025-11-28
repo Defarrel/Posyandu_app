@@ -24,7 +24,6 @@ class _CariPerkembanganBalitaScreenState
   String _searchQuery = "";
   String _filterValue = "Semua";
   bool _isLoading = true;
-  Map<int, bool> _expandedName = {};
 
   @override
   void initState() {
@@ -76,6 +75,16 @@ class _CariPerkembanganBalitaScreenState
     }
   }
 
+  String _formatNIK(String nik) {
+    if (nik.length <= 12) return nik;
+    final chunks = <String>[];
+    for (int i = 0; i < nik.length; i += 4) {
+      final end = i + 4;
+      chunks.add(nik.substring(i, end < nik.length ? end : nik.length));
+    }
+    return chunks.join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredList = _balitaList.where((balita) {
@@ -101,8 +110,9 @@ class _CariPerkembanganBalitaScreenState
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
+        centerTitle: true,
         title: const Text(
-          "Cari Data Perkembangan Balita",
+          "Cari Data Balita",
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
@@ -113,7 +123,7 @@ class _CariPerkembanganBalitaScreenState
           icon: const Icon(
             Icons.arrow_back_ios,
             color: AppColors.primary,
-            size: 18,
+            size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -122,390 +132,427 @@ class _CariPerkembanganBalitaScreenState
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             )
-          : Padding(
-              padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
-              child: Column(
-                children: [
-                  Row(
+          : Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  color: Colors.white,
+                  child: Column(
                     children: [
-                      Expanded(
-                        flex: 4,
-                        child: TextField(
-                          controller: _searchController,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: AppColors.primary,
-                            ),
-                            hintText: "Cari Nama / NIK Balita",
-                            hintStyle: const TextStyle(color: Colors.black54),
-                            filled: true,
-                            fillColor: Colors.grey[200],
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 0,
-                              horizontal: 12,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: TextField(
+                                controller: _searchController,
+                                style: const TextStyle(color: Colors.black),
+                                decoration: const InputDecoration(
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color: AppColors.primary,
+                                  ),
+                                  hintText: "Nama / NIK Balita",
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                ),
+                                onChanged: _onSearchChanged,
+                              ),
                             ),
                           ),
-                          onChanged: _onSearchChanged,
-                        ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 2,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _filterValue,
+                                  isExpanded: true,
+                                  icon: const Icon(
+                                    Icons.filter_list,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: "Semua",
+                                      child: Text("Semua"),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: "Balita",
+                                      child: Text("Balita"),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: "Baduta",
+                                      child: Text("Baduta"),
+                                    ),
+                                  ],
+                                  onChanged: _onFilterChanged,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        flex: 2,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
                           ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _filterValue,
-                              icon: const Icon(
-                                Icons.filter_list,
-                                color: AppColors.primary,
-                              ),
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: "Semua",
-                                  child: Text("Semua"),
-                                ),
-                                DropdownMenuItem(
-                                  value: "Balita",
-                                  child: Text("Balita"),
-                                ),
-                                DropdownMenuItem(
-                                  value: "Baduta",
-                                  child: Text("Baduta"),
-                                ),
-                              ],
-                              onChanged: _onFilterChanged,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              color: AppColors.primary,
+                              size: 20,
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Tekan tombol (+) di sebelah kanan untuk input data perkembangan.",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.primary.withOpacity(0.8),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                ),
 
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 8,
+                Expanded(
+                  child: filteredList.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.person_search_outlined,
+                                size: 64,
+                                color: Colors.grey[300],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "Data balita tidak ditemukan",
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          color: AppColors.primary,
+                          onRefresh: _fetchBalita,
+                          child: ListView.separated(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: filteredList.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final balita = filteredList[index];
+                              final umurBulan = _hitungUmurBulan(
+                                balita.tanggalLahir,
+                              );
+
+                              return _buildBalitaCard(balita, umurBulan);
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildBalitaCard(BalitaResponseModel balita, int umurBulan) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withOpacity(0.7),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
-                    child: const Row(
+                  ],
+                ),
+                child: const Icon(
+                  Icons.show_chart_rounded, 
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      balita.namaBalita,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
                       children: [
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            "Nama",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
+                        Icon(
+                          Icons.badge_outlined,
+                          size: 14,
+                          color: Colors.grey.shade600,
                         ),
+                        const SizedBox(width: 4),
                         Expanded(
-                          flex: 4,
                           child: Text(
-                            "NIK",
+                            _formatNIK(balita.nikBalita),
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
                             ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            "Aksi",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.cake_outlined,
+                          size: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "$umurBulan Bulan",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
 
-                  Expanded(
-                    child: filteredList.isEmpty
-                        ? const Center(
-                            child: Text(
-                              "Data balita tidak ditemukan",
-                              style: TextStyle(color: Colors.black),
+              const SizedBox(width: 8),
+
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    final result = await PerkembanganBalitaRepository()
+                        .cekPerkembanganBulanIni(nikBalita: balita.nikBalita);
+
+                    result.fold(
+                      (error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          CustomSnackBar.show(
+                            message: error,
+                            type: SnackBarType.error,
+                          ),
+                        );
+                      },
+                      (sudahAda) {
+                        if (sudahAda) {
+                          _showKonfirmasiDialog(balita);
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TambahPerkembanganBalita(
+                                nikBalita: balita.nikBalita,
+                                namaBalita: balita.namaBalita,
+                              ),
                             ),
-                          )
-                        : RefreshIndicator(
-                            color: AppColors.primary,
-                            onRefresh: _fetchBalita,
-                            child: ListView.builder(
-                              itemCount: filteredList.length,
-                              itemBuilder: (context, index) {
-                                final balita = filteredList[index];
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                    horizontal: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.background,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        flex: 3,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              _expandedName[index] =
-                                                  !(_expandedName[index] ??
-                                                      false);
-                                            });
-                                          },
-                                          child: AnimatedSize(
-                                            duration: const Duration(
-                                              milliseconds: 200,
-                                            ),
-                                            child: Text(
-                                              balita.namaBalita,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.black,
-                                              ),
-                                              maxLines:
-                                                  _expandedName[index] == true
-                                                  ? 2
-                                                  : 1,
-                                              overflow:
-                                                  _expandedName[index] == true
-                                                  ? TextOverflow.visible
-                                                  : TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 4,
-                                        child: Text(
-                                          balita.nikBalita,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 3,
-                                        child: Align(
-                                          alignment: Alignment.centerRight,
-                                          child: GestureDetector(
-                                            onTap: () async {
-                                              final now = DateTime.now();
-                                              final result =
-                                                  await PerkembanganBalitaRepository()
-                                                      .cekPerkembanganBulanIni(
-                                                        nikBalita:
-                                                            balita.nikBalita,
-                                                      );
-                                              result.fold(
-                                                (error) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    CustomSnackBar.show(
-                                                      message: (error),
-                                                      type: SnackBarType.error,
-                                                    ),
-                                                  );
-                                                },
-                                                (sudahAda) {
-                                                  if (sudahAda) {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) => Dialog(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                18,
-                                                              ),
-                                                        ),
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets.all(
-                                                                20,
-                                                              ),
-                                                          child: Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            children: [
-                                                              const Text(
-                                                                "Perhatian !",
-                                                                style: TextStyle(
-                                                                  fontSize: 18,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  color: Colors.red,
-                                                                ),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 12,
-                                                              ),
-                                                              const Text(
-                                                                "Data perkembangan bulan ini sudah ditambahkan.\n"
-                                                                "Apakah Anda yakin ingin menambah data baru?",
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                                style:
-                                                                    TextStyle(
-                                                                      fontSize:
-                                                                          14,
-                                                                    ),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 20,
-                                                              ),
+                          );
+                        }
+                      },
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.2),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.add_rounded,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
-                                                                children: [
-                                                                  Expanded(
-                                                                    child: ElevatedButton(
-                                                                      style: ElevatedButton.styleFrom(
-                                                                        backgroundColor:
-                                                                            Colors.red,
-                                                                        shape: RoundedRectangleBorder(
-                                                                          borderRadius: BorderRadius.circular(
-                                                                            12,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                      onPressed: () =>
-                                                                          Navigator.pop(
-                                                                            context,
-                                                                          ),
-                                                                      child: const Text(
-                                                                        "Batal",
-                                                                        style: TextStyle(
-                                                                          color:
-                                                                              Colors.white,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    width: 10,
-                                                                  ),
-                                                                  Expanded(
-                                                                    child: ElevatedButton(
-                                                                      style: ElevatedButton.styleFrom(
-                                                                        backgroundColor:
-                                                                            AppColors.primary,
-                                                                        shape: RoundedRectangleBorder(
-                                                                          borderRadius: BorderRadius.circular(
-                                                                            12,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                      onPressed: () {
-                                                                        Navigator.pop(
-                                                                          context,
-                                                                        ); 
-                                                                        Navigator.push(
-                                                                          context,
-                                                                          MaterialPageRoute(
-                                                                            builder: (_) => TambahPerkembanganBalita(
-                                                                              nikBalita: balita.nikBalita,
-                                                                              namaBalita: balita.namaBalita,
-                                                                            ),
-                                                                          ),
-                                                                        );
-                                                                      },
-                                                                      child: const Text(
-                                                                        "Tambah",
-                                                                        style: TextStyle(
-                                                                          color:
-                                                                              Colors.white,
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  } else {
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (_) =>
-                                                            TambahPerkembanganBalita(
-                                                              nikBalita: balita
-                                                                  .nikBalita,
-                                                              namaBalita: balita
-                                                                  .namaBalita,
-                                                            ),
-                                                      ),
-                                                    );
-                                                  }
-                                                },
-                                              );
-                                            },
-
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 8,
-                                                    horizontal: 13,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.primaryLight,
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
-                                              ),
-                                              child: const Text(
-                                                "Perkembangan",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+  void _showKonfirmasiDialog(BalitaResponseModel balita) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Data Sudah Ada",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Data perkembangan bulan ini sudah ditambahkan. Apakah Anda yakin ingin menambah data baru lagi?",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.grey[700],
+                        side: BorderSide(color: Colors.grey[300]!),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Batal"),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TambahPerkembanganBalita(
+                              nikBalita: balita.nikBalita,
+                              namaBalita: balita.namaBalita,
                             ),
                           ),
+                        );
+                      },
+                      child: const Text(
+                        "Tambah",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

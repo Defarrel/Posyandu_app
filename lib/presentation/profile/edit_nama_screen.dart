@@ -64,7 +64,7 @@ class _EditNamaScreenState extends State<EditNamaScreen> {
         elevation: 0,
         backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -72,6 +72,7 @@ class _EditNamaScreenState extends State<EditNamaScreen> {
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
         ),
       ),

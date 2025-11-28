@@ -293,7 +293,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           icon: const Icon(
             Icons.arrow_back_ios,
             color: AppColors.primary,
-            size: 18,
+            size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -373,7 +373,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                     Container(
                       height: 200,
                       decoration: BoxDecoration(
-                        color: AppColors.background,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: _isLoadingChart

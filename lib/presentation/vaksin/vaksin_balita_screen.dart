@@ -132,7 +132,7 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),

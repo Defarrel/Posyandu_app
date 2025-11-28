@@ -256,7 +256,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           icon: const Icon(
             Icons.arrow_back_ios,
             color: AppColors.primary,
-            size: 18,
+            size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),

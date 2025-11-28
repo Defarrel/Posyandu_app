@@ -262,7 +262,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
           elevation: 0,
           backgroundColor: Colors.white,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
             onPressed: () async {
               if (await _konfirmasiKeluar()) {
                 Navigator.pop(context);
@@ -276,7 +276,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
             style: const TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 20,
             ),
           ),
           centerTitle: true,

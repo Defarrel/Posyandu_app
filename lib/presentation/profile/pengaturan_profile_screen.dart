@@ -235,7 +235,7 @@ class _PengaturanProfileScreenState extends State<PengaturanProfileScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -353,7 +353,7 @@ class _PengaturanProfileScreenState extends State<PengaturanProfileScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(

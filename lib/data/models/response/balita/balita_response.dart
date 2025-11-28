@@ -34,38 +34,43 @@ class BalitaResponseModel {
   factory BalitaResponseModel.fromJson(String str) =>
       BalitaResponseModel.fromMap(json.decode(str));
 
-  factory BalitaResponseModel.fromMap(Map<String, dynamic> map) =>
-      BalitaResponseModel(
-        nikBalita: map['nik_balita'],
-        namaBalita: map['nama_balita'],
-        jenisKelamin: map['jenis_kelamin'],
-        tanggalLahir: map['tanggal_lahir'],
-        anakKeBerapa: map['anak_ke_berapa'],
-        nomorKk: map['nomor_kk'],
-        namaOrtu: map['nama_ortu'],
-        nikOrtu: map['nik_ortu'],
-        nomorTelpOrtu: map['nomor_telp_ortu'],
-        alamat: map['alamat'],
-        rt: map['rt'],
-        rw: map['rw'],
-        createdAt: map['created_at'],
-      );
+  factory BalitaResponseModel.fromMap(Map<String, dynamic> map) {
+    return BalitaResponseModel(
+      nikBalita: map['nik_balita']?.toString() ?? '',
+      namaBalita: map['nama_balita']?.toString() ?? '',
+      jenisKelamin: map['jenis_kelamin']?.toString() ?? '',
+      tanggalLahir:
+          map['tanggal_lahir']?.toString() ??
+          DateTime.now().toIso8601String(), 
+      anakKeBerapa: map['anak_ke_berapa']?.toString() ?? '',
+      nomorKk: map['nomor_kk']?.toString() ?? '',
+      namaOrtu: map['nama_ortu']?.toString() ?? '',
+      nikOrtu: map['nik_ortu']?.toString() ?? '',
+      nomorTelpOrtu:
+          map['nomor_telp_ortu']?.toString() ??
+          '-',
+      alamat: map['alamat']?.toString() ?? '',
+      rt: map['rt']?.toString() ?? '',
+      rw: map['rw']?.toString() ?? '',
+      createdAt: map['created_at']?.toString() ?? '',
+    );
+  }
 
   String toJson() => json.encode(toMap());
 
   Map<String, dynamic> toMap() => {
-        "nik_balita": nikBalita,
-        "nama_balita": namaBalita,
-        "jenis_kelamin": jenisKelamin,
-        "tanggal_lahir": tanggalLahir,
-        "anak_ke_berapa": anakKeBerapa,
-        "nomor_kk": nomorKk,
-        "nama_ortu": namaOrtu,
-        "nik_ortu": nikOrtu,
-        "nomor_telp_ortu": nomorTelpOrtu,
-        "alamat": alamat,
-        "rt": rt,
-        "rw": rw,
-        "created_at": createdAt,
-      };
+    "nik_balita": nikBalita,
+    "nama_balita": namaBalita,
+    "jenis_kelamin": jenisKelamin,
+    "tanggal_lahir": tanggalLahir,
+    "anak_ke_berapa": anakKeBerapa,
+    "nomor_kk": nomorKk,
+    "nama_ortu": namaOrtu,
+    "nik_ortu": nikOrtu,
+    "nomor_telp_ortu": nomorTelpOrtu,
+    "alamat": alamat,
+    "rt": rt,
+    "rw": rw,
+    "created_at": createdAt,
+  };
 }

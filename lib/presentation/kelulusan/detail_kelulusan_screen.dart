@@ -4,6 +4,7 @@ import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/request/kelulusan/kelulusan_request_model.dart';
 import 'package:posyandu_app/data/models/response/kelulusan/kelulusan_response_model.dart';
 import 'package:posyandu_app/data/repository/kelulusan_repository.dart';
+import 'package:posyandu_app/services/certificate_service.dart';
 
 class DetailKelulusanBalitaScreen extends StatefulWidget {
   final String nikBalita;
@@ -116,14 +117,19 @@ class _DetailKelulusanBalitaScreenState
     setState(() => _downloading = true);
     _buttonAnimationController.forward();
 
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final file = await CertificateService.saveAndShare(
+        namaBalita: widget.namaBalita,
+      );
 
-    setState(() => _downloading = false);
-    _buttonAnimationController.reverse();
+      _showSuccessSnackbar("Sertifikat berhasil diunduh dan dibagikan!");
 
-    _showSuccessSnackbar("Sertifikat berhasil didownload!");
-
-    // TODO: Implement actual PDF download logic
+    } catch (e) {
+      _showErrorSnackbar(e.toString());
+    } finally {
+      setState(() => _downloading = false);
+      _buttonAnimationController.reverse();
+    }
   }
 
   void _showConfirmLulusDialog() {
@@ -276,7 +282,11 @@ class _DetailKelulusanBalitaScreenState
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.primary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -672,11 +682,9 @@ class _DetailKelulusanBalitaScreenState
   Widget _buildActionButtons() {
     if (_data!.status == "LULUS") {
       return _buildDownloadButton();
-    }
-    else if (_data!.status == "PINDAH") {
+    } else if (_data!.status == "PINDAH") {
       return _buildPindahInfo();
-    }
-    else {
+    } else {
       return _buildActionButtonsRow();
     }
   }
@@ -827,7 +835,6 @@ class _DetailKelulusanBalitaScreenState
       ),
     );
   }
-
 
   Color _getStatusColor(String status) {
     switch (status) {

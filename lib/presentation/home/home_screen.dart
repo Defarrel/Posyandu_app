@@ -659,13 +659,13 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+              child: const Text("Batal", style: TextStyle(color: AppColors.primary)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(24),
                 ),
               ),
               onPressed: () {

@@ -192,10 +192,13 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     );
   }
 
-  // --- PERBAIKAN DI SINI ---
   Future<void> _handleUpdatePerkembangan() async {
-    // Saya MENGHAPUS baris: if (_filteredPerkembangan == null) return;
-    // Sekarang fungsi ini bisa jalan meskipun _filteredPerkembangan null (mode tambah data)
+    DateTime tglLahir;
+    try {
+      tglLahir = DateTime.parse(_balitaData.tanggalLahir);
+    } catch (e) {
+      tglLahir = DateTime.now();
+    }
 
     final updated = await Navigator.push(
       context,
@@ -203,8 +206,9 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         builder: (_) => TambahPerkembanganBalita(
           nikBalita: _balitaData.nikBalita,
           namaBalita: _balitaData.namaBalita,
-          existingData:
-              _filteredPerkembangan, // Jika null, halaman Tambah akan otomatis jadi mode "Input Baru"
+          jenisKelamin: _balitaData.jenisKelamin,
+          tanggalLahir: tglLahir,
+          existingData: _filteredPerkembangan,
         ),
       ),
     );
@@ -959,6 +963,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           ),
           const Divider(height: 20),
           _infoRow("Cara Ukur", p.caraUkur),
+          _infoRow("KMS", p.kms),
           _infoRow("Vitamin A", p.vitaminA),
           _infoRow("ASI Eksklusif", p.asiEks),
           _infoRow("IMD", p.imd),

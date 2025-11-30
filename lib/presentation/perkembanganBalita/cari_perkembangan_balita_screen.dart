@@ -518,6 +518,10 @@ class _CariPerkembanganBalitaScreenState
                               builder: (_) => TambahPerkembanganBalita(
                                 nikBalita: balita.nikBalita,
                                 namaBalita: balita.namaBalita,
+                                jenisKelamin: balita.jenisKelamin,
+                                tanggalLahir: DateTime.parse(
+                                  balita.tanggalLahir,
+                                ),
                               ),
                             ),
                           );
@@ -618,6 +622,8 @@ class _CariPerkembanganBalitaScreenState
                             builder: (_) => TambahPerkembanganBalita(
                               nikBalita: balita.nikBalita,
                               namaBalita: balita.namaBalita,
+                              jenisKelamin: balita.jenisKelamin,
+                              tanggalLahir: DateTime.parse(balita.tanggalLahir),
                             ),
                           ),
                         );

@@ -32,19 +32,37 @@ class LottieWarningDot extends StatelessWidget {
   const LottieWarningDot({Key? key, required this.kms}) : super(key: key);
 
   String _getLottiePath() {
-    if (kms == "merah") return 'lib/core/assets/lottie/dot_red.json';
-    if (kms == "kuning") return 'lib/core/assets/lottie/dot_orange.json';
+    final status = kms.toLowerCase();
+    if (status.contains("merah")) return 'lib/core/assets/lottie/dot_red.json';
+    if (status.contains("kuning")) {
+      return 'lib/core/assets/lottie/dot_orange.json';
+    }
     return 'lib/core/assets/lottie/dot_green.json';
   }
 
   Color _getColor() {
-    if (kms == "merah") return Colors.redAccent;
-    if (kms == "kuning") return const Color.fromARGB(255, 255, 171, 64);
+    final status = kms.toLowerCase();
+    if (status.contains("merah")) return Colors.redAccent;
+    if (status.contains("kuning")) {
+      return const Color.fromARGB(255, 255, 171, 64);
+    }
+    if (status.contains("abu")) return Colors.grey;
     return const Color.fromARGB(255, 76, 175, 80);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (kms.toLowerCase().contains("abu")) {
+      return Container(
+        width: 12,
+        height: 12,
+        decoration: const BoxDecoration(
+          color: Colors.grey,
+          shape: BoxShape.circle,
+        ),
+      );
+    }
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -96,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int _normal = 0;
   int _kurang = 0;
+  int _lebih = 0;
   int _obesitas = 0;
 
   @override
@@ -108,9 +127,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _refreshAll() async {
-    await _loadNamaKader();
-    await _fetchStatistik();
-    await _loadBalitaTrending();
+    await Future.wait([
+      _loadNamaKader(),
+      _fetchStatistik(),
+      _loadBalitaTrending(),
+    ]);
   }
 
   Future<void> _loadNamaKader() async {
@@ -123,10 +144,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadBalitaTrending() async {
+    if (mounted) setState(() => _loadingTrending = true);
     final result = await _repository.getBalitaPerluPerhatian();
     if (mounted) {
       result.fold(
-        (err) => setState(() => _loadingTrending = false),
+        (err) {
+          setState(() => _loadingTrending = false);
+        },
         (data) => setState(() {
           _balitaTrending = data.map((e) => e.toMap()).toList();
           _loadingTrending = false;
@@ -165,9 +189,10 @@ class _HomeScreenState extends State<HomeScreen> {
       (data) {
         if (mounted) {
           setState(() {
-            _normal = data["normal"];
-            _kurang = data["kurang"];
-            _obesitas = data["obesitas"];
+            _normal = (data["normal"] ?? 0);
+            _kurang = (data["kurang"] ?? 0);
+            _lebih = (data["lebih"] ?? 0);
+            _obesitas = (data["obesitas"] ?? 0);
             _isLoadingChart = false;
           });
         }
@@ -184,6 +209,8 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         top: false,
         child: RefreshIndicator(
+          color: AppColors.primary,
+          backgroundColor: Colors.white,
           onRefresh: _refreshAll,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -195,12 +222,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildGrafikCard(),
                 const SizedBox(height: 30),
-
                 BalitaTrendingSlider(
                   data: _balitaTrending,
                   isLoading: _loadingTrending,
                 ),
-
                 const SizedBox(height: 30),
                 _buildMenuSection(context),
                 const SizedBox(height: 30),
@@ -214,11 +239,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGrafikCard() {
-    final int totalBalita = _normal + _kurang + _obesitas;
+    final int totalBalita = _normal + _kurang + _lebih + _obesitas;
+
     final List<_GrafikData> chartData = [
       _GrafikData('Obesitas', _obesitas, Colors.redAccent),
-      _GrafikData('Kurang', _kurang, Colors.orangeAccent),
+      _GrafikData('Lebih', _lebih, Colors.yellow.shade700),
       _GrafikData('Normal', _normal, Colors.green),
+      _GrafikData('Kurang', _kurang, Colors.orangeAccent),
     ];
 
     return Column(
@@ -336,7 +363,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   child: _isLoadingChart
                       ? const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
                         )
                       : SfCartesianChart(
                           plotAreaBorderWidth: 0,
@@ -344,6 +373,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             labelStyle: const TextStyle(
                               color: Colors.black,
                               fontWeight: FontWeight.w600,
+                              fontSize: 10,
                             ),
                           ),
                           primaryYAxis: NumericAxis(
@@ -363,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 topLeft: Radius.circular(10),
                                 topRight: Radius.circular(10),
                               ),
-                              width: 0.55,
+                              width: 0.6,
                               dataSource: chartData,
                               xValueMapper: (data, _) => data.kategori,
                               yValueMapper: (data, _) => data.jumlah,
@@ -373,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 labelAlignment: ChartDataLabelAlignment.middle,
                                 textStyle: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -596,17 +626,25 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
   Timer? _timer;
   int _currentIndex = 0;
   bool _isUserTouching = false;
+  final double _itemWidth = 266.0;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _startAutoScroll();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAutoScroll();
+    });
   }
 
   void _startAutoScroll() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
       if (!_isUserTouching &&
           widget.data.isNotEmpty &&
           _scrollController.hasClients) {
@@ -617,7 +655,7 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
         }
 
         _scrollController.animateTo(
-          _currentIndex * 266.0,
+          _currentIndex * _itemWidth,
           duration: const Duration(milliseconds: 800),
           curve: Curves.easeInOutCubic,
         );
@@ -659,7 +697,10 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Batal", style: TextStyle(color: AppColors.primary)),
+              child: const Text(
+                "Batal",
+                style: TextStyle(color: AppColors.primary),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -670,7 +711,6 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
               ),
               onPressed: () {
                 Navigator.pop(context);
-
                 try {
                   final safeMap = {
                     'nik_balita': item['nik']?.toString() ?? '',
@@ -707,7 +747,7 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     CustomSnackBar.show(
                       message:
-                          "Gagal memuat detail balita. Error konversi: Data di daftar trending tidak lengkap.",
+                          "Gagal memuat detail balita. Data tidak lengkap.",
                       type: SnackBarType.error,
                     ),
                   );
@@ -797,9 +837,17 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
                 if (notification is ScrollStartNotification) {
-                  setState(() => _isUserTouching = true);
+                  if (notification.dragDetails != null) {
+                    setState(() => _isUserTouching = true);
+                  }
                 } else if (notification is ScrollEndNotification) {
-                  setState(() => _isUserTouching = false);
+                  setState(() {
+                    _isUserTouching = false;
+                    if (_scrollController.hasClients) {
+                      final offset = _scrollController.position.pixels;
+                      _currentIndex = (offset / _itemWidth).round();
+                    }
+                  });
                 }
                 return false;
               },
@@ -827,12 +875,15 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
     Color statusColor;
     Color statusBgColor;
 
-    if (kms == "merah") {
+    if (kms.contains("merah")) {
       statusColor = Colors.red;
       statusBgColor = Colors.red.withOpacity(0.1);
-    } else if (kms == "kuning") {
+    } else if (kms.contains("kuning")) {
       statusColor = Colors.orange;
       statusBgColor = Colors.orange.withOpacity(0.1);
+    } else if (kms.contains("abu")) {
+      statusColor = Colors.grey;
+      statusBgColor = Colors.grey.withOpacity(0.1);
     } else {
       statusColor = Colors.green;
       statusBgColor = Colors.green.withOpacity(0.1);
@@ -873,7 +924,7 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
                     Container(
                       width: 30,
                       height: 50,
-                      decoration: BoxDecoration(shape: BoxShape.circle),
+                      decoration: const BoxDecoration(shape: BoxShape.circle),
                       child: Center(child: LottieWarningDot(kms: kms)),
                     ),
                     const SizedBox(width: 14),

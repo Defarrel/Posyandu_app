@@ -210,6 +210,8 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             builder: (_) => TambahPerkembanganBalita(
               nikBalita: balita.nikBalita,
               namaBalita: balita.namaBalita,
+              jenisKelamin: balita.jenisKelamin,
+              tanggalLahir: DateTime.parse(balita.tanggalLahir),
             ),
           ),
         );

@@ -481,7 +481,7 @@ class LaporanPosyandu {
           tgl = d.tanggalLahir;
         }
 
-        final kms = (d.kms.trim().isNotEmpty) ? "Ada" : "-";
+        final kms = (d.kms != null && d.kms.trim().isNotEmpty) ? d.kms : "-";
 
         row.cells[0].value = (i + 1).toString();
         row.cells[1].value = d.anakKe;

@@ -57,13 +57,19 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
   int _normal = 0;
   int _kurang = 0;
+  int _lebih = 0; 
   int _obesitas = 0;
+
   int _lakiNormal = 0;
   int _lakiKurang = 0;
+  int _lakiLebih = 0; 
   int _lakiObesitas = 0;
+
   int _perempuanNormal = 0;
   int _perempuanKurang = 0;
+  int _perempuanLebih = 0;
   int _perempuanObesitas = 0;
+
   int _totalLaki = 0;
   int _totalPerempuan = 0;
 
@@ -145,16 +151,20 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           setState(() {
             _normal = (data['normal'] ?? 0) as int;
             _kurang = (data['kurang'] ?? 0) as int;
+            _lebih = (data['lebih'] ?? 0) as int; 
             _obesitas = (data['obesitas'] ?? 0) as int;
+
             _totalLaki = (data['total_laki'] ?? 0) as int;
             _totalPerempuan = (data['total_perempuan'] ?? 0) as int;
 
             _lakiNormal = (laki['normal'] ?? 0) as int;
             _lakiKurang = (laki['kurang'] ?? 0) as int;
+            _lakiLebih = (laki['lebih'] ?? 0) as int; 
             _lakiObesitas = (laki['obesitas'] ?? 0) as int;
 
             _perempuanNormal = (perempuan['normal'] ?? 0) as int;
             _perempuanKurang = (perempuan['kurang'] ?? 0) as int;
+            _perempuanLebih = (perempuan['lebih'] ?? 0) as int; 
             _perempuanObesitas = (perempuan['obesitas'] ?? 0) as int;
 
             _isLoadingChart = false;
@@ -298,16 +308,23 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     }
   }
 
-  String _getAnalisisGizi(int normal, int kurang, int obesitas, int total) {
+  String _getAnalisisGizi(
+    int normal,
+    int kurang,
+    int lebih,
+    int obesitas,
+    int total,
+  ) {
     if (total == 0) return "Belum ada data perkembangan bulan ini.";
     final persenNormal = (normal / total) * 100;
+
     if (persenNormal >= 100) {
       return "Semua balita berada pada kategori gizi normal. Bagus!";
     }
     if (persenNormal >= 70) {
-      return "Mayoritas balita normal, namun beberapa perlu perhatian.";
+      return "Mayoritas balita normal, namun beberapa (${kurang + lebih + obesitas}) perlu perhatian.";
     }
-    return "Perlu intervensi karena proporsi gizi kurang/obesitas cukup tinggi.";
+    return "Perlu intervensi! Proporsi gizi kurang/lebih/obesitas cukup tinggi.";
   }
 
   String _getAnalisisSKDN() {
@@ -328,7 +345,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   Widget build(BuildContext context) {
     final int totalBalita = (_tipeGrafikDipilih == 'SKDN')
         ? _s
-        : (_normal + _kurang + _obesitas);
+        : (_normal + _kurang + _lebih + _obesitas);
 
     List<_GrafikData> chartData = [];
     if (_tipeGrafikDipilih == 'SKDN') {
@@ -340,9 +357,10 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
       ];
     } else {
       chartData = [
-        _GrafikData('Obesitas', _obesitas, Colors.redAccent),
-        _GrafikData('Kurang', _kurang, Colors.orangeAccent),
+        _GrafikData('Obesitas', _obesitas, Colors.red),
+        _GrafikData('Lebih', _lebih, Colors.yellow.shade700),  
         _GrafikData('Normal', _normal, Colors.green),
+        _GrafikData('Kurang', _kurang, Colors.orangeAccent),
       ];
     }
 
@@ -630,6 +648,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                                     ? _getAnalisisGizi(
                                         _normal,
                                         _kurang,
+                                        _lebih,
                                         _obesitas,
                                         totalBalita,
                                       )
@@ -716,20 +735,20 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
-                                    color: Colors.orange,
+                                    color: AppColors.accent,
                                     strokeWidth: 2,
                                   ),
                                 )
                               : const Icon(
-                                  Icons.star_outline,
-                                  color: Colors.orange,
+                                  Icons.picture_as_pdf_sharp,
+                                  color: AppColors.accent,
                                 ),
                           label: Text(
                             _isGeneratingPdfKhusus
                                 ? "Memproses..."
                                 : "Download Laporan Khusus",
                             style: const TextStyle(
-                              color: Colors.orange,
+                              color: AppColors.accent,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -737,7 +756,6 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                       ),
                     ],
                   ] else ...[
-                    // TOMBOL SKDN (Bisa ditekan tapi menampilkan SnackBar)
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -855,8 +873,16 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         ),
         const SizedBox(height: 12),
         _buildGiziDetailCard(
+          title: "Risiko Gizi Lebih",
+          color: Colors.yellow.shade700,
+          total: _lebih,
+          male: _lakiLebih,
+          female: _perempuanLebih,
+        ),
+        const SizedBox(height: 12),
+        _buildGiziDetailCard(
           title: "Gizi Kurang",
-          color: Colors.orange,
+          color: Colors.orangeAccent,
           total: _kurang,
           male: _lakiKurang,
           female: _perempuanKurang,

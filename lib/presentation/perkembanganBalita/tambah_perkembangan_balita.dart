@@ -12,12 +12,16 @@ import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart
 class TambahPerkembanganBalita extends StatefulWidget {
   final String nikBalita;
   final String namaBalita;
+  final String jenisKelamin; 
+  final DateTime tanggalLahir;
   final PerkembanganBalitaResponseModel? existingData;
 
   const TambahPerkembanganBalita({
     super.key,
     required this.nikBalita,
     required this.namaBalita,
+    required this.jenisKelamin,
+    required this.tanggalLahir,
     this.existingData,
   });
 
@@ -34,10 +38,13 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
 
   DateTime _selectedDate = DateTime.now();
   String? _caraUkur = "Berdiri";
-  String? _kms;
+  String? _kms = "Ada";
   String? _imd;
   String? _vitaminA;
   String? _asiEks;
+
+  bool _isLoading = false;
+  final _repo = PerkembanganBalitaRepository();
 
   bool _formBerubah() {
     return _beratController.text.isNotEmpty ||
@@ -45,14 +52,11 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         _lingkarLenganController.text.isNotEmpty ||
         _lingkarKepalaController.text.isNotEmpty ||
         (_caraUkur != "Berdiri") ||
-        (_kms != null) ||
+        (_kms != "Ada") ||
         (_imd != null) ||
         (_asiEks != null) ||
         (_vitaminA != null);
   }
-
-  bool _isLoading = false;
-  final _repo = PerkembanganBalitaRepository();
 
   bool get isSpecialMonth {
     final month = _selectedDate.month;
@@ -70,21 +74,32 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       _lingkarLenganController.text = d.lingkarLengan?.toString() ?? "";
       _lingkarKepalaController.text = d.lingkarKepala?.toString() ?? "";
       _caraUkur = d.caraUkur ?? "Berdiri";
-      _kms = d.kms;
+
+      if (d.kms != null && (d.kms == "Ada" || d.kms == "Tidak")) {
+        _kms = d.kms;
+      } else {
+        _kms = "Ada"; 
+      }
+
       _imd = d.imd;
       _vitaminA = d.vitaminA;
       _asiEks = d.asiEks;
       _selectedDate =
           DateTime.tryParse(d.tanggalPerubahan ?? "") ?? DateTime.now();
     }
+  }
 
-    _beratController.addListener(_hitungKMS);
-    _tinggiController.addListener(_hitungKMS);
+  @override
+  void dispose() {
+    _beratController.dispose();
+    _tinggiController.dispose();
+    _lingkarLenganController.dispose();
+    _lingkarKepalaController.dispose();
+    super.dispose();
   }
 
   Future<bool> _konfirmasiKeluar() async {
     if (!_formBerubah()) return true;
-
     final keluar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -105,40 +120,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         ],
       ),
     );
-
     return keluar ?? false;
-  }
-
-  @override
-  void dispose() {
-    _beratController.removeListener(_hitungKMS);
-    _tinggiController.removeListener(_hitungKMS);
-    _beratController.dispose();
-    _tinggiController.dispose();
-    _lingkarLenganController.dispose();
-    _lingkarKepalaController.dispose();
-    super.dispose();
-  }
-
-  void _hitungKMS() {
-    final berat = double.tryParse(_beratController.text) ?? 0.0;
-    final tinggi = double.tryParse(_tinggiController.text) ?? 0.0;
-
-    if (berat > 0 && tinggi > 0) {
-      final tinggiMeter = tinggi / 100;
-      final imt = berat / (tinggiMeter * tinggiMeter);
-
-      String hasilKMS;
-      if (imt < 13.0) {
-        hasilKMS = "Merah";
-      } else if (imt <= 17.0) {
-        hasilKMS = "Hijau";
-      } else {
-        hasilKMS = "Kuning";
-      }
-
-      setState(() => _kms = hasilKMS);
-    }
   }
 
   String _bulanIndo(int month) {
@@ -175,7 +157,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     }
 
     final now = DateTime.now();
-
     if (_selectedDate.year > now.year ||
         (_selectedDate.year == now.year && _selectedDate.month > now.month)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,7 +184,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         beratBadan: double.tryParse(_beratController.text) ?? 0.0,
         caraUkur: _caraUkur ?? "-",
         vitaminA: _vitaminA ?? "-",
-        kms: _kms ?? "-",
+        kms: _kms ?? "Tidak", 
         imd: _imd ?? "-",
         asiEks: _asiEks ?? "-",
         tanggalPerubahan: tanggalPerubahan,
@@ -267,9 +248,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     final isUpdate = widget.existingData != null;
 
     return WillPopScope(
-      onWillPop: () async {
-        return await _konfirmasiKeluar();
-      },
+      onWillPop: () async => await _konfirmasiKeluar(),
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
@@ -282,31 +261,33 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
               size: 20,
             ),
             onPressed: () async {
-              if (await _konfirmasiKeluar()) {
-                Navigator.pop(context);
-              }
+              if (await _konfirmasiKeluar()) Navigator.pop(context);
             },
           ),
-          title: Text(
-            isUpdate
-                ? "Perbarui Data Perkembangan"
-                : "Tambah Data Perkembangan Balita",
-            style: const TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isUpdate
+                    ? "Perbarui Data Perkembangan"
+                    : "Tambah Data Perkembangan",
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                isUpdate
+                    ? "Perbarui data ${widget.namaBalita}"
+                    : "Halo, ${widget.namaBalita}! Gimana perkembangannya?",
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          // subtitle: Text(
-          //   isUpdate
-          //       ? "Perbarui data perkembangan ${widget.namaBalita}"
-          //       : "Halo, ${widget.namaBalita}! Gimana perkembangan kamu bulan ini?",
-          //   style: const TextStyle(
-          //     fontSize: 14,
-          //     fontWeight: FontWeight.w500,
-          //     color: AppColors.textSecondary,
-          //   ),
-          // ),
           centerTitle: true,
         ),
         body: SingleChildScrollView(
@@ -315,29 +296,20 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                isUpdate
-                    ? "Perbarui data perkembangan ${widget.namaBalita}"
-                    : "Halo, ${widget.namaBalita}! Gimana perkembangan kamu bulan ini?",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 20),
-
+              const SizedBox(height: 10),
               GestureDetector(
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
                     initialDate: _selectedDate,
-                    firstDate: DateTime(2020),
+                    firstDate: widget.tanggalLahir,
                     lastDate: DateTime(2100),
                     locale: const Locale('id', 'ID'),
                   );
                   if (picked != null) {
-                    setState(() => _selectedDate = picked);
+                    setState(() {
+                      _selectedDate = picked;
+                    });
                   }
                 },
                 child: AbsorbPointer(
@@ -351,7 +323,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -374,7 +345,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -397,7 +367,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
               CustomDropdownField(
                 label: "Cara Ukur",
@@ -412,7 +381,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                     child: CustomDropdownField2(
                       label: "KMS",
                       value: _kms,
-                      items: const ["Merah", "Hijau", "Kuning"],
+                      items: const ["Ada", "Tidak"],
                       onChanged: (val) => setState(() => _kms = val),
                     ),
                   ),
@@ -460,7 +429,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,

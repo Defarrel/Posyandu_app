@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:posyandu_app/core/constant/constants.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/core/components/custom_appbar_profile.dart';
+import 'package:posyandu_app/data/models/response/auth/auth_response_model.dart';
+import 'package:posyandu_app/data/repository/auth_repository.dart';
 import 'package:posyandu_app/presentation/profile/pengaturan_profile_screen.dart';
+import 'package:posyandu_app/services/services_http_client.dart';
+import 'package:posyandu_app/services/user_notifier.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,15 +16,15 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen>
     with TickerProviderStateMixin {
-  String _username = "Memuat...";
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final AuthRepository _repo = AuthRepository(ServiceHttpClient());
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _repo.getUserProfile();
 
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -40,13 +43,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.dispose();
   }
 
-  Future<void> _loadUserData() async {
-    final nama = await _storage.read(key: 'username');
-    setState(() {
-      _username = nama ?? "Kader Posyandu";
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,67 +53,87 @@ class _ProfileScreenState extends State<ProfileScreen>
           Positioned.fill(
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 220, 20, 30),
-                children: [
-                  _buildSectionHeader(
-                    icon: Icons.person_rounded,
-                    title: "Informasi Akun",
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernInfoCard([
-                    _InfoItem(Icons.person_outline, "Nama Pengguna", _username),
-                    _InfoItem(Icons.home_rounded, "Posyandu", "Dahlia X"),
-                  ]),
+              child: ValueListenableBuilder<User?>(
+                valueListenable: UserNotifier.user,
+                builder: (context, user, _) {
+                  final displayUsername =
+                      user?.username ?? user?.email ?? "Kader Posyandu";
 
-                  const SizedBox(height: 32),
+                  return ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 220, 20, 30),
+                    children: [
+                      _buildSectionHeader(
+                        icon: Icons.person_rounded,
+                        title: "Informasi Akun",
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildModernInfoCard([
+                        _InfoItem(
+                          Icons.person_outline,
+                          "Nama Pengguna",
+                          displayUsername,
+                        ),
+                        _InfoItem(
+                          Icons.email_outlined,
+                          "Email",
+                          user?.email ?? "-",
+                        ),
+                        _InfoItem(Icons.home_rounded, "Posyandu", "Dahlia X"),
+                      ]),
 
-                  _buildSectionHeader(
-                    icon: Icons.settings_rounded,
-                    title: "Pengaturan",
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernInfoCard([
-                    _SettingItem(
-                      Icons.person_rounded,
-                      "Pengaturan Profil",
-                      "Ubah password dan nama pengguna",
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const PengaturanProfileScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ]),
+                      const SizedBox(height: 32),
 
-                  const SizedBox(height: 32),
+                      _buildSectionHeader(
+                        icon: Icons.settings_rounded,
+                        title: "Pengaturan",
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildModernInfoCard([
+                        _SettingItem(
+                          Icons.person_rounded,
+                          "Pengaturan Profil",
+                          "Ubah Nama, Password, dan Foto Profil",
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PengaturanProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ]),
 
-                  _buildSectionHeader(
-                    icon: Icons.info_outline_rounded,
-                    title: "Tentang Aplikasi",
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildModernInfoCard([
-                    _InfoItem(Icons.code_rounded, "Versi Aplikasi", "v1.0.0"),
-                    _InfoItem(
-                      Icons.update_rounded,
-                      "Update Terakhir",
-                      "Oktober 2025",
-                    ),
-                  ]),
+                      const SizedBox(height: 32),
 
-                  const SizedBox(height: 20),
-                ],
+                      _buildSectionHeader(
+                        icon: Icons.info_outline_rounded,
+                        title: "Tentang Aplikasi",
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildModernInfoCard([
+                        _InfoItem(
+                          Icons.code_rounded,
+                          "Versi Aplikasi",
+                          "v1.0.0",
+                        ),
+                        _InfoItem(
+                          Icons.update_rounded,
+                          "Update Terakhir",
+                          "Oktober 2025",
+                        ),
+                      ]),
+
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                },
               ),
             ),
           ),
-
           Positioned(
             top: 0,
             left: 0,
@@ -224,7 +240,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                       ],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(icon, color: const Color.fromARGB(255, 30, 140, 148), size: 24),
+                    child: Icon(
+                      icon,
+                      color: const Color.fromARGB(255, 30, 140, 148),
+                      size: 24,
+                    ),
                   ),
                   title: Text(
                     title,
@@ -253,7 +273,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                       : null,
                 ),
               ),
-
               if (index < items.length - 1)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),

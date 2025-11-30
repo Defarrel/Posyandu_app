@@ -34,14 +34,14 @@ class AuthRepository {
         );
         await _secureStorage.write(
           key: "userId",
-          value: authResponse.username?.id.toString() ?? '',
+          value: authResponse.user?.id.toString() ?? '',
         );
         await _secureStorage.write(
           key: "userName",
-          value: authResponse.username?.username ?? '',
+          value: authResponse.user?.username ?? '',
         );
 
-        log("Login success: ${authResponse.username?.username}");
+        log("Login success: ${authResponse.user?.username}");
         return Right(authResponse);
       } else {
         final message = jsonResponse['message'] ?? "Login failed";

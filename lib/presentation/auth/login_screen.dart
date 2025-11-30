@@ -16,7 +16,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isObscure = true;
@@ -55,11 +55,11 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _loadSavedCredentials() async {
-    final savedUsername = await _storage.read(key: 'saved_username');
+    final savedEmail = await _storage.read(key: 'saved_email');
     final savedPassword = await _storage.read(key: 'saved_password');
-    if (savedUsername != null && savedPassword != null) {
+    if (savedEmail != null && savedPassword != null) {
       setState(() {
-        _usernameController.text = savedUsername;
+        _emailController.text = savedEmail; 
         _passwordController.text = savedPassword;
         _rememberMe = true;
       });
@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
 
     final loginRequest = LoginRequestModel(
-      username: _usernameController.text.trim(),
+      email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     );
 
@@ -86,19 +86,20 @@ class _LoginScreenState extends State<LoginScreen>
       },
       (response) async {
         await _storage.write(key: 'token', value: response.token ?? '');
-        await _storage.write(key: 'username', value: _usernameController.text);
+
+        await _storage.write(key: 'email', value: _emailController.text);
 
         if (_rememberMe) {
           await _storage.write(
-            key: 'saved_username',
-            value: _usernameController.text,
+            key: 'saved_email',
+            value: _emailController.text,
           );
           await _storage.write(
             key: 'saved_password',
             value: _passwordController.text,
           );
         } else {
-          await _storage.delete(key: 'saved_username');
+          await _storage.delete(key: 'saved_email');
           await _storage.delete(key: 'saved_password');
         }
 
@@ -128,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _controller.dispose();
-    _usernameController.dispose();
+    _emailController.dispose(); 
     _passwordController.dispose();
     super.dispose();
   }
@@ -183,14 +184,17 @@ class _LoginScreenState extends State<LoginScreen>
                 key: _formKey,
                 child: Column(
                   children: [
-                    // Username
                     TextFormField(
-                      controller: _usernameController,
+                      controller: _emailController,
+                      keyboardType:
+                          TextInputType.emailAddress,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Username',
-                        prefixIcon: const Icon(Icons.person_outline),
+                        hintText: 'Email',
+                        prefixIcon: const Icon(
+                          Icons.email_outlined,
+                        ), 
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
@@ -212,11 +216,10 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
                       validator: (value) => value == null || value.isEmpty
-                          ? 'Masukkan username'
+                          ? 'Masukkan email'
                           : null,
                     ),
                     const SizedBox(height: 16),
-                    // Password
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _isObscure,

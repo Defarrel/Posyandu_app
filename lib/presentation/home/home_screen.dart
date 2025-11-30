@@ -1044,7 +1044,7 @@ class _ModernMenuCardState extends State<ModernMenuCard>
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.03),
+                    color: AppColors.primary.withOpacity(0.5),
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(80),
                       topRight: Radius.circular(24),
@@ -1062,12 +1062,19 @@ class _ModernMenuCardState extends State<ModernMenuCard>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.primaryLight.withOpacity(0.1),
-                            AppColors.primary.withOpacity(0.05),
+                            AppColors.primary.withOpacity(0.1),
+                            AppColors.primary.withOpacity(0.6),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Padding(

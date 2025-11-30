@@ -12,7 +12,7 @@ import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart
 class TambahPerkembanganBalita extends StatefulWidget {
   final String nikBalita;
   final String namaBalita;
-  final String jenisKelamin; 
+  final String jenisKelamin;
   final DateTime tanggalLahir;
   final PerkembanganBalitaResponseModel? existingData;
 
@@ -35,6 +35,11 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   final _tinggiController = TextEditingController();
   final _lingkarLenganController = TextEditingController();
   final _lingkarKepalaController = TextEditingController();
+
+  String? _errorBerat;
+  String? _errorTinggi;
+  String? _errorLengan;
+  String? _errorKepala;
 
   DateTime _selectedDate = DateTime.now();
   String? _caraUkur = "Berdiri";
@@ -78,7 +83,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       if (d.kms != null && (d.kms == "Ada" || d.kms == "Tidak")) {
         _kms = d.kms;
       } else {
-        _kms = "Ada"; 
+        _kms = "Ada";
       }
 
       _imd = d.imd;
@@ -142,14 +147,97 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     return bulan[month];
   }
 
+  bool _validateInputs() {
+    bool isValid = true;
+
+    setState(() {
+      _errorBerat = null;
+      _errorTinggi = null;
+      _errorLengan = null;
+      _errorKepala = null;
+    });
+
+    if (_beratController.text.isEmpty) {
+      _errorBerat = "Wajib diisi";
+      isValid = false;
+    } else {
+      double? bb = double.tryParse(_beratController.text.replaceAll(',', '.'));
+      if (bb == null) {
+        _errorBerat = "Format salah";
+        isValid = false;
+      } else if (bb > 50) {
+        _errorBerat = "Maks 50kg";
+        isValid = false;
+      } else if (bb <= 0) {
+        _errorBerat = "Tidak valid";
+        isValid = false;
+      }
+    }
+
+    if (_tinggiController.text.isEmpty) {
+      _errorTinggi = "Wajib diisi";
+      isValid = false;
+    } else {
+      double? tb = double.tryParse(_tinggiController.text.replaceAll(',', '.'));
+      if (tb == null) {
+        _errorTinggi = "Format salah";
+        isValid = false;
+      } else if (tb > 150) {
+        _errorTinggi = "Maks 150cm";
+        isValid = false;
+      } else if (tb <= 0) {
+        _errorTinggi = "Tidak valid";
+        isValid = false;
+      }
+    }
+
+    if (_lingkarLenganController.text.isEmpty) {
+      _errorLengan = "Wajib diisi";
+      isValid = false;
+    } else {
+      double? lila = double.tryParse(
+        _lingkarLenganController.text.replaceAll(',', '.'),
+      );
+      if (lila == null) {
+        _errorLengan = "Format salah";
+        isValid = false;
+      } else if (lila > 40) {
+        _errorLengan = "Maks 40cm";
+        isValid = false;
+      } else if (lila <= 0) {
+        _errorLengan = "Tidak valid";
+        isValid = false;
+      }
+    }
+
+    if (_lingkarKepalaController.text.isEmpty) {
+      _errorKepala = "Wajib diisi";
+      isValid = false;
+    } else {
+      double? lk = double.tryParse(
+        _lingkarKepalaController.text.replaceAll(',', '.'),
+      );
+      if (lk == null) {
+        _errorKepala = "Format salah";
+        isValid = false;
+      } else if (lk > 65) {
+        _errorKepala = "Maks 65cm";
+        isValid = false;
+      } else if (lk <= 0) {
+        _errorKepala = "Tidak valid";
+        isValid = false;
+      }
+    }
+
+    setState(() {});
+    return isValid;
+  }
+
   void _submitForm() async {
-    if (_beratController.text.isEmpty ||
-        _tinggiController.text.isEmpty ||
-        _lingkarLenganController.text.isEmpty ||
-        _lingkarKepalaController.text.isEmpty) {
+    if (!_validateInputs()) {
       ScaffoldMessenger.of(context).showSnackBar(
         CustomSnackBar.show(
-          message: ("Harap isi semua data terlebih dahulu"),
+          message: "Periksa kembali data bertanda merah.",
           type: SnackBarType.error,
         ),
       );
@@ -162,7 +250,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       ScaffoldMessenger.of(context).showSnackBar(
         CustomSnackBar.show(
           message:
-              "Tidak dapat input data untuk masa depan (${_bulanIndo(_selectedDate.month)} ${_selectedDate.year}).",
+              "Tidak dapat input data masa depan (${_bulanIndo(_selectedDate.month)} ${_selectedDate.year}).",
           type: SnackBarType.error,
         ),
       );
@@ -178,13 +266,23 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
 
       final model = PerkembanganBalitaRequestModel(
         nikBalita: widget.nikBalita,
-        lingkarLengan: double.tryParse(_lingkarLenganController.text) ?? 0.0,
-        lingkarKepala: double.tryParse(_lingkarKepalaController.text) ?? 0.0,
-        tinggiBadan: double.tryParse(_tinggiController.text) ?? 0.0,
-        beratBadan: double.tryParse(_beratController.text) ?? 0.0,
+        lingkarLengan:
+            double.tryParse(
+              _lingkarLenganController.text.replaceAll(',', '.'),
+            ) ??
+            0.0,
+        lingkarKepala:
+            double.tryParse(
+              _lingkarKepalaController.text.replaceAll(',', '.'),
+            ) ??
+            0.0,
+        tinggiBadan:
+            double.tryParse(_tinggiController.text.replaceAll(',', '.')) ?? 0.0,
+        beratBadan:
+            double.tryParse(_beratController.text.replaceAll(',', '.')) ?? 0.0,
         caraUkur: _caraUkur ?? "-",
         vitaminA: _vitaminA ?? "-",
-        kms: _kms ?? "Tidak", 
+        kms: _kms ?? "Tidak",
         imd: _imd ?? "-",
         asiEks: _asiEks ?? "-",
         tanggalPerubahan: tanggalPerubahan,
@@ -195,16 +293,13 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         result.fold(
           (error) => ScaffoldMessenger.of(context).showSnackBar(
             CustomSnackBar.show(
-              message: ("Gagal: $error"),
+              message: "Gagal: $error",
               type: SnackBarType.error,
             ),
           ),
           (message) {
             ScaffoldMessenger.of(context).showSnackBar(
-              CustomSnackBar.show(
-                message: (message),
-                type: SnackBarType.success,
-              ),
+              CustomSnackBar.show(message: message, type: SnackBarType.success),
             );
             Navigator.pop(context, true);
           },
@@ -215,16 +310,13 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         result.fold(
           (error) => ScaffoldMessenger.of(context).showSnackBar(
             CustomSnackBar.show(
-              message: ("Gagal: $error"),
+              message: "Gagal: $error",
               type: SnackBarType.error,
             ),
           ),
           (message) {
             ScaffoldMessenger.of(context).showSnackBar(
-              CustomSnackBar.show(
-                message: (message),
-                type: SnackBarType.success,
-              ),
+              CustomSnackBar.show(message: message, type: SnackBarType.success),
             );
             Navigator.pop(context, true);
           },
@@ -234,7 +326,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       log("Exception form: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         CustomSnackBar.show(
-          message: ("Terjadi kesalahan: $e"),
+          message: "Terjadi kesalahan: $e",
           type: SnackBarType.error,
         ),
       );
@@ -324,49 +416,66 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                 ),
               ),
               const SizedBox(height: 12),
+
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: CustomTextField2(
                       label: "Berat Badan",
-                      hint: "0 kg",
+                      hint: "4.8 kg",
                       controller: _beratController,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      errorText: _errorBerat, 
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: CustomTextField2(
                       label: "Tinggi Badan",
-                      hint: "0 cm",
+                      hint: "49.3 cm",
                       controller: _tinggiController,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      errorText: _errorTinggi, 
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
+
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: CustomTextField2(
                       label: "Lingkar Lengan",
-                      hint: "0 cm",
+                      hint: "45.6 cm",
                       controller: _lingkarLenganController,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      errorText: _errorLengan,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: CustomTextField2(
                       label: "Lingkar Kepala",
-                      hint: "0 cm",
+                      hint: "18.1 cm",
                       controller: _lingkarKepalaController,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      errorText: _errorKepala,
                     ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 10),
               CustomDropdownField(
                 label: "Cara Ukur",

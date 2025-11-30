@@ -185,7 +185,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
           type: SnackBarType.error,
         ),
       );
-      return; 
+      return;
     }
 
     setState(() => _isLoading = true);
@@ -271,7 +271,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         return await _konfirmasiKeluar();
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[50],
         appBar: AppBar(
           elevation: 0,
           backgroundColor: Colors.white,
@@ -297,6 +297,16 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
               fontSize: 20,
             ),
           ),
+          // subtitle: Text(
+          //   isUpdate
+          //       ? "Perbarui data perkembangan ${widget.namaBalita}"
+          //       : "Halo, ${widget.namaBalita}! Gimana perkembangan kamu bulan ini?",
+          //   style: const TextStyle(
+          //     fontSize: 14,
+          //     fontWeight: FontWeight.w500,
+          //     color: AppColors.textSecondary,
+          //   ),
+          // ),
           centerTitle: true,
         ),
         body: SingleChildScrollView(

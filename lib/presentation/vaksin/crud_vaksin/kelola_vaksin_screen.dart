@@ -229,8 +229,7 @@ class _KelolaVaksinScreenState extends State<KelolaVaksinScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
-
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,

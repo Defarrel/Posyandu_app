@@ -7,7 +7,7 @@ import 'package:posyandu_app/main.dart';
 import 'package:posyandu_app/presentation/auth/login_screen.dart';
 
 class ServiceHttpClient {
-  final String baseUrl = 'http://10.155.222.232:5000/api/';
+  final String baseUrl = 'http://10.165.141.169:5000/api/';
   final secureStorage = FlutterSecureStorage();
   static bool _isLoggingOut = false;
 
@@ -118,7 +118,7 @@ class ServiceHttpClient {
 
   // HANDLE TOKEN EXPIRED
   Future<void> _handleTokenExpired() async {
-    if (_isLoggingOut) return; 
+    if (_isLoggingOut) return;
     _isLoggingOut = true;
 
     await secureStorage.delete(key: "authToken");

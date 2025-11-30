@@ -179,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: CustomAppBarHome(nama: _namaKader, posyandu: "Posyandu Dahlia"),
       body: SafeArea(
         top: false,
@@ -478,7 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ).then((_) => _refreshAll()),
               ),
               MenuButton(
-                title: "Grafik Bulanan\nBalita",
+                title: "Grafik Gizi Balita\n dan SKDN",
                 imagePath: "lib/core/assets/grafik.png",
                 onTap: () => Navigator.push(
                   context,

@@ -121,13 +121,13 @@ class _CariPerkembanganBalitaScreenState
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
         centerTitle: true,
         title: const Text(
-          "Cari Data Balita",
+          "Cari Data Perkembangan Balita",
           style: TextStyle(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,

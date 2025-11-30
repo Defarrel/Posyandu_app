@@ -263,7 +263,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
           "Detail Balita",

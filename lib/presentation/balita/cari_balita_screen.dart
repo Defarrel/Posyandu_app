@@ -89,7 +89,7 @@ class _CariBalitaScreenState extends State<CariBalitaScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: CustomAppBarCari(
         searchController: _searchController,
         filterValue: _filterKategori,

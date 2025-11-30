@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:posyandu_app/data/models/request/perkembangan_balita/perkembangan_request_model.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_attention_response.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
+import 'package:posyandu_app/data/models/response/perkembangan_balita/skdn_response_model.dart';
 import 'package:posyandu_app/services/services_http_client.dart';
 import 'package:dartz/dartz.dart';
 
@@ -269,6 +270,27 @@ class PerkembanganBalitaRepository {
       }
 
       return Left(jsonResponse["message"] ?? "Gagal memuat data");
+    } catch (e) {
+      return Left("Kesalahan: $e");
+    }
+  }
+
+  // SKDN
+  Future<Either<String, SkdnResponseModel>> getSKDN({
+    required int bulan,
+    required int tahun,
+  }) async {
+    try {
+      final response = await _service.get(
+        "perkembangan/skdn?bulan=$bulan&tahun=$tahun",
+      );
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return Right(SkdnResponseModel.fromMap(data));
+      } else {
+        return Left(data['message'] ?? 'Gagal memuat SKDN');
+      }
     } catch (e) {
       return Left("Kesalahan: $e");
     }

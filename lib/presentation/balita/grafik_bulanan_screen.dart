@@ -57,12 +57,12 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
   int _normal = 0;
   int _kurang = 0;
-  int _lebih = 0; 
+  int _lebih = 0;
   int _obesitas = 0;
 
   int _lakiNormal = 0;
   int _lakiKurang = 0;
-  int _lakiLebih = 0; 
+  int _lakiLebih = 0;
   int _lakiObesitas = 0;
 
   int _perempuanNormal = 0;
@@ -151,7 +151,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           setState(() {
             _normal = (data['normal'] ?? 0) as int;
             _kurang = (data['kurang'] ?? 0) as int;
-            _lebih = (data['lebih'] ?? 0) as int; 
+            _lebih = (data['lebih'] ?? 0) as int;
             _obesitas = (data['obesitas'] ?? 0) as int;
 
             _totalLaki = (data['total_laki'] ?? 0) as int;
@@ -159,12 +159,12 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
             _lakiNormal = (laki['normal'] ?? 0) as int;
             _lakiKurang = (laki['kurang'] ?? 0) as int;
-            _lakiLebih = (laki['lebih'] ?? 0) as int; 
+            _lakiLebih = (laki['lebih'] ?? 0) as int;
             _lakiObesitas = (laki['obesitas'] ?? 0) as int;
 
             _perempuanNormal = (perempuan['normal'] ?? 0) as int;
             _perempuanKurang = (perempuan['kurang'] ?? 0) as int;
-            _perempuanLebih = (perempuan['lebih'] ?? 0) as int; 
+            _perempuanLebih = (perempuan['lebih'] ?? 0) as int;
             _perempuanObesitas = (perempuan['obesitas'] ?? 0) as int;
 
             _isLoadingChart = false;
@@ -358,7 +358,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     } else {
       chartData = [
         _GrafikData('Obesitas', _obesitas, Colors.red),
-        _GrafikData('Lebih', _lebih, Colors.yellow.shade700),  
+        _GrafikData('Lebih', _lebih, Colors.yellow.shade700),
         _GrafikData('Normal', _normal, Colors.green),
         _GrafikData('Kurang', _kurang, Colors.orangeAccent),
       ];
@@ -866,6 +866,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         const SizedBox(height: 20),
         _buildGiziDetailCard(
           title: "Gizi Normal",
+          sdInfo: "-2 SD s/d +2 SD", 
           color: Colors.green,
           total: _normal,
           male: _lakiNormal,
@@ -874,22 +875,27 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         const SizedBox(height: 12),
         _buildGiziDetailCard(
           title: "Risiko Gizi Lebih",
+          sdInfo: "> +2 SD s/d +3 SD", 
           color: Colors.yellow.shade700,
           total: _lebih,
           male: _lakiLebih,
           female: _perempuanLebih,
         ),
         const SizedBox(height: 12),
+
         _buildGiziDetailCard(
           title: "Gizi Kurang",
+          sdInfo: "< -2 SD",
           color: Colors.orangeAccent,
           total: _kurang,
           male: _lakiKurang,
           female: _perempuanKurang,
         ),
         const SizedBox(height: 12),
+
         _buildGiziDetailCard(
           title: "Obesitas",
+          sdInfo: "> +3 SD",
           color: Colors.red,
           total: _obesitas,
           male: _lakiObesitas,
@@ -932,6 +938,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
   Widget _buildGiziDetailCard({
     required String title,
+    required String sdInfo, 
     required Color color,
     required int total,
     required int male,
@@ -959,10 +966,16 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start, 
                 children: [
                   Container(
+                    margin: const EdgeInsets.only(
+                      top: 4,
+                    ), 
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
@@ -970,14 +983,38 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          "Ambang Batas: $sdInfo",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -6,6 +6,7 @@ import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_item.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_khusus_item.dart';
 import 'package:posyandu_app/services/laporan_bulanan.dart';
+import 'package:posyandu_app/services/skdn_pdf_service.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
@@ -58,16 +59,19 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   int _normal = 0;
   int _kurang = 0;
   int _lebih = 0;
+  int _buruk = 0;
   int _obesitas = 0;
 
   int _lakiNormal = 0;
   int _lakiKurang = 0;
   int _lakiLebih = 0;
+  int _lakiBuruk = 0;
   int _lakiObesitas = 0;
 
   int _perempuanNormal = 0;
   int _perempuanKurang = 0;
   int _perempuanLebih = 0;
+  int _perempuanBuruk = 0;
   int _perempuanObesitas = 0;
 
   int _totalLaki = 0;
@@ -152,6 +156,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
             _normal = (data['normal'] ?? 0) as int;
             _kurang = (data['kurang'] ?? 0) as int;
             _lebih = (data['lebih'] ?? 0) as int;
+            _buruk = (data['buruk'] ?? 0) as int;
             _obesitas = (data['obesitas'] ?? 0) as int;
 
             _totalLaki = (data['total_laki'] ?? 0) as int;
@@ -160,11 +165,13 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
             _lakiNormal = (laki['normal'] ?? 0) as int;
             _lakiKurang = (laki['kurang'] ?? 0) as int;
             _lakiLebih = (laki['lebih'] ?? 0) as int;
+            _lakiBuruk = (laki['lebih'] ?? 0) as int;
             _lakiObesitas = (laki['obesitas'] ?? 0) as int;
 
             _perempuanNormal = (perempuan['normal'] ?? 0) as int;
             _perempuanKurang = (perempuan['kurang'] ?? 0) as int;
             _perempuanLebih = (perempuan['lebih'] ?? 0) as int;
+            _perempuanBuruk = (perempuan['buruk'] ?? 0) as int;
             _perempuanObesitas = (perempuan['obesitas'] ?? 0) as int;
 
             _isLoadingChart = false;
@@ -185,6 +192,90 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   bool get _isBulanKhusus {
     final bulanIndex = _bulanList.indexOf(_bulanDipilih) + 1;
     return bulanIndex == 2 || bulanIndex == 8;
+  }
+
+  Future<void> _downloadLaporanSKDN() async {
+    setState(() => _isGeneratingPdf = true);
+    try {
+      final int targetMonthIndex = _bulanList.indexOf(_bulanDipilih) + 1;
+      List<SkdnDataModel> listDataSKDN = [];
+
+      for (int i = 1; i <= 12; i++) {
+        if (i <= targetMonthIndex) {
+          final result = await _repository.getSKDN(
+            bulan: i,
+            tahun: _tahunDipilih,
+          );
+
+          result.fold(
+            (error) {
+              listDataSKDN.add(
+                SkdnDataModel(
+                  bulan: _bulanList[i - 1].substring(0, 3).toUpperCase(),
+                  s: 0,
+                  k: 0,
+                  d: 0,
+                  n: 0,
+                ),
+              );
+              print("Warning: Gagal ambil data bulan ke-$i: $error");
+            },
+            (data) {
+              listDataSKDN.add(
+                SkdnDataModel(
+                  bulan: _bulanList[i - 1].substring(0, 3).toUpperCase(),
+                  s: data.s,
+                  k: data.k,
+                  d: data.d,
+                  n: data.n,
+                ),
+              );
+            },
+          );
+        } else {
+          listDataSKDN.add(
+            SkdnDataModel(
+              bulan: _bulanList[i - 1].substring(0, 3).toUpperCase(),
+              s: 0,
+              k: 0,
+              d: 0,
+              n: 0,
+            ),
+          );
+        }
+      }
+
+      final pdfBytes = await LaporanSkdnService.generateSkdnPdf(
+        data: listDataSKDN,
+        namaPosyandu: "DAHLIA X",
+        tahun: _tahunDipilih.toString(),
+      );
+
+      await LaporanSkdnService.saveAndShare(
+        pdfBytes,
+        "laporan_skdn_$_tahunDipilih.pdf",
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(
+            message: "Laporan SKDN Tahun $_tahunDipilih berhasil diunduh",
+            type: SnackBarType.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(
+            message: "Gagal mengunduh laporan: $e",
+            type: SnackBarType.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingPdf = false);
+    }
   }
 
   Future<void> _generateAndExportPdf({bool isLaporanKhusus = false}) async {
@@ -313,6 +404,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     int kurang,
     int lebih,
     int obesitas,
+    int buruk,
     int total,
   ) {
     if (total == 0) return "Belum ada data perkembangan bulan ini.";
@@ -345,7 +437,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   Widget build(BuildContext context) {
     final int totalBalita = (_tipeGrafikDipilih == 'SKDN')
         ? _s
-        : (_normal + _kurang + _lebih + _obesitas);
+        : (_normal + _kurang + _lebih + _obesitas + _buruk);
 
     List<_GrafikData> chartData = [];
     if (_tipeGrafikDipilih == 'SKDN') {
@@ -361,6 +453,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         _GrafikData('Lebih', _lebih, Colors.yellow.shade700),
         _GrafikData('Normal', _normal, Colors.green),
         _GrafikData('Kurang', _kurang, Colors.orangeAccent),
+        _GrafikData('Buruk', _buruk, Colors.red),
       ];
     }
 
@@ -650,6 +743,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                                         _kurang,
                                         _lebih,
                                         _obesitas,
+                                        _buruk,
                                         totalBalita,
                                       )
                                     : _getAnalisisSKDN(),
@@ -760,14 +854,9 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            CustomSnackBar.show(
-                              message: "Fitur belum tersedia",
-                              type: SnackBarType.info,
-                            ),
-                          );
-                        },
+                        onPressed: _isGeneratingPdf
+                            ? null
+                            : _downloadLaporanSKDN,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(
@@ -775,13 +864,24 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                           ),
                           elevation: 2,
                         ),
-                        icon: const Icon(
-                          Icons.picture_as_pdf_outlined,
-                          color: Colors.white,
-                        ),
-                        label: const Text(
-                          "Download Laporan SKDN",
-                          style: TextStyle(
+                        icon: _isGeneratingPdf
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.picture_as_pdf_outlined,
+                                color: Colors.white,
+                              ),
+                        label: Text(
+                          _isGeneratingPdf
+                              ? "Memproses..."
+                              : "Download Laporan SKDN",
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
@@ -866,7 +966,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         const SizedBox(height: 20),
         _buildGiziDetailCard(
           title: "Gizi Normal",
-          sdInfo: "-2 SD s/d +2 SD", 
+          sdInfo: "-2 SD s/d +2 SD",
           color: Colors.green,
           total: _normal,
           male: _lakiNormal,
@@ -874,8 +974,17 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         ),
         const SizedBox(height: 12),
         _buildGiziDetailCard(
+          title: "Gizi Buruk",
+          sdInfo: "-3 SD",
+          color: Colors.red,
+          total: _buruk,
+          male: _lakiBuruk,
+          female: _perempuanBuruk,
+        ),
+        const SizedBox(height: 12),
+        _buildGiziDetailCard(
           title: "Risiko Gizi Lebih",
-          sdInfo: "> +2 SD s/d +3 SD", 
+          sdInfo: "> +2 SD s/d +3 SD",
           color: Colors.yellow.shade700,
           total: _lebih,
           male: _lakiLebih,
@@ -938,7 +1047,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
   Widget _buildGiziDetailCard({
     required String title,
-    required String sdInfo, 
+    required String sdInfo,
     required Color color,
     required int total,
     required int male,
@@ -966,16 +1075,13 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start, 
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    margin: const EdgeInsets.only(
-                      top: 4,
-                    ), 
+                    margin: const EdgeInsets.only(top: 4),
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(

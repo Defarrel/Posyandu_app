@@ -116,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _kurang = 0;
   int _lebih = 0;
   int _obesitas = 0;
+  int _buruk = 0;
 
   @override
   void initState() {
@@ -193,6 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _kurang = (data["kurang"] ?? 0);
             _lebih = (data["lebih"] ?? 0);
             _obesitas = (data["obesitas"] ?? 0);
+            _buruk = (data["buruk"] ?? 0);
             _isLoadingChart = false;
           });
         }
@@ -246,6 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _GrafikData('Lebih', _lebih, Colors.yellow.shade700),
       _GrafikData('Normal', _normal, Colors.green),
       _GrafikData('Kurang', _kurang, Colors.orangeAccent),
+      _GrafikData('Buruk', _buruk, Colors.red),
     ];
 
     return Column(
@@ -283,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 12),
               const Text(
-                "Grafik Balita Bulan",
+                "Grafik Gizi Balita",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:posyandu_app/core/constant/constants.dart';
+import 'package:posyandu_app/core/components/posyandu_background_painter.dart';
+import 'package:posyandu_app/core/constant/colors.dart';
 
 class CustomAppBarCari extends StatelessWidget implements PreferredSizeWidget {
   final TextEditingController searchController;
@@ -23,107 +24,107 @@ class CustomAppBarCari extends StatelessWidget implements PreferredSizeWidget {
     return ClipPath(
       clipper: SlightDownCurveClipper(),
       child: Container(
-        height: preferredSize.height,
+        height: preferredSize.height, 
         width: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('lib/core/assets/cari.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Center(
-                  child: Text(
-                    "Cari Data Balita",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+        color: Colors.transparent,
+        child: Stack(
+          children: [
+            const Positioned.fill(child: SeamlessPattern(offset: 0.0)),
+
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 20,
                 ),
-
-                const SizedBox(height: 30),
-
-                Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      flex: 4,
-                      child: TextField(
-                        controller: searchController,
-                        style: const TextStyle(color: Colors.black),
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: AppColors.primary,
-                          ),
-                          hintText: "Cari Nama / NIK Balita",
-                          hintStyle: const TextStyle(color: Colors.black54),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 0,
-                            horizontal: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
+                    const Center(
+                      child: Text(
+                        "Cari Data Balita",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
                         ),
-                        onChanged: onSearchChanged,
                       ),
                     ),
-
-                    const SizedBox(width: 10),
-
-                    Expanded(
-                      flex: 2,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: filterValue,
-                            icon: const Icon(
-                              Icons.filter_list,
-                              color: AppColors.primary,
+                    const SizedBox(height: 30),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: TextField(
+                            controller: searchController,
+                            style: const TextStyle(color: Colors.black),
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: AppColors.primary,
+                              ),
+                              hintText: "Cari Nama / NIK Balita",
+                              hintStyle: const TextStyle(color: Colors.black54),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 0,
+                                horizontal: 12,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
                             ),
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: "Semua",
-                                child: Text("Semua"),
-                              ),
-                              DropdownMenuItem(
-                                value: "Balita",
-                                child: Text("Balita"),
-                              ),
-                              DropdownMenuItem(
-                                value: "Baduta",
-                                child: Text("Baduta"),
-                              ),
-                            ],
-                            onChanged: onFilterChanged,
+                            onChanged: onSearchChanged,
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: filterValue,
+                                icon: const Icon(
+                                  Icons.filter_list,
+                                  color: AppColors.primary,
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: "Semua",
+                                    child: Text("Semua"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "Balita",
+                                    child: Text("Balita"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: "Baduta",
+                                    child: Text("Baduta"),
+                                  ),
+                                ],
+                                onChanged: onFilterChanged,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

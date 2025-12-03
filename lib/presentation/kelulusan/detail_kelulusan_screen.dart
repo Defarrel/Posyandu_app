@@ -64,15 +64,24 @@ class _DetailKelulusanBalitaScreenState
         _loading = false;
       });
       _animationController.forward();
+
+      if (_data != null &&
+          _data!.status != "LULUS" &&
+          _data!.vaksin.progressVaksin >= 1.0 &&
+          _data!.umur.progressUmur >= 1.0) {
+        Future.delayed(Duration.zero, () {
+          _setLulusManual(pesanKhusus: "Lulus otomatis (Syarat terpenuhi)");
+        });
+      }
     });
   }
 
-  Future<void> _setLulusManual() async {
+  Future<void> _setLulusManual({String? pesanKhusus}) async {
     setState(() => _updating = true);
 
     final request = KelulusanRequestModel(
       status: "LULUS",
-      keterangan: "Lulus manual oleh kader",
+      keterangan: pesanKhusus ?? "Lulus manual oleh kader",
     );
 
     final result = await _repo.setKelulusan(widget.nikBalita, request);
@@ -123,7 +132,6 @@ class _DetailKelulusanBalitaScreenState
       );
 
       _showSuccessSnackbar("Sertifikat berhasil diunduh dan dibagikan!");
-
     } catch (e) {
       _showErrorSnackbar(e.toString());
     } finally {
@@ -848,7 +856,7 @@ class _DetailKelulusanBalitaScreenState
         return Colors.grey;
     }
   }
-
+  
   IconData _getStatusIcon(String status) {
     switch (status) {
       case "LULUS":

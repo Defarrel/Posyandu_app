@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:posyandu_app/core/components/posyandu_background_painter.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/response/auth/auth_response_model.dart';
 import 'package:posyandu_app/data/repository/auth_repository.dart';
@@ -49,17 +50,13 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
     return ClipPath(
       clipper: SlightUpCurveClipper(),
       child: Container(
-        height: widget.preferredSize.height,
+        height: widget.preferredSize.height, 
         width: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('lib/core/assets/home.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-
+        color: Colors.transparent,
         child: Stack(
           children: [
+            const Positioned.fill(child: SeamlessPattern(offset: 1.0)),
+
             Padding(
               padding: const EdgeInsets.only(
                 left: 20,
@@ -103,9 +100,7 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
                           onBackgroundImageError: (_, __) {},
                         ),
                       ),
-
                       const SizedBox(width: 16),
-
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +126,6 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
                           ],
                         ),
                       ),
-
                       IconButton(
                         onPressed: () {},
                         icon: const Icon(
@@ -139,7 +133,6 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
                           color: Colors.white,
                         ),
                       ),
-
                       IconButton(
                         onPressed: widget.onMenuTap,
                         icon: const Icon(Icons.more_vert, color: Colors.white),

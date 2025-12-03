@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:posyandu_app/core/components/posyandu_background_painter.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/response/auth/auth_response_model.dart';
 import 'package:posyandu_app/data/repository/auth_repository.dart';
@@ -85,83 +86,82 @@ class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
       child: Container(
         height: 200,
         width: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('lib/core/assets/profile.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
+        color: Colors.transparent,
         child: Stack(
           children: [
-            Positioned(
-              right: 10,
-              top: 30,
-              child: IconButton(
-                icon: const Icon(Icons.exit_to_app, color: Colors.white),
-                onPressed: () => _handleLogout(context),
-              ),
-            ),
+            const Positioned.fill(child: SeamlessPattern(offset: 2.0)),
 
-            Align(
-              alignment: Alignment.center,
-              child: ValueListenableBuilder<User?>(
-                valueListenable: UserNotifier.user,
-                builder: (context, user, child) {
-                  final String namaTampil = user?.username ?? "Kader Posyandu";
+            Stack(
+              children: [
+                Positioned(
+                  right: 10,
+                  top: 30,
+                  child: IconButton(
+                    icon: const Icon(Icons.exit_to_app, color: Colors.white),
+                    onPressed: () => _handleLogout(context),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.center,
+                  child: ValueListenableBuilder<User?>(
+                    valueListenable: UserNotifier.user,
+                    builder: (context, user, child) {
+                      final String namaTampil =
+                          user?.username ?? "Kader Posyandu";
 
-                  ImageProvider imageProvider;
-                  if (user?.fotoProfile != null &&
-                      user!.fotoProfile!.isNotEmpty) {
-                    imageProvider = NetworkImage(
-                      _getPhotoUrl(user.fotoProfile!),
-                    );
-                  } else {
-                    imageProvider = const AssetImage(
-                      'lib/core/assets/default_profile.png',
-                    );
-                  }
+                      ImageProvider imageProvider;
+                      if (user?.fotoProfile != null &&
+                          user!.fotoProfile!.isNotEmpty) {
+                        imageProvider = NetworkImage(
+                          _getPhotoUrl(user.fotoProfile!),
+                        );
+                      } else {
+                        imageProvider = const AssetImage(
+                          'lib/core/assets/default_profile.png',
+                        );
+                      }
 
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.8),
-                            width: 2,
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.8),
+                                width: 2,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: 35,
+                              backgroundColor: Colors.grey[300],
+                              backgroundImage: imageProvider,
+                              onBackgroundImageError: (_, __) {},
+                            ),
                           ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 35,
-                          backgroundColor: Colors.grey[300],
-                          backgroundImage: imageProvider,
-                          onBackgroundImageError: (_, __) {},
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      Text(
-                        namaTampil,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        widget.posyandu,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+                          const SizedBox(height: 10),
+                          Text(
+                            namaTampil,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            widget.posyandu,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),

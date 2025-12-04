@@ -6,6 +6,9 @@ import 'package:posyandu_app/data/repository/auth_repository.dart';
 import 'package:posyandu_app/services/services_http_client.dart';
 import 'package:posyandu_app/services/user_notifier.dart';
 
+// Import halaman PengaturanProfileScreen
+import 'package:posyandu_app/presentation/profile/pengaturan_profile_screen.dart';
+
 class CustomAppBarHome extends StatefulWidget implements PreferredSizeWidget {
   final String posyandu;
   final VoidCallback? onMenuTap;
@@ -26,6 +29,7 @@ class CustomAppBarHome extends StatefulWidget implements PreferredSizeWidget {
 
 class _CustomAppBarHomeState extends State<CustomAppBarHome> {
   final AuthRepository _repo = AuthRepository(ServiceHttpClient());
+  bool isNotifOpen = false;
 
   @override
   void initState() {
@@ -35,6 +39,7 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
 
   String _getPhotoUrl(String filename) {
     String baseUrl = ServiceHttpClient().baseUrl;
+
     if (baseUrl.endsWith("api/")) {
       baseUrl = baseUrl.replaceAll("api/", "uploads/");
     } else if (baseUrl.endsWith("api")) {
@@ -42,7 +47,14 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
     } else {
       baseUrl = "$baseUrl/uploads/";
     }
+
     return "$baseUrl$filename";
+  }
+
+  void _goToSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const PengaturanProfileScreen()),
+    );
   }
 
   @override
@@ -50,9 +62,9 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
     return ClipPath(
       clipper: SlightUpCurveClipper(),
       child: Container(
-        height: widget.preferredSize.height, 
+        height: widget.preferredSize.height,
         width: double.infinity,
-        color: Colors.transparent,
+        color: AppColors.primary,
         child: Stack(
           children: [
             const Positioned.fill(child: SeamlessPattern(offset: 1.0)),
@@ -61,7 +73,7 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
               padding: const EdgeInsets.only(
                 left: 20,
                 right: 20,
-                top: 20,
+                top: 50,
                 bottom: 25,
               ),
               child: ValueListenableBuilder<User?>(
@@ -81,61 +93,101 @@ class _CustomAppBarHomeState extends State<CustomAppBarHome> {
                     );
                   }
 
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.8),
-                            width: 2,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.8),
+                                width: 2,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Colors.grey[300],
+                              backgroundImage: imageProvider,
+                              onBackgroundImageError: (_, __) {},
+                            ),
                           ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 35,
-                          backgroundColor: Colors.grey[300],
-                          backgroundImage: imageProvider,
-                          onBackgroundImageError: (_, __) {},
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Halo, Selamat Datang',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white,
-                              ),
+                          const SizedBox(width: 16),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Halo, Selamat Datang',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                                Text(
+                                  namaTampil,
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              namaTampil,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              maxLines: 1,
+                          ),
+
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                isNotifOpen = !isNotifOpen;
+                              });
+                            },
+                            icon: Icon(
+                              isNotifOpen
+                                  ? Icons.notifications_off_outlined
+                                  : Icons.notifications_none,
+                              color: Colors.white,
                             ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.notifications_none,
-                          color: Colors.white,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: widget.onMenuTap,
-                        icon: const Icon(Icons.more_vert, color: Colors.white),
+                          ),
+
+                          PopupMenuButton<String>(
+                            icon: const Icon(
+                              Icons.more_vert,
+                              color: Colors.white,
+                            ),
+                            onSelected: (val) {
+                              if (val == 'settings') {
+                                _goToSettings();
+                              } else {
+                                if (widget.onMenuTap != null) {
+                                  widget.onMenuTap!();
+                                }
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem<String>(
+                                value: 'settings',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.settings,
+                                      color: AppColors.primary,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text("Pengaturan Akun"),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
                   );

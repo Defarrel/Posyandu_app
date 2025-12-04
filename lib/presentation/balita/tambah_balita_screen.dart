@@ -34,6 +34,8 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
   final _alamatController = TextEditingController();
   final _rtController = TextEditingController();
   final _rwController = TextEditingController();
+  final _bbLahirController = TextEditingController();
+  final _tbLahirController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -49,6 +51,8 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
   String? _rtError;
   String? _rwError;
   String? _jenisKelaminError;
+  String? _bbLahirError;
+  String? _tbLahirError;
 
   final BalitaRepository _repository = BalitaRepository();
 
@@ -83,6 +87,8 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
       _alamatController.text = b.alamat;
       _rtController.text = b.rt;
       _rwController.text = b.rw;
+      _bbLahirController.text = b.bbLahir;
+      _tbLahirController.text = b.tbLahir;
     }
   }
 
@@ -128,10 +134,16 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           ? "Alamat wajib diisi"
           : null;
 
+      _bbLahirError = _bbLahirController.text.isEmpty
+          ? "BB lahir wajib diisi"
+          : null;
+      _tbLahirError = _tbLahirController.text.isEmpty
+          ? "TB lahir wajib diisi"
+          : null;
+
       _rtError = _rtController.text.isEmpty ? "RT wajib diisi" : null;
       _rwError = _rwController.text.isEmpty ? "RW wajib diisi" : null;
     });
-
     if (_namaError != null ||
         _ttlError != null ||
         _nikBalitaError != null ||
@@ -143,7 +155,9 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
         _noTelpError != null ||
         _alamatError != null ||
         _rtError != null ||
-        _rwError != null) {
+        _rwError != null ||
+        _bbLahirError != null ||
+        _tbLahirError != null) {
       return;
     }
 
@@ -161,6 +175,8 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
       nikOrtu: _nikOrtuController.text,
       nomorTelpOrtu: _noTelpController.text,
       alamat: _alamatController.text,
+      bbLahir: _bbLahirController.text,
+      tbLahir: _tbLahirController.text,
       rt: _rtController.text,
       rw: _rwController.text,
     );
@@ -359,6 +375,23 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
               controller: _anakKeController,
               keyboardType: TextInputType.number,
               errorText: _anakKeError,
+            ),
+            const SizedBox(height: 12),
+            CustomTextFieldBalita(
+              label: "Berat Badan Lahir (kg)",
+              hint: "Contoh: 3.2",
+              controller: _bbLahirController,
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              errorText: _bbLahirError,
+            ),
+
+            const SizedBox(height: 12),
+            CustomTextFieldBalita(
+              label: "Tinggi Badan Lahir (cm)",
+              hint: "Contoh: 49.5",
+              controller: _tbLahirController,
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              errorText: _tbLahirError,
             ),
             const SizedBox(height: 12),
             CustomTextFieldBalita(

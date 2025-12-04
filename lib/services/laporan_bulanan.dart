@@ -491,10 +491,10 @@ class LaporanPosyandu {
         row.cells[5].value = d.nik;
         row.cells[6].value = d.nama;
 
-        row.cells[7].value = d.bbLahir.isEmpty ? "-" : d.bbLahir;
+        row.cells[7].value = d.bbLahir.isEmpty ? " " : d.bbLahir;
         row.cells[8].value = d.bbBulanIni.toString();
 
-        row.cells[9].value = d.tbLahir.isEmpty ? "-" : d.tbLahir;
+        row.cells[9].value = d.tbLahir.isEmpty ? " " : d.tbLahir;
         row.cells[10].value = d.tbBulanIni.toString();
 
         row.cells[11].value = d.caraUkur;

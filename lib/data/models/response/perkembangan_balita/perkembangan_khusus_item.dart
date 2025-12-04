@@ -70,8 +70,8 @@ class PerkembanganKhususItem {
       asiEks: json["asi_eks"] ?? "-",
       vitaminA: json["vitamin_a"] ?? "-",
 
-      bbLahir: json["bb_lahir"]?.toString() ?? "-",
-      tbLahir: json["tb_lahir"]?.toString() ?? "-",
+      bbLahir: json["bb_lahir"]?.toString() ?? " ",
+      tbLahir: json["tb_lahir"]?.toString() ?? " ",
     );
   }
 }

@@ -655,6 +655,8 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
             _formatJenisKelamin(_balitaData.jenisKelamin),
           ),
           _infoRow("Anak Ke-", "${_balitaData.anakKeBerapa}"),
+          _infoRow("BB lahir", "${_balitaData.bbLahir} kg"),
+          _infoRow("TB Lahir", "${_balitaData.tbLahir} cm"),
           _infoRow("Nomor KK", _balitaData.nomorKk),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
@@ -1044,9 +1046,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: warnaStatus.withOpacity(
-                        0.8,
-                      ),
+                      color: warnaStatus.withOpacity(0.8),
                     ),
                   ),
                 ],

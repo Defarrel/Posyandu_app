@@ -13,6 +13,8 @@ class BalitaResponseModel {
   final String alamat;
   final String rt;
   final String rw;
+  final String bbLahir; // DITAMBAHKAN
+  final String tbLahir; // DITAMBAHKAN
   final String createdAt;
 
   BalitaResponseModel({
@@ -28,6 +30,8 @@ class BalitaResponseModel {
     required this.alamat,
     required this.rt,
     required this.rw,
+    required this.bbLahir, // DITAMBAHKAN
+    required this.tbLahir, // DITAMBAHKAN
     required this.createdAt,
   });
 
@@ -40,18 +44,17 @@ class BalitaResponseModel {
       namaBalita: map['nama_balita']?.toString() ?? '',
       jenisKelamin: map['jenis_kelamin']?.toString() ?? '',
       tanggalLahir:
-          map['tanggal_lahir']?.toString() ??
-          DateTime.now().toIso8601String(), 
+          map['tanggal_lahir']?.toString() ?? DateTime.now().toIso8601String(),
       anakKeBerapa: map['anak_ke_berapa']?.toString() ?? '',
       nomorKk: map['nomor_kk']?.toString() ?? '',
       namaOrtu: map['nama_ortu']?.toString() ?? '',
       nikOrtu: map['nik_ortu']?.toString() ?? '',
-      nomorTelpOrtu:
-          map['nomor_telp_ortu']?.toString() ??
-          '-',
+      nomorTelpOrtu: map['nomor_telp_ortu']?.toString() ?? '-',
       alamat: map['alamat']?.toString() ?? '',
       rt: map['rt']?.toString() ?? '',
       rw: map['rw']?.toString() ?? '',
+      bbLahir: map['bb_lahir']?.toString() ?? '', // DITAMBAHKAN
+      tbLahir: map['tb_lahir']?.toString() ?? '', // DITAMBAHKAN
       createdAt: map['created_at']?.toString() ?? '',
     );
   }
@@ -71,6 +74,8 @@ class BalitaResponseModel {
     "alamat": alamat,
     "rt": rt,
     "rw": rw,
+    "bb_lahir": bbLahir, // DITAMBAHKAN
+    "tb_lahir": tbLahir, // DITAMBAHKAN
     "created_at": createdAt,
   };
 }

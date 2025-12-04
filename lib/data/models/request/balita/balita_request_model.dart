@@ -13,8 +13,8 @@ class BalitaRequestModel {
   final String alamat;
   final String rt;
   final String rw;
-  final String bbLahir; // DITAMBAHKAN
-  final String tbLahir; // DITAMBAHKAN
+  final String bbLahir;
+  final String tbLahir; 
 
   BalitaRequestModel({
     required this.nikBalita,
@@ -29,8 +29,8 @@ class BalitaRequestModel {
     required this.alamat,
     required this.rt,
     required this.rw,
-    required this.bbLahir, // DITAMBAHKAN
-    required this.tbLahir, // DITAMBAHKAN
+    required this.bbLahir,
+    required this.tbLahir, 
   });
 
   factory BalitaRequestModel.fromJson(String str) =>
@@ -50,8 +50,8 @@ class BalitaRequestModel {
         alamat: map['alamat'],
         rt: map['rt'],
         rw: map['rw'],
-        bbLahir: map['bb_lahir'].toString(), // DITAMBAHKAN
-        tbLahir: map['tb_lahir'].toString(), // DITAMBAHKAN
+        bbLahir: map['bb_lahir'].toString(), 
+        tbLahir: map['tb_lahir'].toString(),
       );
 
   String toJson() => json.encode(toMap());
@@ -69,7 +69,7 @@ class BalitaRequestModel {
     "alamat": alamat,
     "rt": rt,
     "rw": rw,
-    "bb_lahir": bbLahir, // DITAMBAHKAN
-    "tb_lahir": tbLahir, // DITAMBAHKAN
+    "bb_lahir": bbLahir, 
+    "tb_lahir": tbLahir, 
   };
 }

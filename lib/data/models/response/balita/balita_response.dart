@@ -13,8 +13,8 @@ class BalitaResponseModel {
   final String alamat;
   final String rt;
   final String rw;
-  final String bbLahir; // DITAMBAHKAN
-  final String tbLahir; // DITAMBAHKAN
+  final String bbLahir;
+  final String tbLahir;
   final String createdAt;
 
   BalitaResponseModel({
@@ -30,8 +30,8 @@ class BalitaResponseModel {
     required this.alamat,
     required this.rt,
     required this.rw,
-    required this.bbLahir, // DITAMBAHKAN
-    required this.tbLahir, // DITAMBAHKAN
+    required this.bbLahir,
+    required this.tbLahir,
     required this.createdAt,
   });
 
@@ -53,8 +53,8 @@ class BalitaResponseModel {
       alamat: map['alamat']?.toString() ?? '',
       rt: map['rt']?.toString() ?? '',
       rw: map['rw']?.toString() ?? '',
-      bbLahir: map['bb_lahir']?.toString() ?? '', // DITAMBAHKAN
-      tbLahir: map['tb_lahir']?.toString() ?? '', // DITAMBAHKAN
+      bbLahir: map['bb_lahir']?.toString() ?? '', 
+      tbLahir: map['tb_lahir']?.toString() ?? '', 
       createdAt: map['created_at']?.toString() ?? '',
     );
   }
@@ -74,8 +74,8 @@ class BalitaResponseModel {
     "alamat": alamat,
     "rt": rt,
     "rw": rw,
-    "bb_lahir": bbLahir, // DITAMBAHKAN
-    "tb_lahir": tbLahir, // DITAMBAHKAN
+    "bb_lahir": bbLahir,
+    "tb_lahir": tbLahir,
     "created_at": createdAt,
   };
 }

@@ -224,6 +224,39 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     return jk;
   }
 
+  String hitungUmur(String tanggalLahir) {
+    try {
+      DateTime lahir = DateTime.parse(tanggalLahir);
+      DateTime now = DateTime.now();
+
+      int tahun = now.year - lahir.year;
+      int bulan = now.month - lahir.month;
+      int hari = now.day - lahir.day;
+
+      if (hari < 0) {
+        bulan -= 1;
+        hari += DateTime(now.year, now.month, 0).day;
+      }
+
+      if (bulan < 0) {
+        tahun -= 1;
+        bulan += 12;
+      }
+
+      if (tahun < 0) return "-";
+
+      if (tahun == 0 && bulan == 0) {
+        return "$hari hari";
+      } else if (tahun == 0) {
+        return "$bulan bulan";
+      } else {
+        return "$tahun thn $bulan bln";
+      }
+    } catch (e) {
+      return "-";
+    }
+  }
+
   List<PerkembanganBalitaResponseModel> _perkembanganList = [];
   PerkembanganBalitaResponseModel? _filteredPerkembangan;
   bool _isLoading = true;
@@ -649,7 +682,8 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         children: [
           _buildSectionHeader("Informasi Balita", Icons.person_outline),
           _infoRow("NIK Balita", _balitaData.nikBalita),
-          _infoRow("Tanggal Lahir", _formatTanggal(_balitaData.tanggalLahir)),
+          _infoRow("Umur Balita", hitungUmur(_balitaData.tanggalLahir)),
+
           _infoRow(
             "Jenis Kelamin",
             _formatJenisKelamin(_balitaData.jenisKelamin),

@@ -241,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGrafikCard() {
-    final int totalBalita = _normal + _kurang + _lebih + _obesitas;
+    final int totalBalita = _normal + _kurang + _lebih + _obesitas + _buruk;
 
     final List<_GrafikData> chartData = [
       _GrafikData('Obesitas', _obesitas, Colors.redAccent),

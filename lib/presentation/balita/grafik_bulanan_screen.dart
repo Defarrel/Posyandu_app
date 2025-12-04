@@ -105,12 +105,14 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
     result.fold(
       (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar.show(
-            message: ("Gagal memuat data SKDN: $error"),
-            type: SnackBarType.error,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar.show(
+              message: ("Gagal memuat data SKDN: $error"),
+              type: SnackBarType.error,
+            ),
+          );
+        }
         setState(() => _isLoadingChart = false);
       },
       (data) {
@@ -139,12 +141,14 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
     result.fold(
       (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar.show(
-            message: ("Gagal memuat data grafik: $error"),
-            type: SnackBarType.error,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar.show(
+              message: ("Gagal memuat data grafik: $error"),
+              type: SnackBarType.error,
+            ),
+          );
+        }
         setState(() => _isLoadingChart = false);
       },
       (data) {
@@ -154,35 +158,39 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
           setState(() {
             _normal = (data['normal'] ?? 0) as int;
-            _kurang = (data['kurang'] ?? 0) as int;
-            _lebih = (data['lebih'] ?? 0) as int;
+
             _buruk = (data['buruk'] ?? 0) as int;
+            _kurang = (data['kurang'] ?? 0) as int;
+
+            _lebih = (data['lebih'] ?? 0) as int;
             _obesitas = (data['obesitas'] ?? 0) as int;
 
             _totalLaki = (data['total_laki'] ?? 0) as int;
             _totalPerempuan = (data['total_perempuan'] ?? 0) as int;
 
             _lakiNormal = (laki['normal'] ?? 0) as int;
+            _lakiBuruk = (laki['buruk'] ?? 0) as int;
             _lakiKurang = (laki['kurang'] ?? 0) as int;
             _lakiLebih = (laki['lebih'] ?? 0) as int;
-            _lakiBuruk = (laki['lebih'] ?? 0) as int;
             _lakiObesitas = (laki['obesitas'] ?? 0) as int;
 
             _perempuanNormal = (perempuan['normal'] ?? 0) as int;
+            _perempuanBuruk = (perempuan['buruk'] ?? 0) as int;
             _perempuanKurang = (perempuan['kurang'] ?? 0) as int;
             _perempuanLebih = (perempuan['lebih'] ?? 0) as int;
-            _perempuanBuruk = (perempuan['buruk'] ?? 0) as int;
             _perempuanObesitas = (perempuan['obesitas'] ?? 0) as int;
 
             _isLoadingChart = false;
           });
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            CustomSnackBar.show(
-              message: ("Format data tidak sesuai: $e"),
-              type: SnackBarType.error,
-            ),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              CustomSnackBar.show(
+                message: ("Format data tidak sesuai: $e"),
+                type: SnackBarType.error,
+              ),
+            );
+          }
           setState(() => _isLoadingChart = false);
         }
       },
@@ -376,20 +384,24 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         "laporan_posyandu_bulan_$_bulanDipilih.pdf",
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        CustomSnackBar.show(
-          message:
-              ("PDF ${isLaporanKhusus ? 'khusus ' : ''}berhasil di-generate dan siap dicetak"),
-          type: SnackBarType.success,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(
+            message:
+                ("PDF ${isLaporanKhusus ? 'khusus ' : ''}berhasil di-generate dan siap dicetak"),
+            type: SnackBarType.success,
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        CustomSnackBar.show(
-          message: ("Gagal generate PDF: $e"),
-          type: SnackBarType.error,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(
+            message: ("Gagal generate PDF: $e"),
+            type: SnackBarType.error,
+          ),
+        );
+      }
     } finally {
       if (isLaporanKhusus) {
         setState(() => _isGeneratingPdfKhusus = false);
@@ -408,15 +420,24 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     int total,
   ) {
     if (total == 0) return "Belum ada data perkembangan bulan ini.";
+    final totalMasalah = kurang + buruk + lebih + obesitas;
     final persenNormal = (normal / total) * 100;
 
-    if (persenNormal >= 100) {
-      return "Semua balita berada pada kategori gizi normal. Bagus!";
+    final totalKurangBuruk = kurang + buruk;
+
+    if (totalMasalah == 0) {
+      return "Semua balita berada pada kategori gizi normal. Bagus sekali!";
     }
-    if (persenNormal >= 70) {
-      return "Mayoritas balita normal, namun beberapa (${kurang + lebih + obesitas}) perlu perhatian.";
+    if (persenNormal >= 80 && totalKurangBuruk == 0) {
+      return "Sebagian besar balita berada dalam batas normal. Perhatikan $lebih balita dengan risiko gizi lebih.";
     }
-    return "Perlu intervensi! Proporsi gizi kurang/lebih/obesitas cukup tinggi.";
+    if (totalKurangBuruk > 0 && totalKurangBuruk <= 5) {
+      return "Ada $totalKurangBuruk balita yang mengalami gizi kurang/buruk. Perlu penanganan segera dan edukasi gizi.";
+    }
+    if (totalMasalah > 10) {
+      return "Perlu intervensi! Proporsi gizi kurang, buruk, lebih, atau obesitas cukup tinggi (${totalMasalah} balita).";
+    }
+    return "Mayoritas balita normal, namun $totalMasalah balita perlu perhatian intensif.";
   }
 
   String _getAnalisisSKDN() {
@@ -449,7 +470,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
       ];
     } else {
       chartData = [
-        _GrafikData('Obesitas', _obesitas, Colors.red),
+        _GrafikData('Obesitas', _obesitas, Colors.redAccent),
         _GrafikData('Lebih', _lebih, Colors.yellow.shade700),
         _GrafikData('Normal', _normal, Colors.green),
         _GrafikData('Kurang', _kurang, Colors.orangeAccent),
@@ -610,6 +631,11 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                                   color: AppColors.primary,
                                 ),
                               )
+                            : totalBalita == 0 &&
+                                  _tipeGrafikDipilih == 'Status Gizi'
+                            ? _buildEmptyDataMessage("Status Gizi")
+                            : totalBalita == 0 && _tipeGrafikDipilih == 'SKDN'
+                            ? _buildEmptyDataMessage("SKDN")
                             : SfCartesianChart(
                                 key: ValueKey(_tipeGrafikDipilih),
                                 plotAreaBorderWidth: 0,
@@ -898,6 +924,47 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     );
   }
 
+  Widget _buildEmptyDataMessage(String tipe) {
+    return Container(
+      height: 180,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.grey.shade200,
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.grey.shade400,
+              size: 40,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Tidak ada data $tipe",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            Text(
+              "Tidak ada balita yang diukur pada bulan ini atau datanya belum dimasukkan.",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSimpleDropdown({
     required String value,
     required List<String> items,
@@ -931,84 +998,88 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   }
 
   Widget _buildModernGiziLayout(int total) {
-    return Column(
+    final summaryBadges = Wrap(
+      spacing: 8.0, 
+      runSpacing: 8.0, 
       children: [
-        Row(
+        _buildSummaryBadge("Total", "$total", Colors.blueGrey),
+        _buildSummaryBadge("L", "$_totalLaki", Colors.blue),
+        _buildSummaryBadge("P", "$_totalPerempuan", Colors.pink),
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              flex: 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Ringkasan Balita",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      _buildSummaryBadge("Total", "$total", Colors.blueGrey),
-                      const SizedBox(width: 8),
-                      _buildSummaryBadge("L", "$_totalLaki", Colors.blue),
-                      const SizedBox(width: 8),
-                      _buildSummaryBadge("P", "$_totalPerempuan", Colors.pink),
-                    ],
-                  ),
-                ],
+            const Text(
+              "Ringkasan Balita Aktif",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
               ),
             ),
+            const SizedBox(height: 4),
+            summaryBadges,
           ],
         ),
         const SizedBox(height: 20),
-        _buildGiziDetailCard(
-          title: "Gizi Normal",
-          sdInfo: "-2 SD s/d +2 SD",
-          color: Colors.green,
-          total: _normal,
-          male: _lakiNormal,
-          female: _perempuanNormal,
-        ),
-        const SizedBox(height: 12),
-        _buildGiziDetailCard(
-          title: "Gizi Buruk",
-          sdInfo: "-3 SD",
-          color: Colors.red,
-          total: _buruk,
-          male: _lakiBuruk,
-          female: _perempuanBuruk,
-        ),
-        const SizedBox(height: 12),
-        _buildGiziDetailCard(
-          title: "Risiko Gizi Lebih",
-          sdInfo: "> +2 SD s/d +3 SD",
-          color: Colors.yellow.shade700,
-          total: _lebih,
-          male: _lakiLebih,
-          female: _perempuanLebih,
-        ),
-        const SizedBox(height: 12),
-
-        _buildGiziDetailCard(
-          title: "Gizi Kurang",
-          sdInfo: "< -2 SD",
-          color: Colors.orangeAccent,
-          total: _kurang,
-          male: _lakiKurang,
-          female: _perempuanKurang,
-        ),
-        const SizedBox(height: 12),
-
-        _buildGiziDetailCard(
-          title: "Obesitas",
-          sdInfo: "> +3 SD",
-          color: Colors.red,
-          total: _obesitas,
-          male: _lakiObesitas,
-          female: _perempuanObesitas,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildGiziDetailCard(
+              title: "Gizi Normal",
+              sdInfo: ">= -2 SD s/d +2 SD",
+              color: Colors.green,
+              total: _normal,
+              male: _lakiNormal,
+              female: _perempuanNormal,
+              icon: Icons.check_circle_outline,
+            ),
+            const SizedBox(height: 12),
+            _buildGiziDetailCard(
+              title: "Gizi Kurang",
+              sdInfo: "< -2 SD s/d >= -3 SD",
+              color: Colors.orangeAccent,
+              total: _kurang,
+              male: _lakiKurang,
+              female: _perempuanKurang,
+              icon: Icons.trending_down,
+            ),
+            const SizedBox(height: 12),
+            _buildGiziDetailCard(
+              title: "Gizi Buruk",
+              sdInfo: "< -3 SD",
+              color: Colors.red,
+              total: _buruk,
+              male: _lakiBuruk,
+              female: _perempuanBuruk,
+              icon: Icons.dangerous_outlined,
+            ),
+            const SizedBox(height: 12),
+            _buildGiziDetailCard(
+              title: "Risiko Gizi Lebih",
+              sdInfo: "> +2 SD s/d +3 SD",
+              color: Colors.yellow.shade700,
+              total: _lebih,
+              male: _lakiLebih,
+              female: _perempuanLebih,
+              icon: Icons.trending_up,
+            ),
+            const SizedBox(height: 12),
+            _buildGiziDetailCard(
+              title: "Obesitas",
+              sdInfo: "> +3 SD",
+              color: Colors.redAccent,
+              total: _obesitas,
+              male: _lakiObesitas,
+              female: _perempuanObesitas,
+              icon: Icons.sick_outlined,
+            ),
+          ],
         ),
       ],
     );
@@ -1023,6 +1094,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             "$label: ",
@@ -1052,8 +1124,68 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     required int total,
     required int male,
     required int female,
+    required IconData icon,
   }) {
-    double totalVal = total == 0 ? 1 : total.toDouble();
+    if (total == 0) {
+      IconData emptyIcon;
+      Color iconColor;
+      String message;
+
+      switch (title) {
+        case "Gizi Buruk":
+        case "Obesitas":
+          emptyIcon = Icons.sentiment_very_satisfied;
+          iconColor = Colors.green.shade500;
+          message = "TIDAK ada Balita $title. Bagus!";
+          break;
+        case "Gizi Kurang":
+        case "Risiko Gizi Lebih":
+          emptyIcon = Icons.sentiment_neutral;
+          iconColor = Colors.blueGrey.shade500;
+          message = "TIDAK ada Balita $title.";
+          break;
+        case "Gizi Normal":
+        default:
+          emptyIcon = Icons.sentiment_dissatisfied;
+          iconColor = color.withOpacity(0.6);
+          message = "Tidak ada Balita $title bulan ini.";
+          break;
+      }
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.grey.shade300,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(emptyIcon, color: iconColor, size: 24),
+              const SizedBox(height: 4),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: iconColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    double totalVal = total.toDouble();
     double malePct = male / totalVal;
     double femalePct = female / totalVal;
 
@@ -1065,8 +1197,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.05),
-            blurRadius: 8,
+            color: color.withOpacity(0.1),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -1077,52 +1209,56 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
+              Flexible(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, size: 18, color: color),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          "Ambang Batas: $sdInfo",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey.shade600,
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 2),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              "Ambang Batas: $sdInfo",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -1138,13 +1274,14 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 14,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
+
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: SizedBox(
@@ -1156,7 +1293,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                     child: Container(color: Colors.blue.shade300),
                   ),
                   Expanded(
-                    flex: (femalePct * 100).toInt(),
+                    flex: malePct == 1.0 ? 0 : (femalePct * 100).toInt(),
                     child: Container(color: Colors.pink.shade300),
                   ),
                 ],
@@ -1164,38 +1301,60 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.male, size: 14, color: Colors.blue.shade400),
-                  const SizedBox(width: 4),
-                  Text(
-                    "Laki-laki: $male",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[700],
-                      fontWeight: FontWeight.w500,
-                    ),
+
+          IntrinsicHeight(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.male, size: 14, color: Colors.blue.shade400),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          "Laki-laki: $male (${(malePct * 100).toStringAsFixed(0)}%)",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    "Perempuan: $female",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[700],
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                VerticalDivider(
+                  width: 20,
+                  thickness: 1,
+                  indent: 2,
+                  endIndent: 2,
+                  color: Colors.grey.shade300,
+                ),
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          "Perempuan: $female (${(femalePct * 100).toStringAsFixed(0)}%)",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.female, size: 14, color: Colors.pink.shade400),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.female, size: 14, color: Colors.pink.shade400),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1219,7 +1378,12 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           count: _k,
           identityColor: Colors.yellow.shade800,
           formula: "Target: K / S",
-          percentageValue: (double.tryParse(_persenK) ?? 0) / 100,
+          percentageValue:
+              (double.tryParse(
+                    _persenK.replaceAll('%', '').replaceAll(',', '.'),
+                  ) ??
+                  0) /
+              100,
           percentageText: "$_persenK%",
         ),
         const SizedBox(height: 12),
@@ -1228,7 +1392,12 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           count: _d,
           identityColor: Colors.green,
           formula: "Target: D / S",
-          percentageValue: (double.tryParse(_persenD) ?? 0) / 100,
+          percentageValue:
+              (double.tryParse(
+                    _persenD.replaceAll('%', '').replaceAll(',', '.'),
+                  ) ??
+                  0) /
+              100,
           percentageText: "$_persenD%",
         ),
         const SizedBox(height: 12),
@@ -1237,7 +1406,12 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           count: _n,
           identityColor: Colors.blue,
           formula: "Target: N / D",
-          percentageValue: (double.tryParse(_persenN) ?? 0) / 100,
+          percentageValue:
+              (double.tryParse(
+                    _persenN.replaceAll('%', '').replaceAll(',', '.'),
+                  ) ??
+                  0) /
+              100,
           percentageText: "$_persenN%",
         ),
       ],
@@ -1252,6 +1426,44 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     required double percentageValue,
     required String percentageText,
   }) {
+    if (count == 0 && formula != null && _s > 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.grey.shade300,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: identityColor.withOpacity(0.6),
+                size: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "Tidak ada data $title bulan ini.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: identityColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final Color performanceColor = formula == null
         ? identityColor
         : _getPerformanceColor(percentageValue);

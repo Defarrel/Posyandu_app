@@ -214,7 +214,7 @@ class _VaksinBalitaScreenState extends State<VaksinBalitaScreen> {
               pinned: true,
               delegate: _StickyHeaderDelegate(
                 child: Container(
-                  color: Colors.white,
+                  color: Colors.grey[50],
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

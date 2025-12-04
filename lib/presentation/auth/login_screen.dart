@@ -154,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Hero(
                         tag: 'logo_posyandu',
                         child: Image.asset(
-                          'lib/core/assets/logo.png',
+                          'lib/core/assets/logo1.png',
                           height: 160,
                         ),
                       ),
@@ -273,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen>
                           side: const BorderSide(color: Colors.white),
                         ),
                         const Text(
-                          "Ingat kata sandi",
+                          "Ingat Saya",
                           style: TextStyle(color: Colors.white),
                         ),
                       ],

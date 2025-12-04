@@ -51,14 +51,13 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkLoginStatus() async {
-    await Future.delayed(const Duration(seconds: 3)); // animasi splash tetap
+    await Future.delayed(const Duration(seconds: 3)); 
 
     final token = await storage.read(key: 'token');
 
     if (!mounted) return;
 
     if (token != null && token.isNotEmpty) {
-      // Token ada -> langsung ke Home
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
@@ -70,7 +69,6 @@ class _SplashScreenState extends State<SplashScreen>
         ),
       );
     } else {
-      // Tidak ada token -> ke Login
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
@@ -110,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen>
                       Hero(
                         tag: 'logo_posyandu',
                         child: Image.asset(
-                          'lib/core/assets/logo.png',
+                          'lib/core/assets/logo1.png',
                           height: 180,
                           fit: BoxFit.contain,
                         ),

@@ -999,8 +999,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
 
   Widget _buildModernGiziLayout(int total) {
     final summaryBadges = Wrap(
-      spacing: 8.0, 
-      runSpacing: 8.0, 
+      spacing: 8.0,
+      runSpacing: 8.0,
       children: [
         _buildSummaryBadge("Total", "$total", Colors.blueGrey),
         _buildSummaryBadge("L", "$_totalLaki", Colors.blue),
@@ -1135,20 +1135,20 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         case "Gizi Buruk":
         case "Obesitas":
           emptyIcon = Icons.sentiment_very_satisfied;
-          iconColor = Colors.green.shade500;
-          message = "TIDAK ada Balita $title. Bagus!";
+          iconColor = Colors.blueGrey.shade500;
+          message = "Tidak ada balita $title. Bagus!";
           break;
         case "Gizi Kurang":
         case "Risiko Gizi Lebih":
-          emptyIcon = Icons.sentiment_neutral;
+          emptyIcon = Icons.sentiment_very_satisfied;
           iconColor = Colors.blueGrey.shade500;
-          message = "TIDAK ada Balita $title.";
+          message = "Tidak ada balita $title. Bagus";
           break;
         case "Gizi Normal":
         default:
           emptyIcon = Icons.sentiment_dissatisfied;
-          iconColor = color.withOpacity(0.6);
-          message = "Tidak ada Balita $title bulan ini.";
+          iconColor = Colors.blueGrey.shade500;
+          message = "Tidak ada balita $title bulan ini.";
           break;
       }
 

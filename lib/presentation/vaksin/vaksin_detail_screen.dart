@@ -111,7 +111,11 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.primary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -222,7 +226,7 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
   Widget _buildRekomendasiHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Colors.white, // Penting agar content di belakang tidak terlihat
+      color: Colors.grey[50],
       alignment: Alignment.centerLeft,
       child: Row(
         children: [
@@ -264,7 +268,7 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
     final riwayat = _vaksinData?.data ?? [];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: Colors.white, // Penting agar content di belakang tidak terlihat
+      color: Colors.grey[50],
       alignment: Alignment.centerLeft,
       child: Row(
         children: [

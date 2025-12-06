@@ -5,6 +5,7 @@ import 'package:posyandu_app/core/components/custom_dropdown_button.dart';
 import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_item.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_khusus_item.dart';
+import 'package:posyandu_app/presentation/balita/list_gizi_balita_screen.dart';
 import 'package:posyandu_app/services/laporan_bulanan.dart';
 import 'package:posyandu_app/services/skdn_pdf_service.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
@@ -1126,6 +1127,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     required int female,
     required IconData icon,
   }) {
+    // 1. Logika Empty State Khusus (Jika data 0, tampilkan pesan spesifik & TIDAK bisa diklik)
     if (total == 0) {
       IconData emptyIcon;
       Color iconColor;
@@ -1185,74 +1187,207 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
       );
     }
 
+    // 2. Logika Data Ada (> 0) dengan Navigasi ke List Detail
     double totalVal = total.toDouble();
-    double malePct = male / totalVal;
-    double femalePct = female / totalVal;
+    double malePct = totalVal > 0 ? male / totalVal : 0.0;
+    double femalePct = totalVal > 0 ? female / totalVal : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          // Navigasi ke halaman list detail saat card diklik
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ListGiziBalitaScreen(
+                title: title,
+                bulanNama: _bulanDipilih,
+                bulanIndex: _bulanList.indexOf(_bulanDipilih) + 1,
+                tahun: _tahunDipilih,
+                themeColor: color,
+              ),
+            ),
+          );
+        },
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
             children: [
-              Flexible(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(icon, size: 18, color: color),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(icon, size: 18, color: color),
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  "Ambang Batas: $sdInfo",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 10),
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          "$total",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Indikator panah bahwa card bisa diklik
+                      Icon(
+                        Icons.chevron_right,
+                        size: 20,
+                        color: Colors.grey[400],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: SizedBox(
+                  height: 8,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: (malePct * 100).toInt(),
+                        child: Container(color: Colors.blue.shade300),
+                      ),
+                      Expanded(
+                        flex: malePct == 1.0 ? 0 : (femalePct * 100).toInt(),
+                        child: Container(color: Colors.pink.shade300),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              IntrinsicHeight(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                     Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                          Icon(
+                            Icons.male,
+                            size: 14,
+                            color: Colors.blue.shade400,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              "Laki-laki: $male (${(malePct * 100).toStringAsFixed(0)}%)",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+                        ],
+                      ),
+                    ),
+                    VerticalDivider(
+                      width: 20,
+                      thickness: 1,
+                      indent: 2,
+                      endIndent: 2,
+                      color: Colors.grey.shade300,
+                    ),
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
                             child: Text(
-                              "Ambang Batas: $sdInfo",
+                              "Perempuan: $female (${(femalePct * 100).toStringAsFixed(0)}%)",
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 12,
+                                color: Colors.grey[700],
                                 fontWeight: FontWeight.w500,
-                                color: Colors.grey.shade600,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.female,
+                            size: 14,
+                            color: Colors.pink.shade400,
                           ),
                         ],
                       ),
@@ -1260,103 +1395,9 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  "$total",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: SizedBox(
-              height: 8,
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: (malePct * 100).toInt(),
-                    child: Container(color: Colors.blue.shade300),
-                  ),
-                  Expanded(
-                    flex: malePct == 1.0 ? 0 : (femalePct * 100).toInt(),
-                    child: Container(color: Colors.pink.shade300),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          IntrinsicHeight(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.male, size: 14, color: Colors.blue.shade400),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          "Laki-laki: $male (${(malePct * 100).toStringAsFixed(0)}%)",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[700],
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                VerticalDivider(
-                  width: 20,
-                  thickness: 1,
-                  indent: 2,
-                  endIndent: 2,
-                  color: Colors.grey.shade300,
-                ),
-                Flexible(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          "Perempuan: $female (${(femalePct * 100).toStringAsFixed(0)}%)",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[700],
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.female, size: 14, color: Colors.pink.shade400),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

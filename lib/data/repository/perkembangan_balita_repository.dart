@@ -295,4 +295,57 @@ class PerkembanganBalitaRepository {
       return Left("Kesalahan: $e");
     }
   }
+
+// Detail Gizi
+  Future<Either<String, List<Map<String, dynamic>>>> getDetailGiziKategori({
+    required int bulan,
+    required int tahun,
+    required String kategori,
+  }) async {
+    try {
+      String kategoriApi = '';
+      switch (kategori.toLowerCase()) {
+        case 'gizi buruk':
+          kategoriApi = 'buruk';
+          break;
+        case 'gizi kurang':
+          kategoriApi = 'kurang';
+          break;
+        case 'gizi normal':
+          kategoriApi = 'normal';
+          break;
+        case 'risiko gizi lebih':
+          kategoriApi = 'lebih';
+          break;
+        case 'obesitas':
+          kategoriApi = 'obesitas';
+          break;
+        default:
+          kategoriApi = 'normal';
+      }
+
+      final endpoint =
+          "perkembangan/list-kategori?bulan=$bulan&tahun=$tahun&kategori=$kategoriApi";
+
+      final response = await _service.get(endpoint);
+      final jsonResponse = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        if (jsonResponse['success'] == true && jsonResponse['data'] is List) {
+          final List<dynamic> rawData = jsonResponse['data'];
+          // Convert List<dynamic> ke List<Map<String, dynamic>>
+          return Right(List<Map<String, dynamic>>.from(rawData));
+        } else {
+          return Left("Format data list kategori tidak sesuai");
+        }
+      } else {
+        return Left(
+          jsonResponse['message'] ?? "Gagal mengambil data detail gizi",
+        );
+      }
+    } catch (e) {
+      log("Exception getDetailGiziKategori: $e");
+      return Left("Terjadi kesalahan saat mengambil detail gizi");
+    }
+  }
 }

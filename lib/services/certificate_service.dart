@@ -21,7 +21,9 @@ class CertificateService {
 
   static Future<Uint8List> _loadImageAsset() async {
     try {
-      final byteData = await rootBundle.load('lib/core/assets/sertifikat.png');
+      final byteData = await rootBundle.load(
+        'lib/core/assets/sertifBalita.png',
+      );
       return byteData.buffer.asUint8List();
     } catch (e) {
       throw Exception('Gagal memuat gambar: $e');
@@ -106,8 +108,7 @@ class CertificateService {
     try {
       final bytes = await generatePdf(namaBalita: namaBalita);
 
-      final fileName =
-          'Sertifikat_Lulus_${namaBalita.replaceAll(' ', '')}.pdf';
+      final fileName = 'Sertifikat_Lulus_${namaBalita.replaceAll(' ', '')}.pdf';
 
       final dir =
           await getDownloadsDirectory() ??

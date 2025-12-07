@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -48,6 +49,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   String _persenK = "0";
   String _persenD = "0";
   String _persenN = "0";
+  String _persenS = "0";
 
   late String _bulanDipilih;
   late int _tahunDipilih;
@@ -125,6 +127,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
           _persenK = data.persentase.kS;
           _persenD = data.persentase.dS;
           _persenN = data.persentase.nD;
+          _persenS = data.persentase.nS;
           _isLoadingChart = false;
         });
       },
@@ -225,6 +228,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                   k: 0,
                   d: 0,
                   n: 0,
+                  jumlahLulus: 0,
+                  jumlahS36: 0,
                 ),
               );
               print("Warning: Gagal ambil data bulan ke-$i: $error");
@@ -237,6 +242,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                   k: data.k,
                   d: data.d,
                   n: data.n,
+                  jumlahLulus: data.jumlahLulus,
+                  jumlahS36: data.jumlahS36,
                 ),
               );
             },
@@ -249,6 +256,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
               k: 0,
               d: 0,
               n: 0,
+              jumlahLulus: 0,
+              jumlahS36: 0,
             ),
           );
         }
@@ -385,15 +394,13 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         "laporan_posyandu_bulan_$_bulanDipilih.pdf",
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnackBar.show(
-            message:
-                ("PDF ${isLaporanKhusus ? 'khusus ' : ''}berhasil di-generate dan siap dicetak"),
-            type: SnackBarType.success,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar.show(
+          message:
+              ("PDF ${isLaporanKhusus ? 'khusus ' : ''}berhasil di-generate dan siap dicetak"),
+          type: SnackBarType.success,
+        ),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -446,7 +453,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     return "Data Bulan $_bulanDipilih:\n"
         "• Liputan (K/S): $_persenK%\n"
         "• Partisipasi (D/S): $_persenD%\n"
-        "• Keberhasilan (N/D): $_persenN%";
+        "• Keberhasilan (N/D): $_persenN%\n"
+        "• Pencapaian (N/S): $_persenS%";
   }
 
   Color _getPerformanceColor(double percentage) {
@@ -657,9 +665,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                                     color: Colors.grey[200],
                                     dashArray: [5, 5],
                                   ),
-                                  interval: _tipeGrafikDipilih == 'SKDN'
-                                      ? null
-                                      : 1,
+                                  decimalPlaces: 0,
+                                  minimum: 0,
                                 ),
                                 tooltipBehavior: TooltipBehavior(enable: true),
                                 series: <CartesianSeries<_GrafikData, String>>[
@@ -738,9 +745,18 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                     ),
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: _tipeGrafikDipilih == 'Status Gizi'
-                          ? _buildModernGiziLayout(totalBalita)
-                          : _buildCleanSKDNLayout(),
+                      child: _isLoadingChart
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 32),
+                                child: CircularProgressIndicator(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            )
+                          : (_tipeGrafikDipilih == 'Status Gizi'
+                                ? _buildModernGiziLayout(totalBalita)
+                                : _buildCleanSKDNLayout()),
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -1031,54 +1047,74 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildGiziDetailCard(
-              title: "Gizi Normal",
-              sdInfo: ">= -2 SD s/d +2 SD",
-              color: Colors.green,
-              total: _normal,
-              male: _lakiNormal,
-              female: _perempuanNormal,
-              icon: Icons.check_circle_outline,
+            _SlideInAnimation(
+              index: 0,
+              child: _buildGiziDetailCard(
+                index: 0,
+                title: "Gizi Normal",
+                sdInfo: ">= -2 SD s/d +2 SD",
+                color: Colors.green,
+                total: _normal,
+                male: _lakiNormal,
+                female: _perempuanNormal,
+                icon: Icons.check_circle_outline,
+              ),
             ),
             const SizedBox(height: 12),
-            _buildGiziDetailCard(
-              title: "Gizi Kurang",
-              sdInfo: "< -2 SD s/d >= -3 SD",
-              color: Colors.orangeAccent,
-              total: _kurang,
-              male: _lakiKurang,
-              female: _perempuanKurang,
-              icon: Icons.trending_down,
+            _SlideInAnimation(
+              index: 1,
+              child: _buildGiziDetailCard(
+                index: 1,
+                title: "Gizi Kurang",
+                sdInfo: "< -2 SD s/d >= -3 SD",
+                color: Colors.orangeAccent,
+                total: _kurang,
+                male: _lakiKurang,
+                female: _perempuanKurang,
+                icon: Icons.trending_down,
+              ),
             ),
             const SizedBox(height: 12),
-            _buildGiziDetailCard(
-              title: "Gizi Buruk",
-              sdInfo: "< -3 SD",
-              color: Colors.red,
-              total: _buruk,
-              male: _lakiBuruk,
-              female: _perempuanBuruk,
-              icon: Icons.dangerous_outlined,
+            _SlideInAnimation(
+              index: 2,
+              child: _buildGiziDetailCard(
+                index: 2,
+                title: "Gizi Buruk",
+                sdInfo: "< -3 SD",
+                color: Colors.red,
+                total: _buruk,
+                male: _lakiBuruk,
+                female: _perempuanBuruk,
+                icon: Icons.dangerous_outlined,
+              ),
             ),
             const SizedBox(height: 12),
-            _buildGiziDetailCard(
-              title: "Risiko Gizi Lebih",
-              sdInfo: "> +2 SD s/d +3 SD",
-              color: Colors.yellow.shade700,
-              total: _lebih,
-              male: _lakiLebih,
-              female: _perempuanLebih,
-              icon: Icons.trending_up,
+            _SlideInAnimation(
+              index: 3,
+              child: _buildGiziDetailCard(
+                index: 3,
+                title: "Risiko Gizi Lebih",
+                sdInfo: "> +2 SD s/d +3 SD",
+                color: Colors.yellow.shade700,
+                total: _lebih,
+                male: _lakiLebih,
+                female: _perempuanLebih,
+                icon: Icons.trending_up,
+              ),
             ),
             const SizedBox(height: 12),
-            _buildGiziDetailCard(
-              title: "Obesitas",
-              sdInfo: "> +3 SD",
-              color: Colors.redAccent,
-              total: _obesitas,
-              male: _lakiObesitas,
-              female: _perempuanObesitas,
-              icon: Icons.sick_outlined,
+            _SlideInAnimation(
+              index: 4,
+              child: _buildGiziDetailCard(
+                index: 4,
+                title: "Obesitas",
+                sdInfo: "> +3 SD",
+                color: Colors.redAccent,
+                total: _obesitas,
+                male: _lakiObesitas,
+                female: _perempuanObesitas,
+                icon: Icons.sick_outlined,
+              ),
             ),
           ],
         ),
@@ -1119,6 +1155,7 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   }
 
   Widget _buildGiziDetailCard({
+    required int index,
     required String title,
     required String sdInfo,
     required Color color,
@@ -1127,7 +1164,8 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
     required int female,
     required IconData icon,
   }) {
-    // 1. Logika Empty State Khusus (Jika data 0, tampilkan pesan spesifik & TIDAK bisa diklik)
+    final int delayStart = 600 + (index * 150);
+
     if (total == 0) {
       IconData emptyIcon;
       Color iconColor;
@@ -1187,7 +1225,6 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
       );
     }
 
-    // 2. Logika Data Ada (> 0) dengan Navigasi ke List Detail
     double totalVal = total.toDouble();
     double malePct = totalVal > 0 ? male / totalVal : 0.0;
     double femalePct = totalVal > 0 ? female / totalVal : 0.0;
@@ -1196,7 +1233,6 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          // Navigasi ke halaman list detail saat card diklik
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -1303,7 +1339,6 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Indikator panah bahwa card bisa diklik
                       Icon(
                         Icons.chevron_right,
                         size: 20,
@@ -1314,23 +1349,10 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: SizedBox(
-                  height: 8,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: (malePct * 100).toInt(),
-                        child: Container(color: Colors.blue.shade300),
-                      ),
-                      Expanded(
-                        flex: malePct == 1.0 ? 0 : (femalePct * 100).toInt(),
-                        child: Container(color: Colors.pink.shade300),
-                      ),
-                    ],
-                  ),
-                ),
+              _AnimatedGenderBar(
+                malePct: malePct,
+                femalePct: femalePct,
+                delayMs: delayStart,
               ),
               const SizedBox(height: 10),
               IntrinsicHeight(
@@ -1405,61 +1427,83 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
   Widget _buildCleanSKDNLayout() {
     return Column(
       children: [
-        _buildCleanSKDNCard(
-          title: "Sasaran Balita (S)",
-          count: _s,
-          identityColor: Colors.red,
-          formula: null,
-          percentageValue: 0,
-          percentageText: "-",
+        _SlideInAnimation(
+          index: 0,
+          child: _buildCleanSKDNCard(
+            index: 0,
+            title: "Sasaran Balita (S)",
+            count: _s,
+            identityColor: Colors.red,
+            formula: "Target N / S",
+            percentageValue:
+                (double.tryParse(
+                      _persenS.replaceAll('%', '').replaceAll(',', '.'),
+                    ) ??
+                    0) /
+                100,
+            percentageText: "$_persenS%",
+          ),
         ),
         const SizedBox(height: 12),
-        _buildCleanSKDNCard(
-          title: "Punya KMS (K)",
-          count: _k,
-          identityColor: Colors.yellow.shade800,
-          formula: "Target: K / S",
-          percentageValue:
-              (double.tryParse(
-                    _persenK.replaceAll('%', '').replaceAll(',', '.'),
-                  ) ??
-                  0) /
-              100,
-          percentageText: "$_persenK%",
+        _SlideInAnimation(
+          index: 1,
+          child: _buildCleanSKDNCard(
+            index: 1,
+            title: "Punya KMS (K)",
+            count: _k,
+            identityColor: Colors.yellow.shade800,
+            formula: "Target: K / S",
+            percentageValue:
+                (double.tryParse(
+                      _persenK.replaceAll('%', '').replaceAll(',', '.'),
+                    ) ??
+                    0) /
+                100,
+            percentageText: "$_persenK%",
+          ),
         ),
         const SizedBox(height: 12),
-        _buildCleanSKDNCard(
-          title: "Datang Ditimbang (D)",
-          count: _d,
-          identityColor: Colors.green,
-          formula: "Target: D / S",
-          percentageValue:
-              (double.tryParse(
-                    _persenD.replaceAll('%', '').replaceAll(',', '.'),
-                  ) ??
-                  0) /
-              100,
-          percentageText: "$_persenD%",
+        _SlideInAnimation(
+          index: 2,
+          child: _buildCleanSKDNCard(
+            index: 2,
+            title: "Datang Ditimbang (D)",
+            count: _d,
+            identityColor: Colors.green,
+            formula: "Target: D / S",
+            percentageValue:
+                (double.tryParse(
+                      _persenD.replaceAll('%', '').replaceAll(',', '.'),
+                    ) ??
+                    0) /
+                100,
+            percentageText: "$_persenD%",
+          ),
         ),
         const SizedBox(height: 12),
-        _buildCleanSKDNCard(
-          title: "Naik Berat Badan (N)",
-          count: _n,
-          identityColor: Colors.blue,
-          formula: "Target: N / D",
-          percentageValue:
-              (double.tryParse(
-                    _persenN.replaceAll('%', '').replaceAll(',', '.'),
-                  ) ??
-                  0) /
-              100,
-          percentageText: "$_persenN%",
+        _SlideInAnimation(
+          index: 3,
+          child: _buildCleanSKDNCard(
+            index: 3,
+            title: "Naik Berat Badan (N)",
+            count: _n,
+            identityColor: Colors.blue,
+            formula: "Target: N / D",
+            percentageValue:
+                (double.tryParse(
+                      _persenN.replaceAll('%', '').replaceAll(',', '.'),
+                    ) ??
+                    0) /
+                100,
+            percentageText: "$_persenN%",
+          ),
         ),
       ],
     );
   }
 
   Widget _buildCleanSKDNCard({
+    required int index,
     required String title,
     required int count,
     required Color identityColor,
@@ -1505,120 +1549,16 @@ class _GrafikBulananScreenState extends State<GrafikBulananScreen> {
       );
     }
 
-    final Color performanceColor = formula == null
-        ? identityColor
-        : _getPerformanceColor(percentageValue);
+    final int delayStart = 600 + (index * 150);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: identityColor.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "$count Data",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  width: 30,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: identityColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (formula != null) ...[
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  percentageText,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: performanceColor,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    formula,
-                    style: TextStyle(fontSize: 10, color: Colors.grey[500]),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 36,
-              height: 36,
-              child: Stack(
-                children: [
-                  CircularProgressIndicator(
-                    value: percentageValue > 1.0 ? 1.0 : percentageValue,
-                    strokeWidth: 4,
-                    backgroundColor: Colors.grey[100],
-                    color: performanceColor,
-                  ),
-                ],
-              ),
-            ),
-          ] else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                "Total",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-        ],
-      ),
+    return _AnimatedSKDNCard(
+      title: title,
+      count: count,
+      identityColor: identityColor,
+      formula: formula,
+      percentageValue: percentageValue,
+      percentageText: percentageText,
+      delayMs: delayStart,
     );
   }
 }
@@ -1660,4 +1600,347 @@ class _GrafikData {
   final dynamic jumlah;
   final Color warna;
   _GrafikData(this.kategori, this.jumlah, this.warna);
+}
+
+class _SlideInAnimation extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _SlideInAnimation({required this.index, required this.child});
+
+  @override
+  State<_SlideInAnimation> createState() => _SlideInAnimationState();
+}
+
+class _SlideInAnimationState extends State<_SlideInAnimation>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 700),
+      vsync: this,
+    );
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    Future.delayed(Duration(milliseconds: widget.index * 120), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(position: _offsetAnimation, child: widget.child),
+    );
+  }
+}
+
+class _AnimatedGenderBar extends StatefulWidget {
+  final double malePct;
+  final double femalePct;
+  final int delayMs;
+
+  const _AnimatedGenderBar({
+    required this.malePct,
+    required this.femalePct,
+    required this.delayMs,
+  });
+
+  @override
+  State<_AnimatedGenderBar> createState() => _AnimatedGenderBarState();
+}
+
+class _AnimatedGenderBarState extends State<_AnimatedGenderBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
+
+    Future.delayed(Duration(milliseconds: widget.delayMs), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedGenderBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.malePct != widget.malePct ||
+        oldWidget.femalePct != widget.femalePct) {
+      _ctrl.reset();
+      _ctrl.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, child) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: SizedBox(
+            height: 8,
+            child: Row(
+              children: [
+                Expanded(
+                  flex: (widget.malePct * 100 * _anim.value).toInt(),
+                  child: Container(color: Colors.blue.shade300),
+                ),
+                Expanded(
+                  flex: widget.malePct == 1.0
+                      ? 0
+                      : (widget.femalePct * 100 * _anim.value).toInt(),
+                  child: Container(color: Colors.pink.shade300),
+                ),
+                Expanded(
+                  flex: (100 * (1.0 - _anim.value)).toInt(),
+                  child: Container(color: Colors.transparent),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AnimatedSKDNCard extends StatefulWidget {
+  final String title;
+  final int count;
+  final Color identityColor;
+  final String? formula;
+  final double percentageValue;
+  final String percentageText;
+  final int delayMs;
+
+  const _AnimatedSKDNCard({
+    required this.title,
+    required this.count,
+    required this.identityColor,
+    this.formula,
+    required this.percentageValue,
+    required this.percentageText,
+    required this.delayMs,
+  });
+
+  @override
+  State<_AnimatedSKDNCard> createState() => _AnimatedSKDNCardState();
+}
+
+class _AnimatedSKDNCardState extends State<_AnimatedSKDNCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+  late double _targetPercentage;
+
+  @override
+  void initState() {
+    super.initState();
+    _targetPercentage = widget.percentageValue;
+    if (_targetPercentage > 1.0) _targetPercentage = 1.0;
+
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutExpo);
+
+    Future.delayed(Duration(milliseconds: widget.delayMs), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedSKDNCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.percentageValue != widget.percentageValue ||
+        oldWidget.count != widget.count) {
+      _targetPercentage = widget.percentageValue;
+      if (_targetPercentage > 1.0) _targetPercentage = 1.0;
+
+      _ctrl.reset();
+      _ctrl.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Color _getPerformanceColor(double percentage) {
+    if (percentage >= 0.8) return Colors.green;
+    if (percentage >= 0.5) return Colors.orange;
+    return Colors.red;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final performanceColor = widget.formula == null
+        ? widget.identityColor
+        : _getPerformanceColor(widget.percentageValue);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: widget.identityColor.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${widget.count} Data",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  width: 30,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: widget.identityColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (widget.formula != null) ...[
+            AnimatedBuilder(
+              animation: _anim,
+              builder: (context, child) {
+                final double currentVal = _targetPercentage * _anim.value;
+                final String currentText =
+                    "${(currentVal * 100).toStringAsFixed(1)}%";
+
+                return Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          currentText, 
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: performanceColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            widget.formula!,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: Stack(
+                        children: [
+                          CircularProgressIndicator(
+                            value: currentVal,
+                            strokeWidth: 4,
+                            backgroundColor: Colors.grey[100],
+                            color: performanceColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ] else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                "Total",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

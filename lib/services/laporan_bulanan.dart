@@ -404,8 +404,8 @@ class LaporanPosyandu {
         40,
         80,
         85,
-        60,
-        110,
+        75,
+        90,
       ];
 
       for (int i = 0; i < widths.length; i++) {

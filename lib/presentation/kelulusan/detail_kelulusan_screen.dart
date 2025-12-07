@@ -467,7 +467,7 @@ class _DetailKelulusanBalitaScreenState
           ),
           const SizedBox(height: 20),
 
-          _buildProgressItem(
+          _AnimatedProgressItem(
             title: "Vaksinasi",
             value: vaksin.progressVaksin,
             current: vaksin.sudahDiambil,
@@ -478,7 +478,7 @@ class _DetailKelulusanBalitaScreenState
           ),
           const SizedBox(height: 20),
 
-          _buildProgressItem(
+          _AnimatedProgressItem(
             title: "Usia",
             value: umur.progressUmur,
             current: umur.umurBulan,
@@ -489,107 +489,6 @@ class _DetailKelulusanBalitaScreenState
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildProgressItem({
-    required String title,
-    required double value,
-    required int current,
-    required int total,
-    required Color color,
-    required IconData icon,
-    required String description,
-  }) {
-    final percentage = (value * 100).toInt();
-    final isComplete = value >= 1.0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 20, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    description,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isComplete
-                    ? color.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isComplete
-                      ? color.withOpacity(0.3)
-                      : Colors.grey.withOpacity(0.3),
-                ),
-              ),
-              child: Text(
-                "$percentage%",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isComplete ? color : Colors.grey,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: value,
-            minHeight: 12,
-            backgroundColor: Colors.grey.shade200,
-            valueColor: AlwaysStoppedAnimation(color),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "$current dari $total",
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            Text(
-              "${current}/$total",
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -856,7 +755,7 @@ class _DetailKelulusanBalitaScreenState
         return Colors.grey;
     }
   }
-  
+
   IconData _getStatusIcon(String status) {
     switch (status) {
       case "LULUS":
@@ -894,5 +793,168 @@ class _DetailKelulusanBalitaScreenState
       default:
         return "Status tidak diketahui";
     }
+  }
+}
+
+class _AnimatedProgressItem extends StatefulWidget {
+  final String title;
+  final double value;
+  final int current;
+  final int total;
+  final Color color;
+  final IconData icon;
+  final String description;
+
+  const _AnimatedProgressItem({
+    required this.title,
+    required this.value,
+    required this.current,
+    required this.total,
+    required this.color,
+    required this.icon,
+    required this.description,
+  });
+
+  @override
+  State<_AnimatedProgressItem> createState() => _AnimatedProgressItemState();
+}
+
+class _AnimatedProgressItemState extends State<_AnimatedProgressItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _progressAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 2000,
+      ), 
+    );
+
+    _progressAnimation = Tween<double>(
+      begin: 0.0,
+      end: widget.value,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isComplete = widget.value >= 1.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: widget.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(widget.icon, size: 20, color: widget.color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    widget.description,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            AnimatedBuilder(
+              animation: _progressAnimation,
+              builder: (context, child) {
+                final currentProgress = _progressAnimation.value;
+                final percentage = (currentProgress * 100).toInt();
+                final currentIsComplete = currentProgress >= 1.0;
+
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: currentIsComplete
+                        ? widget.color.withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: currentIsComplete
+                          ? widget.color.withOpacity(0.3)
+                          : Colors.grey.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Text(
+                    "$percentage%",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: currentIsComplete ? widget.color : Colors.grey,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: AnimatedBuilder(
+            animation: _progressAnimation,
+            builder: (context, child) {
+              return LinearProgressIndicator(
+                value: _progressAnimation.value,
+                minHeight: 12,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation(widget.color),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "${widget.current} dari ${widget.total}",
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            Text(
+              "${widget.current}/${widget.total}",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }

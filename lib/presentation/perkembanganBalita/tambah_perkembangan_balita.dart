@@ -51,6 +51,8 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   bool _isLoading = false;
   final _repo = PerkembanganBalitaRepository();
 
+  List<PerkembanganBalitaResponseModel> _existingHistory = [];
+
   bool _formBerubah() {
     return _beratController.text.isNotEmpty ||
         _tinggiController.text.isNotEmpty ||
@@ -72,6 +74,8 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   void initState() {
     super.initState();
 
+    _loadRiwayat();
+
     if (widget.existingData != null) {
       final d = widget.existingData!;
       _beratController.text = d.beratBadan?.toString() ?? "";
@@ -91,6 +95,22 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       _asiEks = d.asiEks;
       _selectedDate =
           DateTime.tryParse(d.tanggalPerubahan ?? "") ?? DateTime.now();
+    }
+  }
+
+  Future<void> _loadRiwayat() async {
+    try {
+      final result = await _repo.getPerkembanganByNIK(widget.nikBalita);
+
+      result.fold((error) => log("Gagal load history: $error"), (data) {
+        if (mounted) {
+          setState(() {
+            _existingHistory = data;
+          });
+        }
+      });
+    } catch (e) {
+      log("Repository method mungkin belum ada atau error: $e");
     }
   }
 
@@ -237,7 +257,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     if (!_validateInputs()) {
       ScaffoldMessenger.of(context).showSnackBar(
         CustomSnackBar.show(
-          message: "Periksa kembali data bertanda merah.",
+          message: "Mohon lengkapi data bertanda merah.",
           type: SnackBarType.error,
         ),
       );
@@ -245,12 +265,47 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     }
 
     final now = DateTime.now();
-    if (_selectedDate.year > now.year ||
-        (_selectedDate.year == now.year && _selectedDate.month > now.month)) {
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+
+    bool isDuplicate = false;
+    for (var item in _existingHistory) {
+      final itemDate = DateTime.tryParse(item.tanggalPerubahan ?? "");
+
+      if (itemDate != null) {
+        if (itemDate.year == _selectedDate.year &&
+            itemDate.month == _selectedDate.month) {
+          if (widget.existingData != null &&
+              widget.existingData!.id == item.id) {
+            continue;
+          }
+
+          isDuplicate = true;
+          break;
+        }
+      }
+    }
+
+    if (isDuplicate) {
       ScaffoldMessenger.of(context).showSnackBar(
         CustomSnackBar.show(
           message:
-              "Tidak dapat input data masa depan (${_bulanIndo(_selectedDate.month)} ${_selectedDate.year}).",
+              "Data bulan ${_bulanIndo(_selectedDate.month)} ${_selectedDate.year} sudah ada. Silahkan cek detail balita.",
+          type: SnackBarType.error,
+        ),
+      );
+      return;
+    }
+
+    if (selected.isAfter(today)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar.show(
+          message:
+              "Tidak dapat input data masa depan (${_selectedDate.day} ${_bulanIndo(_selectedDate.month)} ${_selectedDate.year}).",
           type: SnackBarType.error,
         ),
       );
@@ -401,6 +456,12 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                   if (picked != null) {
                     setState(() {
                       _selectedDate = picked;
+
+                      if (!isSpecialMonth) {
+                        _imd = null;
+                        _vitaminA = null;
+                        _asiEks = null;
+                      }
                     });
                   }
                 },
@@ -428,7 +489,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      errorText: _errorBerat, 
+                      errorText: _errorBerat,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -440,7 +501,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      errorText: _errorTinggi, 
+                      errorText: _errorTinggi,
                     ),
                   ),
                 ],

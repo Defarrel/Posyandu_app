@@ -173,6 +173,12 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
         _rwError != null ||
         _bbLahirError != null ||
         _tbLahirError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar.show(
+          message: "Mohon lengkapi data yang bertanda merah",
+          type: SnackBarType.error,
+        ),
+      );
       return;
     }
 

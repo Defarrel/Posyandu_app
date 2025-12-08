@@ -2,174 +2,16 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-import 'package:posyandu_app/core/components/custom_snackbar.dart';
-import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/response/balita/balita_response.dart';
 import 'package:posyandu_app/data/models/response/perkembangan_balita/perkembangan_balita_reponse.dart';
+import 'package:posyandu_app/data/repository/balita_repository.dart';
 import 'package:posyandu_app/data/repository/perkembangan_balita_repository.dart';
-import 'package:posyandu_app/presentation/perkembanganBalita/tambah_perkembangan_balita.dart';
 import 'package:posyandu_app/presentation/balita/tambah_balita_screen.dart';
-
-String getKategoriStatusGizi(double berat, String gender, int umurBulan) {
-  final umurCheck = umurBulan > 60 ? 60 : umurBulan;
-
-  final standards = (gender.toUpperCase().contains('L'))
-      ? _boysData[umurCheck]
-      : _girlsData[umurCheck];
-
-  if (standards == null) return "Data Belum Tersedia";
-
-  final sdMin3 = standards[0];
-  final sdMin2 = standards[1];
-  final sdPlus2 = standards[2];
-  final sdPlus3 = standards[3];
-
-  if (berat < sdMin3) return "Gizi Buruk (Merah)";
-  if (berat >= sdMin3 && berat < sdMin2) return "Gizi Kurang (Kuning)";
-  if (berat >= sdMin2 && berat <= sdPlus2) return "Gizi Normal (Hijau)";
-  if (berat > sdPlus2 && berat <= sdPlus3) return "Risiko Gizi Lebih (Kuning)";
-  return "Obesitas (Merah)";
-}
-
-Color getColorStatusGizi(String status) {
-  if (status.contains("Buruk") || status.contains("Obesitas"))
-    return Colors.red;
-  if (status.contains("Kurang") || status.contains("Risiko"))
-    return Colors.orange;
-  if (status.contains("Normal")) return Colors.green;
-  return Colors.grey;
-}
-
-// Data WHO
-final Map<int, List<double>> _boysData = {
-  0: [2.1, 2.5, 4.4, 5.0],
-  1: [2.9, 3.4, 5.8, 6.6],
-  2: [3.8, 4.3, 7.1, 8.0],
-  3: [4.4, 5.0, 8.0, 9.0],
-  4: [4.9, 5.6, 8.7, 9.7],
-  5: [5.3, 6.0, 9.3, 10.4],
-  6: [5.7, 6.4, 9.8, 10.9],
-  7: [5.9, 6.7, 10.3, 11.4],
-  8: [6.2, 6.9, 10.7, 11.9],
-  9: [6.4, 7.1, 11.0, 12.3],
-  10: [6.6, 7.4, 11.4, 12.7],
-  11: [6.8, 7.6, 11.7, 13.0],
-  12: [6.9, 7.7, 12.0, 13.3],
-  13: [7.1, 7.9, 12.3, 13.7],
-  14: [7.2, 8.1, 12.6, 14.0],
-  15: [7.4, 8.3, 12.8, 14.3],
-  16: [7.5, 8.4, 13.1, 14.6],
-  17: [7.7, 8.6, 13.3, 14.9],
-  18: [7.8, 8.8, 13.5, 15.1],
-  19: [8.0, 8.9, 13.7, 15.4],
-  20: [8.1, 9.1, 14.0, 15.6],
-  21: [8.2, 9.2, 14.2, 15.9],
-  22: [8.4, 9.4, 14.4, 16.2],
-  23: [8.5, 9.5, 14.6, 16.4],
-  24: [8.6, 9.7, 14.8, 16.6],
-  25: [8.8, 9.8, 15.0, 16.9],
-  26: [8.9, 10.0, 15.2, 17.1],
-  27: [9.0, 10.1, 15.4, 17.3],
-  28: [9.1, 10.2, 15.6, 17.5],
-  29: [9.2, 10.4, 15.8, 17.8],
-  30: [9.4, 10.5, 16.0, 18.0],
-  31: [9.5, 10.7, 16.2, 18.2],
-  32: [9.6, 10.8, 16.4, 18.4],
-  33: [9.7, 10.9, 16.6, 18.6],
-  34: [9.8, 11.0, 16.8, 18.8],
-  35: [9.9, 11.2, 17.0, 19.0],
-  36: [10.0, 11.3, 17.2, 19.3],
-  37: [10.1, 11.4, 17.4, 19.5],
-  38: [10.2, 11.5, 17.6, 19.7],
-  39: [10.3, 11.6, 17.8, 19.9],
-  40: [10.4, 11.8, 18.0, 20.2],
-  41: [10.5, 11.9, 18.2, 20.4],
-  42: [10.6, 12.0, 18.4, 20.6],
-  43: [10.7, 12.1, 18.6, 20.9],
-  44: [10.8, 12.2, 18.8, 21.1],
-  45: [10.9, 12.4, 19.0, 21.3],
-  46: [11.0, 12.5, 19.2, 21.6],
-  47: [11.1, 12.6, 19.4, 21.8],
-  48: [11.2, 12.7, 19.6, 22.0],
-  49: [11.3, 12.8, 19.8, 22.3],
-  50: [11.4, 12.9, 20.0, 22.5],
-  51: [11.5, 13.1, 20.2, 22.7],
-  52: [11.6, 13.2, 20.4, 23.0],
-  53: [11.7, 13.3, 20.6, 23.2],
-  54: [11.8, 13.4, 20.8, 23.5],
-  55: [11.9, 13.5, 21.0, 23.7],
-  56: [12.0, 13.6, 21.2, 24.0],
-  57: [12.1, 13.7, 21.4, 24.2],
-  58: [12.2, 13.8, 21.6, 24.5],
-  59: [12.3, 14.0, 21.8, 24.7],
-  60: [12.4, 14.1, 22.0, 25.0],
-};
-
-final Map<int, List<double>> _girlsData = {
-  0: [2.0, 2.4, 4.2, 4.8],
-  1: [2.7, 3.2, 5.5, 6.2],
-  2: [3.4, 3.9, 6.6, 7.5],
-  3: [4.0, 4.5, 7.5, 8.5],
-  4: [4.4, 5.0, 8.2, 9.3],
-  5: [4.8, 5.4, 8.8, 9.9],
-  6: [5.1, 5.7, 9.3, 10.5],
-  7: [5.3, 6.0, 9.8, 11.0],
-  8: [5.6, 6.3, 10.2, 11.5],
-  9: [5.8, 6.5, 10.5, 11.9],
-  10: [5.9, 6.7, 10.9, 12.4],
-  11: [6.1, 6.9, 11.2, 12.7],
-  12: [6.3, 7.0, 11.5, 13.0],
-  13: [6.4, 7.2, 11.8, 13.3],
-  14: [6.6, 7.4, 12.1, 13.6],
-  15: [6.7, 7.6, 12.4, 13.9],
-  16: [6.9, 7.7, 12.6, 14.2],
-  17: [7.0, 7.9, 12.9, 14.5],
-  18: [7.2, 8.1, 13.2, 14.8],
-  19: [7.3, 8.2, 13.4, 15.1],
-  20: [7.5, 8.4, 13.7, 15.4],
-  21: [7.6, 8.6, 13.9, 15.7],
-  22: [7.8, 8.7, 14.2, 16.0],
-  23: [7.9, 8.9, 14.4, 16.3],
-  24: [8.1, 9.0, 14.8, 16.6],
-  25: [8.2, 9.2, 15.0, 16.9],
-  26: [8.4, 9.4, 15.3, 17.2],
-  27: [8.5, 9.5, 15.5, 17.5],
-  28: [8.6, 9.7, 15.7, 17.8],
-  29: [8.8, 9.8, 16.0, 18.1],
-  30: [8.9, 10.0, 16.2, 18.3],
-  31: [9.0, 10.1, 16.4, 18.6],
-  32: [9.1, 10.3, 16.6, 18.9],
-  33: [9.3, 10.4, 16.8, 19.1],
-  34: [9.4, 10.5, 17.0, 19.4],
-  35: [9.5, 10.7, 17.2, 19.6],
-  36: [9.6, 10.8, 17.4, 19.9],
-  37: [9.7, 10.9, 17.6, 20.1],
-  38: [9.8, 11.1, 17.8, 20.4],
-  39: [9.9, 11.2, 18.0, 20.6],
-  40: [10.0, 11.3, 18.2, 20.9],
-  41: [10.1, 11.5, 18.4, 21.1],
-  42: [10.2, 11.6, 18.6, 21.4],
-  43: [10.3, 11.7, 18.8, 21.6],
-  44: [10.4, 11.8, 19.0, 21.9],
-  45: [10.5, 12.0, 19.2, 22.1],
-  46: [10.6, 12.1, 19.4, 22.4],
-  47: [10.7, 12.2, 19.6, 22.6],
-  48: [10.8, 12.3, 19.8, 22.9],
-  49: [10.9, 12.4, 20.0, 23.1],
-  50: [11.0, 12.6, 20.2, 23.4],
-  51: [11.1, 12.7, 20.4, 23.6],
-  52: [11.2, 12.8, 20.6, 23.9],
-  53: [11.3, 12.9, 20.8, 24.1],
-  54: [11.4, 13.0, 21.0, 24.4],
-  55: [11.5, 13.2, 21.2, 24.6],
-  56: [11.6, 13.3, 21.4, 24.9],
-  57: [11.7, 13.4, 21.6, 25.1],
-  58: [11.8, 13.5, 21.8, 25.4],
-  59: [11.9, 13.6, 22.0, 25.6],
-  60: [12.0, 13.7, 22.3, 25.9],
-};
+import 'package:posyandu_app/presentation/perkembanganBalita/tambah_perkembangan_balita.dart';
+import 'package:posyandu_app/core/util/antropometri_data.dart';
 
 class DetailBalitaScreen extends StatefulWidget {
   final BalitaResponseModel balita;
@@ -184,6 +26,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
   final PerkembanganBalitaRepository _repository =
       PerkembanganBalitaRepository();
   final BalitaRepository _balitaRepository = BalitaRepository();
+
 
   int _hitungUmurBulan(DateTime tglLahir) {
     final now = DateTime.now();
@@ -257,6 +100,25 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     }
   }
 
+  String _formatTanggal(String raw) {
+    try {
+      final date = DateTime.parse(raw);
+      return DateFormat("d MMM yyyy", "id_ID").format(date);
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  DateTime _safeParseDate(String? raw) {
+    if (raw == null || raw.isEmpty) return DateTime(1900);
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {
+      return DateTime(1900);
+    }
+  }
+
+
   List<PerkembanganBalitaResponseModel> _perkembanganList = [];
   PerkembanganBalitaResponseModel? _filteredPerkembangan;
   bool _isLoading = true;
@@ -290,6 +152,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     _selectedBulan = _bulanList[DateTime.now().month - 1];
     _fetchPerkembangan();
   }
+
 
   Future<void> _fetchPerkembangan() async {
     final balitaResult = await _balitaRepository.getBalitaByNIK(
@@ -332,15 +195,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     );
   }
 
-  DateTime _safeParseDate(String? raw) {
-    if (raw == null || raw.isEmpty) return DateTime(1900);
-    try {
-      return DateTime.parse(raw);
-    } catch (_) {
-      return DateTime(1900);
-    }
-  }
-
   void _applyFilter() {
     final bulanIndex = _bulanList.indexOf(_selectedBulan) + 1;
     final filtered = _perkembanganList.where((data) {
@@ -352,6 +206,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       _filteredPerkembangan = filtered.isNotEmpty ? filtered.first : null;
     });
   }
+
 
   Future<void> _handleEditBalita() async {
     final updated = await Navigator.push(
@@ -455,6 +310,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         ) ??
         false;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -1007,12 +863,38 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     if (tglUkur.day < tglLahir.day) umurSaatUkur--;
     if (umurSaatUkur < 0) umurSaatUkur = 0;
 
-    String statusGizi = getKategoriStatusGizi(
+
+    String statusGiziBBU = getKategoriStatusGizi(
       p.beratBadan.toDouble(),
       _balitaData.jenisKelamin,
       umurSaatUkur,
     );
-    Color warnaStatus = getColorStatusGizi(statusGizi);
+    Color warnaStatusBBU = getColorStatusGizi(statusGiziBBU);
+
+    String statusGiziTBU = getStatusTinggiUmur(
+      p.tinggiBadan.toDouble(),
+      _balitaData.jenisKelamin,
+      umurSaatUkur,
+    );
+    Color warnaStatusTBU = getColorStatusGizi(statusGiziTBU);
+
+    String statusGiziBBTB = getStatusBeratTinggi(
+      p.beratBadan.toDouble(),
+      p.tinggiBadan.toDouble(),
+      _balitaData.jenisKelamin,
+      umurSaatUkur,
+    );
+    Color warnaStatusBBTB = getColorStatusGizi(statusGiziBBTB);
+
+    String rekomendasiBB = getRekomendasiBerat(
+      umurSaatUkur,
+      _balitaData.jenisKelamin,
+    );
+
+    String rekomendasiTB = getRekomendasiTinggi(
+      umurSaatUkur,
+      _balitaData.jenisKelamin,
+    );
 
     return Column(
       children: [
@@ -1045,49 +927,112 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         ),
 
         const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: warnaStatus.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: warnaStatus.withOpacity(0.3)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: warnaStatus,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.health_and_safety,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Status Gizi (BB/U)",
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
-                  Text(
-                    statusGizi,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: warnaStatus.withOpacity(0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+
+        _buildStatusCard("BB/U (Berat/Umur)", statusGiziBBU, warnaStatusBBU),
+        const SizedBox(height: 8),
+        _buildStatusCard("TB/U (Tinggi/Umur)", statusGiziTBU, warnaStatusTBU),
+        const SizedBox(height: 8),
+        _buildStatusCard(
+          "BB/TB (Berat/Tinggi)",
+          statusGiziBBTB,
+          warnaStatusBBTB,
         ),
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade100),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.monitor_weight_outlined,
+                          size: 16,
+                          color: Colors.blue.shade700,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Target BB:",
+                          style: TextStyle(
+                            color: Colors.blue.shade900,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      rekomendasiBB,
+                      style: TextStyle(
+                        color: Colors.blue.shade900,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orange.shade100),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.height,
+                          size: 16,
+                          color: Colors.orange.shade700,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Target TB:",
+                          style: TextStyle(
+                            color: Colors.orange.shade900,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      rekomendasiTB,
+                      style: TextStyle(
+                        color: Colors.orange.shade900,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+
         const SizedBox(height: 16),
 
         GridView.count(
@@ -1133,6 +1078,49 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildStatusCard(String title, String status, Color color) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            child: const Icon(
+              Icons.health_and_safety,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+              Text(
+                status,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color.withOpacity(0.8),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1253,15 +1241,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         ],
       ),
     );
-  }
-
-  String _formatTanggal(String raw) {
-    try {
-      final date = DateTime.parse(raw);
-      return DateFormat("d MMM yyyy", "id_ID").format(date);
-    } catch (_) {
-      return raw;
-    }
   }
 }
 

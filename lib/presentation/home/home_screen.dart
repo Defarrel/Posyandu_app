@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lottie/lottie.dart';
 import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/presentation/balita/detail_balita_screen.dart';
+import 'package:posyandu_app/presentation/home/informasi_balita_screen.dart';
 import 'package:posyandu_app/presentation/kelulusan/kelulusan_balita_screen.dart';
 import 'package:posyandu_app/presentation/vaksin/vaksin_balita_screen.dart';
 import 'package:posyandu_app/services/services_http_client.dart';
@@ -631,6 +632,21 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
   bool _isUserTouching = false;
   final double _itemWidth = 266.0;
 
+  List<Widget> get _displayItems {
+    final List<Widget> items = [];
+
+    final maxDataCount = widget.data.length > 5 ? 5 : widget.data.length;
+    for (int i = 0; i < maxDataCount; i++) {
+      items.add(_buildModernCard(context, widget.data[i]));
+    }
+
+    if (widget.data.length > 5) {
+      items.add(_buildLihatSemuaCard(context));
+    }
+
+    return items;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -649,9 +665,9 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
       }
 
       if (!_isUserTouching &&
-          widget.data.isNotEmpty &&
+          _displayItems.isNotEmpty &&
           _scrollController.hasClients) {
-        if (_currentIndex < widget.data.length - 1) {
+        if (_currentIndex < _displayItems.length - 1) {
           _currentIndex++;
         } else {
           _currentIndex = 0;
@@ -776,6 +792,8 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
 
   @override
   Widget build(BuildContext context) {
+    final int balitaDotCount = widget.data.length > 5 ? 5 : widget.data.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -821,7 +839,7 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
             ],
           ),
         ),
-        const SizedBox(height: 7),
+        const SizedBox(height: 12),
         if (widget.isLoading)
           const Center(
             child: CircularProgressIndicator(color: AppColors.primary),
@@ -835,39 +853,85 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
             ),
           )
         else
-          SizedBox(
-            height: 120,
-            child: NotificationListener<ScrollNotification>(
-              onNotification: (notification) {
-                if (notification is ScrollStartNotification) {
-                  if (notification.dragDetails != null) {
-                    setState(() => _isUserTouching = true);
-                  }
-                } else if (notification is ScrollEndNotification) {
-                  setState(() {
-                    _isUserTouching = false;
-                    if (_scrollController.hasClients) {
-                      final offset = _scrollController.position.pixels;
-                      _currentIndex = (offset / _itemWidth).round();
+          Column(
+            children: [
+              SizedBox(
+                height: 100,
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (notification) {
+                    if (notification is ScrollStartNotification) {
+                      if (notification.dragDetails != null) {
+                        setState(() => _isUserTouching = true);
+                        _timer?.cancel();
+                      }
+                    } else if (notification is ScrollEndNotification) {
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        if (mounted) {
+                          setState(() {
+                            _isUserTouching = false;
+                            if (_scrollController.hasClients) {
+                              final offset = _scrollController.position.pixels;
+                              _currentIndex = (offset / _itemWidth).round();
+                            }
+                          });
+                          _startAutoScroll();
+                        }
+                      });
                     }
-                  });
-                }
-                return false;
-              },
-              child: ListView.builder(
-                controller: _scrollController,
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
+                    return false;
+                  },
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(
+                      left: 20,
+                      right: 20,
+                      bottom: 8,
+                    ),
+                    itemCount: _displayItems.length,
+                    itemBuilder: (context, index) {
+                      return _displayItems[index];
+                    },
+                  ),
                 ),
-                itemCount: widget.data.length,
-                itemBuilder: (context, index) {
-                  return _buildModernCard(context, widget.data[index]);
-                },
               ),
-            ),
+              const SizedBox(height: 8),
+              Container(
+                height: 20,
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(balitaDotCount, (index) {
+                    bool isActive = index == _currentIndex;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _currentIndex = index;
+                        });
+                        _scrollController.animateTo(
+                          index * _itemWidth,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        height: 6,
+                        width: isActive ? 20 : 6,
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? AppColors.primary
+                              : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ],
           ),
       ],
     );
@@ -957,23 +1021,25 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusBgColor,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              item["alasan"] ?? "-",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
-                                color: statusColor,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusBgColor,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                item["alasan"] ?? "-",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                  color: statusColor,
+                                ),
                               ),
                             ),
                           ),
@@ -985,6 +1051,64 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLihatSemuaCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const InformasiBalitaScreen(),
+          ),
+        );
+      },
+      child: Container(
+        width: 180,
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        margin: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              child: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 20,
+                color: Colors.white,
+              ),
+            ),
+            const Text(
+              "Lihat Semua",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            Text(
+              "${widget.data.length - 5} Lainnya",
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 10,
+              ),
+            ),
+          ],
         ),
       ),
     );

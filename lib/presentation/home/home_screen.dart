@@ -856,7 +856,7 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
           Column(
             children: [
               SizedBox(
-                height: 100,
+                height: 120,
                 child: NotificationListener<ScrollNotification>(
                   onNotification: (notification) {
                     if (notification is ScrollStartNotification) {
@@ -887,7 +887,7 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
                     padding: const EdgeInsets.only(
                       left: 20,
                       right: 20,
-                      bottom: 8,
+                      bottom: 12,
                     ),
                     itemCount: _displayItems.length,
                     itemBuilder: (context, index) {
@@ -1089,7 +1089,7 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
               padding: const EdgeInsets.all(8),
               child: const Icon(
                 Icons.arrow_forward_ios_rounded,
-                size: 20,
+                size: 22,
                 color: Colors.white,
               ),
             ),
@@ -1098,14 +1098,14 @@ class _BalitaTrendingSliderState extends State<BalitaTrendingSlider> {
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
+                fontSize: 14,
               ),
             ),
             Text(
               "${widget.data.length - 5} Lainnya",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.8),
-                fontSize: 10,
+                fontSize: 12,
               ),
             ),
           ],

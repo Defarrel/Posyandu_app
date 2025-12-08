@@ -128,22 +128,37 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
       _noTelpError = _noTelpController.text.isEmpty
           ? "Nomor telepon wajib diisi"
+          : (_noTelpController.text.length < 11 ||
+                _noTelpController.text.length > 13)
+          ? "Nomor telepon harus 11 - 13 digit"
           : null;
 
       _alamatError = _alamatController.text.isEmpty
           ? "Alamat wajib diisi"
           : null;
 
+      final bbVal = double.tryParse(
+        _bbLahirController.text.replaceAll(',', '.'),
+      );
       _bbLahirError = _bbLahirController.text.isEmpty
           ? "BB lahir wajib diisi"
+          : (bbVal == null || bbVal < 1 || bbVal > 6)
+          ? "BB lahir harus 1 - 6 kg"
           : null;
+
+      final tbVal = double.tryParse(
+        _tbLahirController.text.replaceAll(',', '.'),
+      );
       _tbLahirError = _tbLahirController.text.isEmpty
           ? "TB lahir wajib diisi"
+          : (tbVal == null || tbVal < 30 || tbVal > 60)
+          ? "TB lahir harus 30 - 60 cm"
           : null;
 
       _rtError = _rtController.text.isEmpty ? "RT wajib diisi" : null;
       _rwError = _rwController.text.isEmpty ? "RW wajib diisi" : null;
     });
+
     if (_namaError != null ||
         _ttlError != null ||
         _nikBalitaError != null ||

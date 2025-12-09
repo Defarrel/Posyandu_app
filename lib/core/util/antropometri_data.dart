@@ -3,17 +3,19 @@ import 'package:flutter/material.dart';
 Color getColorStatusGizi(String status) {
   if (status.contains("Buruk") ||
       status.contains("Obesitas") ||
-      status.contains("Sangat Pendek") || 
-      status.contains("Severely")) {
+      status.contains("Sangat Pendek") ||
+      status.contains("Sangat Kurus")) {
     return Colors.red;
   }
   if (status.contains("Kurang") ||
       status.contains("Risiko") ||
       status.contains("Pendek") ||
-      status.contains("Wasted") && !status.contains("Severely")) {
+      status.contains("Kurus")) {
     return Colors.orange;
   }
-  if (status.contains("Normal") || status.contains("Baik")) return Colors.green;
+  if (status.contains("Normal") || status.contains("Baik")) {
+    return Colors.green;
+  }
   if (status.contains("Tinggi")) return Colors.blue;
   return Colors.grey;
 }
@@ -50,14 +52,18 @@ String getStatusTinggiUmur(double tinggi, String gender, int umurBulan) {
   final sdMin2 = standards[1];
   final sdPlus3 = standards[2];
 
-  if (tinggi < sdMin3) return "Sangat Pendek (Severely Stunted)";
-  if (tinggi >= sdMin3 && tinggi < sdMin2) return "Pendek (Stunted)";
+  if (tinggi < sdMin3) return "Sangat Pendek";
+  if (tinggi >= sdMin3 && tinggi < sdMin2) return "Pendek";
   if (tinggi >= sdMin2 && tinggi <= sdPlus3) return "Normal";
   return "Tinggi";
 }
 
 String getStatusBeratTinggi(
-    double berat, double tinggi, String gender, int umurBulan) {
+  double berat,
+  double tinggi,
+  String gender,
+  int umurBulan,
+) {
   int tinggiRounded = tinggi.round();
 
   if (tinggiRounded < 45) tinggiRounded = 45;
@@ -75,11 +81,11 @@ String getStatusBeratTinggi(
   final sdPlus2 = standards[3];
   final sdPlus3 = standards[4];
 
-  if (berat < sdMin3) return "Gizi Buruk (Severely Wasted)";
-  if (berat >= sdMin3 && berat < sdMin2) return "Gizi Kurang (Wasted)";
-  if (berat >= sdMin2 && berat <= sdPlus1) return "Gizi Baik (Normal)";
+  if (berat < sdMin3) return "Sangat Kurus";
+  if (berat >= sdMin3 && berat < sdMin2) return "Kurus";
+  if (berat >= sdMin2 && berat <= sdPlus1) return "Normal";
   if (berat > sdPlus1 && berat <= sdPlus2) return "Risiko Gizi Lebih";
-  if (berat > sdPlus2 && berat <= sdPlus3) return "Gizi Lebih (Overweight)";
+  if (berat > sdPlus2 && berat <= sdPlus3) return "Gizi Lebih";
   return "Obesitas";
 }
 
@@ -265,7 +271,7 @@ final Map<int, List<double>> _boysHeightAge = {
   21: [76.5, 79.4, 93.8],
   22: [77.2, 80.2, 94.9],
   23: [78.0, 81.0, 95.9],
-  24: [78.0, 81.0, 96.3], 
+  24: [78.0, 81.0, 96.3],
   25: [78.6, 81.7, 97.3],
   26: [79.3, 82.5, 98.3],
   27: [79.9, 83.1, 99.3],

@@ -27,7 +27,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       PerkembanganBalitaRepository();
   final BalitaRepository _balitaRepository = BalitaRepository();
 
-
   int _hitungUmurBulan(DateTime tglLahir) {
     final now = DateTime.now();
     int bulan = (now.year - tglLahir.year) * 12 + (now.month - tglLahir.month);
@@ -118,6 +117,138 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     }
   }
 
+  Map<String, String> _getDeskripsiDanRekomendasi(
+    String status,
+    String indikator,
+  ) {
+    final clean = status
+        .replaceAll("(Merah)", "")
+        .replaceAll("(Kuning)", "")
+        .trim();
+
+    String deskripsi = "";
+    String rekomendasi = "";
+
+    if (indikator == "BB/U") {
+      switch (clean) {
+        case "Gizi Buruk":
+          deskripsi =
+              "Berat badan jauh di bawah standar usia. Kondisi ini menunjukkan kekurangan gizi berat dan berisiko komplikasi kesehatan jika tidak ditangani segera.";
+          rekomendasi =
+              "Segera rujuk ke fasilitas kesehatan. Tingkatkan asupan gizi padat energi dan protein setiap hari, pantau BB mingguan, dan evaluasi oleh tenaga kesehatan.";
+          break;
+
+        case "Gizi Kurang":
+          deskripsi =
+              "Berat badan sedikit di bawah standar dan menunjukkan kecenderungan kurang gizi. Jika tidak ditangani, anak berisiko stagnan atau turun lagi.";
+          rekomendasi =
+              "Tambahkan makanan tinggi protein hewani (telur, ikan, ayam), tingkatkan frekuensi makan, dan lakukan pemantauan ulang dalam 2–4 minggu.";
+          break;
+
+        case "Gizi Normal":
+          deskripsi =
+              "Berat badan berada dalam rentang normal untuk usia anak. Pertumbuhan sejauh ini sesuai standar WHO.";
+          rekomendasi =
+              "Pertahankan pola makan seimbang, jadwal makan teratur, dan lakukan penimbangan rutin setiap bulan.";
+          break;
+
+        case "Risiko Gizi Lebih":
+          deskripsi =
+              "Berat badan mulai melebihi batas normal untuk usia, menandakan risiko awal gizi berlebih.";
+          rekomendasi =
+              "Atur porsi makan, kurangi makanan manis/berlemak, dan tingkatkan aktivitas fisik ringan setiap hari.";
+          break;
+
+        case "Obesitas":
+          deskripsi =
+              "Berat badan sudah berada di atas ambang obesitas untuk usia anak, berisiko gangguan kesehatan jangka panjang.";
+          rekomendasi =
+              "Evaluasi pola makan, hindari makanan cepat saji, kurangi gula, dan tingkatkan aktivitas fisik teratur. Konsultasi ke tenaga kesehatan dianjurkan.";
+          break;
+      }
+    } else if (indikator == "TB/U") {
+      switch (clean) {
+        case "Sangat Pendek":
+          deskripsi =
+              "Tinggi badan sangat rendah dibanding standar WHO. Ini mengindikasikan stunting berat yang sudah terjadi dalam jangka lama.";
+          rekomendasi =
+              "Segera evaluasi kondisi gizi dan riwayat kesehatan anak. Tingkatkan makanan sumber protein hewani, dan lakukan pemeriksaan ke fasilitas kesehatan.";
+          break;
+
+        case "Pendek":
+          deskripsi =
+              "Anak mengalami stunting ringan dan berada di bawah standar tinggi badan menurut usia.";
+          rekomendasi =
+              "Perbanyak makanan sumber protein hewani, susu, serta perbaiki pola tidur. Pantau tinggi badan setiap bulan.";
+          break;
+
+        case "Normal":
+          deskripsi =
+              "Tinggi badan sesuai standar usia dan tidak menunjukkan tanda stunting.";
+          rekomendasi =
+              "Pertahankan pola makan bergizi seimbang dan stimulasi fisik seperti merangkak, berjalan, atau bermain aktif.";
+          break;
+
+        case "Tinggi":
+          deskripsi =
+              "Tinggi badan di atas rata-rata anak seusianya. Biasanya bukan masalah apabila BB juga proporsional.";
+          rekomendasi =
+              "Tidak ada tindakan khusus. Pastikan nutrisi tetap seimbang dan pantau pertumbuhan secara rutin.";
+          break;
+      }
+    } else if (indikator == "BB/TB") {
+      switch (clean) {
+        case "Sangat Kurus":
+          deskripsi =
+              "Berat badan sangat kurang dibanding tinggi badan. Ini merupakan tanda wasting berat dan perlu penanganan segera.";
+          rekomendasi =
+              "Berikan makanan tinggi energi dan protein beberapa kali sehari, tambah camilan sehat, dan segera konsultasikan ke tenaga kesehatan.";
+          break;
+
+        case "Kurus":
+          deskripsi =
+              "Berat badan kurang dibanding tinggi badan, menunjukkan wasting ringan.";
+          rekomendasi =
+              "Tingkatkan kualitas gizi harian, termasuk protein hewani dan lemak baik. Lakukan pemantauan ulang dalam 14–30 hari.";
+          break;
+
+        case "Normal":
+          deskripsi =
+              "Berat badan proporsional terhadap tinggi badan sesuai standar WHO.";
+          rekomendasi =
+              "Pertahankan makan sehat dan pemantauan rutin. Tidak memerlukan intervensi khusus.";
+          break;
+
+        case "Risiko Gizi Lebih":
+          deskripsi =
+              "Berat badan mulai melebihi batas ideal untuk tinggi badan, menandakan awal kecenderungan gizi lebih.";
+          rekomendasi =
+              "Kurangi makanan manis/berlemak, perbanyak buah dan sayur, dan dorong anak bergerak aktif setiap hari.";
+          break;
+
+        case "Gizi Lebih":
+          deskripsi =
+              "Berat badan jelas berlebih dibanding tinggi badan. Jika dibiarkan, risiko obesitas meningkat.";
+          rekomendasi =
+              "Atur porsi makan, batasi cemilan tinggi gula/garam, dan tingkatkan aktivitas fisik. Konsultasi ke Posyandu dianjurkan.";
+          break;
+
+        case "Obesitas":
+          deskripsi =
+              "Berat badan sangat berlebih dibanding tinggi badan. Kondisi ini memerlukan pemantauan dan perubahan pola makan segera.";
+          rekomendasi =
+              "Kendalikan pola makan ketat, hindari makanan cepat saji dan minuman manis, tingkatkan aktivitas fisik, dan konsultasikan ke fasilitas kesehatan.";
+          break;
+      }
+    }
+
+    return {
+      "deskripsi": deskripsi.isEmpty ? "Data belum mencukupi." : deskripsi,
+      "rekomendasi": rekomendasi.isEmpty
+          ? "Tidak ada rekomendasi khusus."
+          : rekomendasi,
+    };
+  }
 
   List<PerkembanganBalitaResponseModel> _perkembanganList = [];
   PerkembanganBalitaResponseModel? _filteredPerkembangan;
@@ -152,7 +283,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     _selectedBulan = _bulanList[DateTime.now().month - 1];
     _fetchPerkembangan();
   }
-
 
   Future<void> _fetchPerkembangan() async {
     final balitaResult = await _balitaRepository.getBalitaByNIK(
@@ -206,7 +336,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       _filteredPerkembangan = filtered.isNotEmpty ? filtered.first : null;
     });
   }
-
 
   Future<void> _handleEditBalita() async {
     final updated = await Navigator.push(
@@ -311,7 +440,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         false;
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -381,17 +509,21 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildProfileHeader(),
+                    _FadeSlideTransition(
+                      index: 0,
+                      child: _buildProfileHeader(),
+                    ),
                     const SizedBox(height: 16),
-                    _buildBiodataCard(),
+                    _FadeSlideTransition(index: 1, child: _buildBiodataCard()),
                     const SizedBox(height: 24),
-                    _buildChartSection(),
+                    _FadeSlideTransition(index: 2, child: _buildChartSection()),
                     const SizedBox(height: 24),
-                    _buildMonthFilter(),
+                    _FadeSlideTransition(index: 3, child: _buildMonthFilter()),
                     const SizedBox(height: 16),
-                    _buildGrowthStatsGrid(),
-                    const SizedBox(height: 16),
-                    _buildAdditionalInfo(),
+                    _FadeSlideTransition(
+                      index: 4,
+                      child: _buildGrowthStatsAndData(),
+                    ),
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -539,7 +671,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
           _buildSectionHeader("Informasi Balita", Icons.person_outline),
           _infoRow("NIK Balita", _balitaData.nikBalita),
           _infoRow("Umur Balita", hitungUmur(_balitaData.tanggalLahir)),
-
           _infoRow(
             "Jenis Kelamin",
             _formatJenisKelamin(_balitaData.jenisKelamin),
@@ -807,7 +938,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
     );
   }
 
-  Widget _buildGrowthStatsGrid() {
+  Widget _buildGrowthStatsAndData() {
     if (_filteredPerkembangan == null) {
       return Container(
         width: double.infinity,
@@ -833,6 +964,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
               onPressed: _handleUpdatePerkembangan,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -848,21 +980,24 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
 
     final p = _filteredPerkembangan!;
 
-    DateTime tglLahir = DateTime.now();
+    DateTime tglLahir;
     try {
       tglLahir = DateTime.parse(_balitaData.tanggalLahir);
-    } catch (_) {}
+    } catch (_) {
+      tglLahir = DateTime.now();
+    }
 
-    DateTime tglUkur = DateTime.now();
+    DateTime tglUkur;
     try {
       tglUkur = DateTime.parse(p.tanggalPerubahan);
-    } catch (_) {}
+    } catch (_) {
+      tglUkur = DateTime.now();
+    }
 
     int umurSaatUkur =
         (tglUkur.year - tglLahir.year) * 12 + (tglUkur.month - tglLahir.month);
     if (tglUkur.day < tglLahir.day) umurSaatUkur--;
     if (umurSaatUkur < 0) umurSaatUkur = 0;
-
 
     String statusGiziBBU = getKategoriStatusGizi(
       p.beratBadan.toDouble(),
@@ -870,6 +1005,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       umurSaatUkur,
     );
     Color warnaStatusBBU = getColorStatusGizi(statusGiziBBU);
+    final descBBU = _getDeskripsiDanRekomendasi(statusGiziBBU, "BB/U");
 
     String statusGiziTBU = getStatusTinggiUmur(
       p.tinggiBadan.toDouble(),
@@ -877,6 +1013,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       umurSaatUkur,
     );
     Color warnaStatusTBU = getColorStatusGizi(statusGiziTBU);
+    final descTBU = _getDeskripsiDanRekomendasi(statusGiziTBU, "TB/U");
 
     String statusGiziBBTB = getStatusBeratTinggi(
       p.beratBadan.toDouble(),
@@ -885,6 +1022,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       umurSaatUkur,
     );
     Color warnaStatusBBTB = getColorStatusGizi(statusGiziBBTB);
+    final descBBTB = _getDeskripsiDanRekomendasi(statusGiziBBTB, "BB/TB");
 
     String rekomendasiBB = getRekomendasiBerat(
       umurSaatUkur,
@@ -896,7 +1034,11 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       _balitaData.jenisKelamin,
     );
 
+    final String measurementDetailBBTB =
+        "BB ${p.beratBadan.toStringAsFixed(1)} kg | TB ${p.tinggiBadan.toStringAsFixed(1)} cm";
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -917,7 +1059,6 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
                   onPressed: _handleUpdatePerkembangan,
                 ),
                 IconButton(
-                  visualDensity: VisualDensity.compact,
                   icon: const Icon(Icons.delete, size: 18, color: Colors.red),
                   onPressed: _handleDeletePerkembangan,
                 ),
@@ -925,116 +1066,52 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
             ),
           ],
         ),
-
-        const SizedBox(height: 8),
-
-        _buildStatusCard("BB/U (Berat/Umur)", statusGiziBBU, warnaStatusBBU),
-        const SizedBox(height: 8),
-        _buildStatusCard("TB/U (Tinggi/Umur)", statusGiziTBU, warnaStatusTBU),
-        const SizedBox(height: 8),
-        _buildStatusCard(
-          "BB/TB (Berat/Tinggi)",
-          statusGiziBBTB,
-          warnaStatusBBTB,
-        ),
         const SizedBox(height: 12),
 
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.shade100),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.monitor_weight_outlined,
-                          size: 16,
-                          color: Colors.blue.shade700,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          "Target BB:",
-                          style: TextStyle(
-                            color: Colors.blue.shade900,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      rekomendasiBB,
-                      style: TextStyle(
-                        color: Colors.blue.shade900,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.shade100),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.height,
-                          size: 16,
-                          color: Colors.orange.shade700,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          "Target TB:",
-                          style: TextStyle(
-                            color: Colors.orange.shade900,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      rekomendasiTB,
-                      style: TextStyle(
-                        color: Colors.orange.shade900,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        _GiziIndicatorCardExpandable(
+          title: "BB/U",
+          subtitle: "Berat Badan menurut Usia",
+          status: statusGiziBBU,
+          value: p.beratBadan.toDouble(),
+          unit: "kg",
+          color: warnaStatusBBU,
+          deskripsiRekomendasi: descBBU,
+          measurementDetail: "",
         ),
+        const SizedBox(height: 12),
+        _GiziIndicatorCardExpandable(
+          title: "TB/U",
+          subtitle: "Tinggi Badan menurut Usia",
+          status: statusGiziTBU,
+          value: p.tinggiBadan.toDouble(),
+          unit: "cm",
+          color: warnaStatusTBU,
+          deskripsiRekomendasi: descTBU,
+          measurementDetail: "",
+        ),
+        const SizedBox(height: 12),
+        _GiziIndicatorCardExpandable(
+          title: "BB/TB",
+          subtitle: "Berat Badan menurut Tinggi Badan",
+          status: statusGiziBBTB,
+          value: 0.0,
+          unit: statusGiziBBTB,
+          color: warnaStatusBBTB,
+          deskripsiRekomendasi: descBBTB,
+          isBBTB: true,
+          measurementDetail: measurementDetailBBTB,
+        ),
+        const SizedBox(height: 24),
 
-        const SizedBox(height: 16),
-
+        const Text(
+          "Hasil Pengukuran Bulan Ini:",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 12),
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -1077,44 +1154,119 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
             ),
           ],
         ),
+
+        const SizedBox(height: 24),
+
+        _buildTargetRekomendasi(rekomendasiBB, rekomendasiTB),
+
+        const SizedBox(height: 16),
+
+        _buildAdditionalInfo(),
       ],
     );
   }
 
-  Widget _buildStatusCard(String title, String status, Color color) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: const Icon(
-              Icons.health_and_safety,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
+  Widget _buildInfoRowWithIcon(
+    IconData icon,
+    String header,
+    String content,
+    Color color,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-              Text(
-                status,
+                header,
                 style: TextStyle(
-                  fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: color.withOpacity(0.8),
+                  fontSize: 12,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(content, style: const TextStyle(fontSize: 13, height: 1.4)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTargetRekomendasi(String rekomendasiBB, String rekomendasiTB) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Target Pertumbuhan Ideal (Sesuai Usia):",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: AppColors.primary,
+            ),
+          ),
+          const Divider(height: 20, color: AppColors.primary),
+          Row(
+            children: [
+              const Icon(
+                Icons.monitor_weight_outlined,
+                size: 20,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Berat Badan Ideal",
+                      style: TextStyle(fontSize: 12, color: Colors.black87),
+                    ),
+                    Text(
+                      rekomendasiBB,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.height, size: 20, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Tinggi Badan Ideal",
+                      style: TextStyle(fontSize: 12, color: Colors.black87),
+                    ),
+                    Text(
+                      rekomendasiTB,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -1210,8 +1362,8 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Catatan Kesehatan",
-            style: TextStyle(fontWeight: FontWeight.bold),
+            "Catatan Kesehatan Tambahan",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const Divider(height: 20),
           _infoRow("Cara Ukur", p.caraUkur),
@@ -1235,7 +1387,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+              style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
             ),
           ),
         ],
@@ -1248,4 +1400,414 @@ class _ChartData {
   final String label;
   final double value;
   _ChartData(this.label, this.value);
+}
+
+class _GiziIndicatorCardExpandable extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final String status;
+  final double value;
+  final String unit;
+  final Color color;
+  final Map<String, String> deskripsiRekomendasi;
+  final bool isBBTB;
+  final String measurementDetail;
+
+  const _GiziIndicatorCardExpandable({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.status,
+    required this.value,
+    required this.unit,
+    required this.color,
+    required this.deskripsiRekomendasi,
+    this.isBBTB = false,
+    required this.measurementDetail,
+  });
+
+  @override
+  State<_GiziIndicatorCardExpandable> createState() =>
+      _GiziIndicatorCardExpandableState();
+}
+
+class _GiziIndicatorCardExpandableState
+    extends State<_GiziIndicatorCardExpandable>
+    with SingleTickerProviderStateMixin {
+  bool _isExpanded = false;
+  late AnimationController _controller;
+  late Animation<double> _iconAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _iconAnimation = Tween<double>(begin: 0.0, end: 0.5).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  Widget _buildGiziHeader(String cleanStatus) {
+    Widget valueDisplay;
+    if (widget.isBBTB) {
+      valueDisplay = Text(
+        cleanStatus,
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: widget.color.withOpacity(0.9),
+        ),
+      );
+    } else {
+      valueDisplay = RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: widget.value.toStringAsFixed(1),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: widget.color.withOpacity(0.9),
+              ),
+            ),
+            TextSpan(
+              text: " ${widget.unit.split('(').first.trim()}",
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _isExpanded
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          widget.subtitle,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          maxLines: 1,
+                        ),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            "(${widget.subtitle})",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            maxLines: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+
+              const SizedBox(height: 4),
+              valueDisplay,
+            ],
+          ),
+        ),
+
+        Row(
+          children: [
+            if (!widget.isBBTB)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: widget.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: widget.color.withOpacity(0.5),
+                    width: 0.5,
+                  ),
+                ),
+                child: Text(
+                  cleanStatus,
+                  style: TextStyle(
+                    color: widget.color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            if (!widget.isBBTB) const SizedBox(width: 8),
+            RotationTransition(
+              turns: _iconAnimation,
+              child: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGiziExpandedContent() {
+    return Column(
+      key: const ValueKey('expanded_content'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 20),
+        if (widget.isBBTB)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Text(
+              "Pengukuran: ${widget.measurementDetail}",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        _buildInfoRowWithIcon(
+          Icons.info_outline,
+          "Kesimpulan:",
+          widget.deskripsiRekomendasi['deskripsi']!,
+          Colors.black54,
+        ),
+        const SizedBox(height: 12),
+        _buildInfoRowWithIcon(
+          Icons.lightbulb_outline,
+          "Rekomendasi:",
+          widget.deskripsiRekomendasi['rekomendasi']!,
+          AppColors.primary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRowWithIcon(
+    IconData icon,
+    String header,
+    String content,
+    Color color,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                header,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(content, style: const TextStyle(fontSize: 13, height: 1.4)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String cleanStatus = widget.status
+        .replaceAll('(Merah)', '')
+        .replaceAll('(Kuning)', '')
+        .trim();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: widget.color.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: _handleTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildGiziHeader(cleanStatus),
+
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                        final isEntering =
+                            child.key == const ValueKey('expanded_content');
+
+                        final slideTween = isEntering
+                            ? Tween<Offset>(
+                                begin: const Offset(0.0, -0.1),
+                                end: Offset.zero,
+                              )
+                            : Tween<Offset>(
+                                begin: Offset.zero,
+                                end: const Offset(0.0, -0.1),
+                              );
+
+                        final slideAnimation = slideTween.animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        );
+
+                        return ClipRect(
+                          child: SlideTransition(
+                            position: slideAnimation,
+                            child: FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            ),
+                          ),
+                        );
+                      },
+                  child: _isExpanded
+                      ? _buildGiziExpandedContent()
+                      : const SizedBox.shrink(
+                          key: ValueKey('collapsed_content'),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FadeSlideTransition extends StatefulWidget {
+  final Widget child;
+  final int index;
+
+  const _FadeSlideTransition({required this.child, required this.index});
+
+  @override
+  _FadeSlideTransitionState createState() => _FadeSlideTransitionState();
+}
+
+class _FadeSlideTransitionState extends State<_FadeSlideTransition>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+
+    Future.delayed(Duration(milliseconds: widget.index * 150), () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        final slideOffset = Tween<Offset>(
+          begin: const Offset(0, 0.2),
+          end: Offset.zero,
+        ).evaluate(_animation);
+
+        return Opacity(
+          opacity: _animation.value,
+          child: Transform.translate(
+            offset: slideOffset * 30,
+            child: widget.child,
+          ),
+        );
+      },
+      child: widget.child,
+    );
+  }
 }

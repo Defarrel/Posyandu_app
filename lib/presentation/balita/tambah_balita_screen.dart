@@ -93,8 +93,15 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
   }
 
   void _submitForm() async {
+    final namaRegex = RegExp(r'^[a-zA-Z\s]+$');
+    final alamatRegex = RegExp(r'^[a-zA-Z0-9\s\.,\/-]+$');
+
     setState(() {
-      _namaError = _namaController.text.isEmpty ? "Nama wajib diisi" : null;
+      _namaError = _namaController.text.isEmpty
+          ? "Nama wajib diisi"
+          : !namaRegex.hasMatch(_namaController.text.trim())
+          ? "Nama hanya boleh huruf dan spasi"
+          : null;
 
       _ttlError = _selectedDate == null ? "Tanggal lahir wajib diisi" : null;
 
@@ -121,6 +128,8 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
       _namaOrtuError = _namaOrtuController.text.isEmpty
           ? "Nama orang tua wajib diisi"
+          : !namaRegex.hasMatch(_namaOrtuController.text.trim())
+          ? "Nama orang tua hanya boleh huruf dan spasi"
           : null;
 
       _nikOrtuError = _nikOrtuController.text.isEmpty
@@ -136,8 +145,11 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           ? "Nomor telepon harus 11 - 13 digit"
           : null;
 
-      _alamatError = _alamatController.text.isEmpty
+      final alamat = _alamatController.text.trim();
+      _alamatError = alamat.isEmpty
           ? "Alamat wajib diisi"
+          : !alamatRegex.hasMatch(alamat)
+          ? "Alamat hanya boleh huruf, angka, spasi, . , / dan -"
           : null;
 
       final bbVal = double.tryParse(
@@ -163,7 +175,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
       _rtError = rtText.isEmpty
           ? "RT wajib diisi"
-          : (rtText.contains(RegExp(r'[^0-9]')))
+          : rtText.contains(RegExp(r'[^0-9]'))
           ? "RT hanya boleh angka"
           : (rtVal == null)
           ? "RT tidak valid"
@@ -178,7 +190,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
       _rwError = rwText.isEmpty
           ? "RW wajib diisi"
-          : (rwText.contains(RegExp(r'[^0-9]')))
+          : rwText.contains(RegExp(r'[^0-9]'))
           ? "RW hanya boleh angka"
           : (rwVal == null)
           ? "RW tidak valid"

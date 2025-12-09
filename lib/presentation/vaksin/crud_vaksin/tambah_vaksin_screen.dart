@@ -45,9 +45,14 @@ class _TambahVaksinScreenState extends State<TambahVaksinScreen> {
 
   void _submit() async {
     setState(() {
-      _kodeError = _kodeController.text.isEmpty
+      final kodeText = _kodeController.text.trim();
+
+      _kodeError = kodeText.isEmpty
           ? "Kode vaksin wajib diisi"
+          : !RegExp(r'^[a-zA-Z0-9-]+$').hasMatch(kodeText)
+          ? "Kode hanya boleh huruf, angka, dan '-'"
           : null;
+
       _namaError = _namaController.text.isEmpty
           ? "Nama vaksin wajib diisi"
           : null;

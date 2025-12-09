@@ -36,47 +36,55 @@ class CustomTextFieldBalita extends StatelessWidget {
               color: const Color(0xFFD9D9D9),
             ),
             clipBehavior: Clip.antiAlias,
-            child: Row(
-              children: [
-                Container(
-                  width: 110,
-                  height: maxLines > 1 ? 70 : 48,
-                  alignment: Alignment.center,
-                  color: AppColors.primary,
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+            child: IntrinsicHeight(
+              child: Row(
+                children: [
+                  Container(
+                    width: 110,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 12,
                     ),
-                  ),
-                ),
-
-                Expanded(
-                  child: IgnorePointer(
-                    ignoring: ignorePointer,
-                    child: TextField(
-                      controller: controller,
-                      keyboardType: keyboardType,
-                      onChanged: onChanged,
-                      maxLines: maxLines,
-                      decoration: InputDecoration(
-                        hintText: hint,
-                        hintStyle: const TextStyle(color: Colors.black45),
-                        filled: true,
-                        fillColor: const Color(0xFFD9D9D9),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 14,
+                    alignment: Alignment.center,
+                    color: AppColors.primary,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
                         ),
-                        border: InputBorder.none,
                       ),
                     ),
                   ),
-                ),
-              ],
+
+                  Expanded(
+                    child: IgnorePointer(
+                      ignoring: ignorePointer,
+                      child: TextField(
+                        controller: controller,
+                        keyboardType: keyboardType,
+                        onChanged: onChanged,
+                        maxLines: maxLines,
+                        decoration: InputDecoration(
+                          hintText: hint,
+                          hintStyle: const TextStyle(color: Colors.black45),
+                          filled: true,
+                          fillColor: const Color(0xFFD9D9D9),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 

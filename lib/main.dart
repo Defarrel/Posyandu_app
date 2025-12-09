@@ -21,6 +21,18 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'PosyanduApp',
       navigatorKey: navigatorKey,
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            textScaleFactor: MediaQuery.of(
+              context,
+            ).textScaleFactor.clamp(0.8, 0.95),
+          ),
+          child: child!,
+        );
+      },
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.white,

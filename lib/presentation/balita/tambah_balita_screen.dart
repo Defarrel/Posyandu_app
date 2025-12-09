@@ -155,8 +155,19 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           ? "TB lahir harus 30 - 60 cm"
           : null;
 
-      _rtError = _rtController.text.isEmpty ? "RT wajib diisi" : null;
-      _rwError = _rwController.text.isEmpty ? "RW wajib diisi" : null;
+      final rtVal = int.tryParse(_rtController.text);
+      _rtError = _rtController.text.isEmpty
+          ? "RT wajib diisi"
+          : (rtVal == null || rtVal <= 0)
+          ? "RT tidak boleh 0"
+          : null;
+
+      final rwVal = int.tryParse(_rwController.text);
+      _rwError = _rwController.text.isEmpty
+          ? "RW wajib diisi"
+          : (rwVal == null || rwVal <= 0)
+          ? "RW tidak boleh 0"
+          : null;
     });
 
     if (_namaError != null ||
@@ -399,7 +410,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             ),
             const SizedBox(height: 12),
             CustomTextFieldBalita(
-              label: "Berat Badan Lahir (kg)",
+              label: "BB Lahir (kg)",
               hint: "Contoh: 3.2",
               controller: _bbLahirController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -408,7 +419,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
             const SizedBox(height: 12),
             CustomTextFieldBalita(
-              label: "Tinggi Badan Lahir (cm)",
+              label: "TB Lahir (cm)",
               hint: "Contoh: 49.5",
               controller: _tbLahirController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),

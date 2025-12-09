@@ -628,16 +628,26 @@ class _DetailKelulusanBalitaScreenState
                     color: Colors.white,
                   ),
                 )
-              : const Row(
+              : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.download, size: 22),
-                    SizedBox(width: 12),
-                    Text(
-                      "Download Sertifikat Kelulusan",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    const Icon(Icons.download, size: 22),
+                    const SizedBox(width: 12),
+
+                    // ⬇️ Di-fix agar tidak overflow
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: const Text(
+                          "Download Sertifikat Kelulusan",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -829,9 +839,7 @@ class _AnimatedProgressItemState extends State<_AnimatedProgressItem>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(
-        milliseconds: 2000,
-      ), 
+      duration: const Duration(milliseconds: 2000),
     );
 
     _progressAnimation = Tween<double>(

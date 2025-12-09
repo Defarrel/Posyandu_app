@@ -82,6 +82,7 @@ class CustomDropdownField2 extends StatelessWidget {
   final ValueChanged<String?> onChanged;
   final bool enabled;
   final Color? iconColor;
+  final String? errorText; 
 
   const CustomDropdownField2({
     super.key,
@@ -91,69 +92,87 @@ class CustomDropdownField2 extends StatelessWidget {
     required this.onChanged,
     this.enabled = true,
     this.iconColor,
+    this.errorText, 
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          color: AppColors.background,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Row(
-          children: [
-            Container(
-              width: 70,
-              height: 48,
-              alignment: Alignment.center,
-              color: enabled ? AppColors.primary : Colors.grey,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              color: AppColors.background,
             ),
-
-            Expanded(
-              child: Container(
-                color: const Color(0xFFD9D9D9),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: items.contains(value) ? value : null,
-                    hint: const Text("Pilih", style: TextStyle(fontSize: 14)),
-                    onChanged: enabled ? onChanged : null,
-                    icon: Icon(
-                      Icons.arrow_drop_down,
-                      color:
-                          iconColor ??
-                          (enabled ? AppColors.primary : Colors.grey),
+            clipBehavior: Clip.antiAlias,
+            child: Row(
+              children: [
+                Container(
+                  width: 70,
+                  height: 48,
+                  alignment: Alignment.center,
+                  color: enabled ? AppColors.primary : Colors.grey,
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
-                    items: items
-                        .map(
-                          (item) => DropdownMenuItem(
-                            value: item,
-                            child: Text(
-                              item,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
-                        )
-                        .toList(),
                   ),
                 ),
+
+                Expanded(
+                  child: Container(
+                    color: const Color(0xFFD9D9D9),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: items.contains(value) ? value : null,
+                        hint: const Text(
+                          "Pilih",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        onChanged: enabled ? onChanged : null,
+                        icon: Icon(
+                          Icons.arrow_drop_down,
+                          color:
+                              iconColor ??
+                              (enabled ? AppColors.primary : Colors.grey),
+                        ),
+                        items: items
+                            .map(
+                              (item) => DropdownMenuItem(
+                                value: item,
+                                child: Text(
+                                  item,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          if (errorText != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 8, top: 4),
+              child: Text(
+                errorText!,
+                style: const TextStyle(color: Colors.red, fontSize: 12),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

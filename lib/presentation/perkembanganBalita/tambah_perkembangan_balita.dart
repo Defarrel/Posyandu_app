@@ -40,6 +40,10 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
   String? _errorTinggi;
   String? _errorLengan;
   String? _errorKepala;
+  String? _errorKMS;
+  String? _errorIMD;
+  String? _errorVitaminA;
+  String? _errorAsiEks;
 
   DateTime _selectedDate = DateTime.now();
   String? _caraUkur = "Berdiri";
@@ -50,21 +54,18 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
 
   bool _isLoading = false;
   bool _isInitLoading = true;
-  final _repo = PerkembanganBalitaRepository();
 
+  final _repo = PerkembanganBalitaRepository();
   List<PerkembanganBalitaResponseModel> _existingHistory = [];
 
   bool _userPickedDate = false;
-  DateTime _parseDateSafe(String? dateStr) {
-    if (dateStr == null || dateStr.isEmpty) {
-      return DateTime.now();
-    }
 
+  DateTime _parseDateSafe(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return DateTime.now();
     try {
-      final DateTime parsed = DateTime.parse(dateStr).toLocal();
+      final parsed = DateTime.parse(dateStr).toLocal();
       return DateTime(parsed.year, parsed.month, parsed.day);
-    } catch (e) {
-      log("Gagal parsing tanggal aman (Update Fix): $e, string: $dateStr");
+    } catch (_) {
       return DateTime.now();
     }
   }
@@ -74,22 +75,19 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         _tinggiController.text.isNotEmpty ||
         _lingkarLenganController.text.isNotEmpty ||
         _lingkarKepalaController.text.isNotEmpty ||
-        (_caraUkur != "Berdiri") ||
-        (_kms != "Ada") ||
-        (_imd != null) ||
-        (_asiEks != null) ||
-        (_vitaminA != null);
+        _caraUkur != "Berdiri" ||
+        _kms != "Ada" ||
+        _imd != null ||
+        _asiEks != null ||
+        _vitaminA != null;
   }
 
-  bool get isSpecialMonth {
-    final month = _selectedDate.month;
-    return month == 2 || month == 8;
-  }
+  bool get isSpecialMonth =>
+      _selectedDate.month == 2 || _selectedDate.month == 8;
 
   @override
   void initState() {
     super.initState();
-
     _loadRiwayat().then((_) {
       if (widget.existingData != null) {
         final d = widget.existingData!;
@@ -98,7 +96,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
         _lingkarLenganController.text = d.lingkarLengan?.toString() ?? "";
         _lingkarKepalaController.text = d.lingkarKepala?.toString() ?? "";
         _caraUkur = d.caraUkur ?? "Berdiri";
-        _kms = (d.kms == "Ada" || d.kms == "Tidak") ? d.kms : "Ada";
+        _kms = d.kms ?? "Ada";
         _imd = d.imd;
         _vitaminA = d.vitaminA;
         _asiEks = d.asiEks;
@@ -107,7 +105,6 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       } else {
         _selectedDate = DateTime.now();
       }
-
       if (mounted) setState(() => _isInitLoading = false);
     });
   }
@@ -116,19 +113,11 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     try {
       final result = await _repo.getPerkembanganByNIK(widget.nikBalita);
       result.fold(
-        (error) {
-          log("Gagal load history: $error");
-        },
-        (data) {
-          if (mounted) {
-            _existingHistory = data;
-          } else {
-            _existingHistory = data;
-          }
-        },
+        (error) => log("Gagal load history: $error"),
+        (data) => _existingHistory = data,
       );
     } catch (e) {
-      log("Repository method mungkin belum ada atau error: $e");
+      log("Error riwayat: $e");
     }
   }
 
@@ -168,19 +157,19 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
 
   String _bulanIndo(int month) {
     const bulan = [
-      '',
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
+      "",
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
     ];
     return bulan[month];
   }
@@ -193,38 +182,62 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       _errorTinggi = null;
       _errorLengan = null;
       _errorKepala = null;
+      _errorKMS = null;
+      _errorIMD = null;
+      _errorVitaminA = null;
+      _errorAsiEks = null;
     });
 
-    double? parseNum(String t) => double.tryParse(t.replaceAll(',', '.'));
+    if (_kms == null || _kms!.isEmpty) {
+      _errorKMS = "Pilih status KMS";
+      isValid = false;
+    }
+
+    if (isSpecialMonth) {
+      if (_imd == null || _imd!.isEmpty) {
+        _errorIMD = "Pilih status IMD";
+        isValid = false;
+      }
+      if (_vitaminA == null || _vitaminA!.isEmpty) {
+        _errorVitaminA = "Pilih Vitamin A";
+        isValid = false;
+      }
+      if (_asiEks == null || _asiEks!.isEmpty) {
+        _errorAsiEks = "Pilih status ASI Eksklusif";
+        isValid = false;
+      }
+    }
+
+    double? numParse(String t) => double.tryParse(t.replaceAll(",", "."));
 
     if (_beratController.text.isEmpty ||
-        parseNum(_beratController.text) == null ||
-        parseNum(_beratController.text)! <= 0 ||
-        parseNum(_beratController.text)! > 50) {
+        numParse(_beratController.text) == null ||
+        numParse(_beratController.text)! <= 0 ||
+        numParse(_beratController.text)! > 50) {
       _errorBerat = "Berat tidak valid";
       isValid = false;
     }
 
     if (_tinggiController.text.isEmpty ||
-        parseNum(_tinggiController.text) == null ||
-        parseNum(_tinggiController.text)! <= 0 ||
-        parseNum(_tinggiController.text)! > 150) {
+        numParse(_tinggiController.text) == null ||
+        numParse(_tinggiController.text)! <= 0 ||
+        numParse(_tinggiController.text)! > 150) {
       _errorTinggi = "Tinggi tidak valid";
       isValid = false;
     }
 
     if (_lingkarLenganController.text.isEmpty ||
-        parseNum(_lingkarLenganController.text) == null ||
-        parseNum(_lingkarLenganController.text)! <= 0 ||
-        parseNum(_lingkarLenganController.text)! > 40) {
+        numParse(_lingkarLenganController.text) == null ||
+        numParse(_lingkarLenganController.text)! <= 0 ||
+        numParse(_lingkarLenganController.text)! > 40) {
       _errorLengan = "Lingkar Lengan tidak valid";
       isValid = false;
     }
 
     if (_lingkarKepalaController.text.isEmpty ||
-        parseNum(_lingkarKepalaController.text) == null ||
-        parseNum(_lingkarKepalaController.text)! <= 0 ||
-        parseNum(_lingkarKepalaController.text)! > 65) {
+        numParse(_lingkarKepalaController.text) == null ||
+        numParse(_lingkarKepalaController.text)! <= 0 ||
+        numParse(_lingkarKepalaController.text)! > 65) {
       _errorKepala = "Lingkar Kepala tidak valid";
       isValid = false;
     }
@@ -263,41 +276,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       _selectedDate.day,
     );
 
-    DateTime selectedMonthToCheck;
-    if (widget.existingData != null && !_userPickedDate) {
-      selectedMonthToCheck = _parseDateSafe(
-        widget.existingData!.tanggalPerubahan,
-      );
-    } else {
-      selectedMonthToCheck = selected;
-    }
-
-    bool isDuplicate = false;
-    for (var item in _existingHistory) {
-      final itemDate = _parseDateSafe(item.tanggalPerubahan);
-      if (itemDate.year == selectedMonthToCheck.year &&
-          itemDate.month == selectedMonthToCheck.month) {
-        if (widget.existingData != null && widget.existingData!.id == item.id) {
-          continue; 
-        }
-        isDuplicate = true;
-        break;
-      }
-    }
-
-    if (isDuplicate) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        CustomSnackBar.show(
-          message:
-              "Data bulan ${_bulanIndo(selectedMonthToCheck.month)} ${selectedMonthToCheck.year} sudah ada.",
-          type: SnackBarType.error,
-        ),
-      );
-      return;
-    }
-
-    if (selected.isAfter(today) &&
-        !(widget.existingData != null && !_userPickedDate)) {
+    if (selected.isAfter(today)) {
       ScaffoldMessenger.of(context).showSnackBar(
         CustomSnackBar.show(
           message: "Tidak dapat input data masa depan.",
@@ -310,68 +289,52 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
     setState(() => _isLoading = true);
 
     try {
-      final baseDate = _selectedDate;
-
-      final compensatedDate = baseDate.add(const Duration(hours: 12));
-
-      final tanggalPerubahan = compensatedDate.toIso8601String();
+      final tanggalPerubahan = _selectedDate
+          .add(const Duration(hours: 12))
+          .toIso8601String();
 
       final model = PerkembanganBalitaRequestModel(
         nikBalita: widget.nikBalita,
         lingkarLengan: double.parse(
-          _lingkarLenganController.text.replaceAll(',', '.'),
+          _lingkarLenganController.text.replaceAll(",", "."),
         ),
         lingkarKepala: double.parse(
-          _lingkarKepalaController.text.replaceAll(',', '.'),
+          _lingkarKepalaController.text.replaceAll(",", "."),
         ),
-        tinggiBadan: double.parse(_tinggiController.text.replaceAll(',', '.')),
-        beratBadan: double.parse(_beratController.text.replaceAll(',', '.')),
+        tinggiBadan: double.parse(_tinggiController.text.replaceAll(",", ".")),
+        beratBadan: double.parse(_beratController.text.replaceAll(",", ".")),
         caraUkur: _caraUkur ?? "-",
         vitaminA: _vitaminA ?? "-",
-        kms: _kms ?? "Tidak",
+        kms: _kms ?? "-",
         imd: _imd ?? "-",
         asiEks: _asiEks ?? "-",
         tanggalPerubahan: tanggalPerubahan,
       );
 
+      late final result;
+
       if (widget.existingData == null) {
-        final result = await _repo.tambahPerkembangan(model);
-
-        result.fold(
-          (error) => ScaffoldMessenger.of(context).showSnackBar(
-            CustomSnackBar.show(
-              message: "Gagal: $error",
-              type: SnackBarType.error,
-            ),
-          ),
-          (msg) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              CustomSnackBar.show(message: msg, type: SnackBarType.success),
-            );
-            Navigator.pop(context, true);
-          },
-        );
+        result = await _repo.tambahPerkembangan(model);
       } else {
-        final id = widget.existingData!.id;
-        final result = await _repo.updatePerkembangan(id, model);
-
-        result.fold(
-          (error) => ScaffoldMessenger.of(context).showSnackBar(
-            CustomSnackBar.show(
-              message: "Gagal: $error",
-              type: SnackBarType.error,
-            ),
-          ),
-          (msg) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              CustomSnackBar.show(message: msg, type: SnackBarType.success),
-            );
-            Navigator.pop(context, true);
-          },
-        );
+        result = await _repo.updatePerkembangan(widget.existingData!.id, model);
       }
+
+      result.fold(
+        (error) => ScaffoldMessenger.of(context).showSnackBar(
+          CustomSnackBar.show(
+            message: "Gagal: $error",
+            type: SnackBarType.error,
+          ),
+        ),
+        (msg) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            CustomSnackBar.show(message: msg, type: SnackBarType.success),
+          );
+          Navigator.pop(context, true);
+        },
+      );
     } catch (e) {
-      log("Exception in _submitForm: $e");
+      log("Error submit: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         CustomSnackBar.show(message: "Error: $e", type: SnackBarType.error),
       );
@@ -392,38 +355,20 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
           elevation: 0,
           backgroundColor: Colors.white,
           leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              color: AppColors.primary,
-              size: 20,
-            ),
+            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
             onPressed: () async {
               if (await _konfirmasiKeluar()) Navigator.pop(context);
             },
           ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isUpdate
-                    ? "Perbarui Data Perkembangan"
-                    : "Tambah Data Perkembangan",
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                isUpdate
-                    ? "Perbarui data ${widget.namaBalita}"
-                    : "Halo, ${widget.namaBalita}! Gimana perkembangannya?",
-                style: const TextStyle(color: Colors.black54, fontSize: 12),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+          title: Text(
+            isUpdate
+                ? "Perbarui Data Perkembangan"
+                : "Tambah Data Perkembangan",
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
           centerTitle: true,
         ),
@@ -432,10 +377,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                 child: CircularProgressIndicator(color: AppColors.primary),
               )
             : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.all(20),
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -449,7 +391,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                           initialDate: _selectedDate,
                           firstDate: widget.tanggalLahir,
                           lastDate: DateTime(2100),
-                          locale: const Locale('id', 'ID'),
+                          locale: const Locale("id", "ID"),
                         );
                         if (picked != null) {
                           setState(() {
@@ -459,6 +401,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                               picked.day,
                             );
                             _userPickedDate = true;
+
                             if (!isSpecialMonth) {
                               _imd = null;
                               _vitaminA = null;
@@ -479,10 +422,9 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 15),
 
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: CustomTextField2(
@@ -510,10 +452,9 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                       ],
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
 
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: CustomTextField2(
@@ -541,7 +482,8 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                       ],
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
+
                     CustomDropdownField(
                       label: "Cara Ukur",
                       value: _caraUkur,
@@ -549,7 +491,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                       onChanged: (val) => setState(() => _caraUkur = val),
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
 
                     Row(
                       children: [
@@ -559,6 +501,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                             value: _kms,
                             items: const ["Ada", "Tidak"],
                             onChanged: (val) => setState(() => _kms = val),
+                            errorText: _errorKMS,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -572,10 +515,13 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                             iconColor: isSpecialMonth
                                 ? AppColors.primary
                                 : Colors.grey,
+                            errorText: _errorIMD,
                           ),
                         ),
                       ],
                     ),
+
+                    const SizedBox(height: 15),
 
                     Row(
                       children: [
@@ -589,6 +535,7 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                             iconColor: isSpecialMonth
                                 ? AppColors.primary
                                 : Colors.grey,
+                            errorText: _errorVitaminA,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -602,12 +549,13 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
                             iconColor: isSpecialMonth
                                 ? AppColors.primary
                                 : Colors.grey,
+                            errorText: _errorAsiEks,
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 25),
 
                     SizedBox(
                       width: double.infinity,

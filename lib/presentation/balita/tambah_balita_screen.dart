@@ -113,11 +113,19 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
       _jenisKelaminError = _jenisKelamin == null ? "Pilih jenis kelamin" : null;
 
-      final anakKeVal = int.tryParse(_anakKeController.text);
-      _anakKeError = _anakKeController.text.isEmpty
+      final anakText = _anakKeController.text.trim();
+      final anakKeVal = int.tryParse(anakText);
+
+      _anakKeError = anakText.isEmpty
           ? "Anak ke wajib diisi"
-          : (anakKeVal == null || anakKeVal <= 0)
+          : anakText.contains(RegExp(r'[^0-9]'))
+          ? "Anak ke hanya boleh angka"
+          : (anakKeVal == null)
+          ? "Anak ke tidak valid"
+          : (anakKeVal <= 0)
           ? "Anak ke tidak boleh 0 atau minus"
+          : (anakText.length > 2)
+          ? "Anak ke tidak boleh lebih dari 2 digit"
           : null;
 
       _nomorKkError = _nomorKkController.text.isEmpty

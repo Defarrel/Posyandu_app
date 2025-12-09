@@ -154,16 +154,16 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
 
         case "Risiko Gizi Lebih":
           deskripsi =
-              "Berat badan mulai melebihi batas normal untuk usia, menandakan risiko awal gizi berlebih.";
+              "Berat badan mulai melebihi batas normal untuk usia. Perlu dikonfirmasi dengan indikator BB/TB. Kondisi ini bisa menjadi risiko gizi berlebih atau tanda awal anak memiliki postur tubuh tinggi.";
           rekomendasi =
-              "Atur porsi makan, kurangi makanan manis/berlemak, dan tingkatkan aktivitas fisik ringan setiap hari.";
+              "Atur porsi makan, kurangi makanan manis/berlemak, dan tingkatkan aktivitas fisik ringan setiap hari. Periksa hasil BB/TB untuk konfirmasi status gizi akut.";
           break;
 
         case "Obesitas":
           deskripsi =
-              "Berat badan sudah berada di atas ambang obesitas untuk usia anak, berisiko gangguan kesehatan jangka panjang.";
+              "Berat badan sudah berada jauh di atas standar usia. Jika indikator BB/TB menunjukkan 'Normal', ini mungkin karena anak memiliki postur tubuh tinggi besar. Namun, jika BB/TB juga Gizi Lebih/Obesitas, kondisi ini memerlukan perhatian dan tindakan segera.";
           rekomendasi =
-              "Evaluasi pola makan, hindari makanan cepat saji, kurangi gula, dan tingkatkan aktivitas fisik teratur. Konsultasi ke tenaga kesehatan dianjurkan.";
+              "Evaluasi pola makan, hindari makanan cepat saji, kurangi gula, dan tingkatkan aktivitas fisik teratur. **Wajib konfirmasi dengan hasil BB/TB.** Konsultasi ke tenaga kesehatan dianjurkan.";
           break;
       }
     } else if (indikator == "TB/U") {
@@ -191,9 +191,9 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
 
         case "Tinggi":
           deskripsi =
-              "Tinggi badan di atas rata-rata anak seusianya. Biasanya bukan masalah apabila BB juga proporsional.";
+              "Tinggi badan di atas rata-rata anak seusianya (anak tinggi besar). Jika BB/TB anak 'Normal', ini bukan masalah dan menunjukkan potensi pertumbuhan yang baik.";
           rekomendasi =
-              "Tidak ada tindakan khusus. Pastikan nutrisi tetap seimbang dan pantau pertumbuhan secara rutin.";
+              "Tidak ada tindakan khusus. Pastikan nutrisi tetap seimbang dan pantau pertumbuhan secara rutin, terutama menjaga BB/TB tetap Normal.";
           break;
       }
     } else if (indikator == "BB/TB") {
@@ -214,7 +214,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
 
         case "Normal":
           deskripsi =
-              "Berat badan proporsional terhadap tinggi badan sesuai standar WHO.";
+              "Berat badan proporsional terhadap tinggi badan sesuai standar WHO. Ini adalah indikator status gizi akut yang paling akurat.";
           rekomendasi =
               "Pertahankan makan sehat dan pemantauan rutin. Tidak memerlukan intervensi khusus.";
           break;

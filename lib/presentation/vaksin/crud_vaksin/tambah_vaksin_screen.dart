@@ -51,7 +51,20 @@ class _TambahVaksinScreenState extends State<TambahVaksinScreen> {
       _namaError = _namaController.text.isEmpty
           ? "Nama vaksin wajib diisi"
           : null;
-      _usiaError = _usiaController.text.isEmpty ? "Usia wajib diisi" : null;
+      final usiaText = _usiaController.text.trim();
+      final usiaVal = int.tryParse(usiaText);
+
+      _usiaError = usiaText.isEmpty
+          ? "Usia wajib diisi"
+          : (usiaText.contains(RegExp(r'[^0-9]')))
+          ? "Usia hanya boleh angka"
+          : (usiaVal == null)
+          ? "Usia tidak valid"
+          : (usiaVal < 0)
+          ? "Usia tidak boleh minus"
+          : (usiaVal > 60)
+          ? "Usia tidak boleh lebih dari 60 bulan"
+          : null;
     });
 
     if (_kodeError != null || _namaError != null || _usiaError != null) return;
@@ -66,7 +79,6 @@ class _TambahVaksinScreenState extends State<TambahVaksinScreen> {
     );
 
     if (widget.isEdit) {
-      // UPDATE
       final res = await _repo.updateVaksin(widget.model!.id, request);
 
       res.fold(

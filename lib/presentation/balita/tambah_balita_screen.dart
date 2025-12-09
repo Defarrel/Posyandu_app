@@ -106,8 +106,11 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
 
       _jenisKelaminError = _jenisKelamin == null ? "Pilih jenis kelamin" : null;
 
+      final anakKeVal = int.tryParse(_anakKeController.text);
       _anakKeError = _anakKeController.text.isEmpty
           ? "Anak ke wajib diisi"
+          : (anakKeVal == null || anakKeVal <= 0)
+          ? "Anak ke tidak boleh 0 atau minus"
           : null;
 
       _nomorKkError = _nomorKkController.text.isEmpty
@@ -155,18 +158,34 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           ? "TB lahir harus 30 - 60 cm"
           : null;
 
-      final rtVal = int.tryParse(_rtController.text);
-      _rtError = _rtController.text.isEmpty
+      final rtText = _rtController.text.trim();
+      final rtVal = int.tryParse(rtText);
+
+      _rtError = rtText.isEmpty
           ? "RT wajib diisi"
-          : (rtVal == null || rtVal <= 0)
-          ? "RT tidak boleh 0"
+          : (rtText.contains(RegExp(r'[^0-9]')))
+          ? "RT hanya boleh angka"
+          : (rtVal == null)
+          ? "RT tidak valid"
+          : (rtVal <= 0)
+          ? "RT tidak boleh 0 atau minus"
+          : (rtText.length > 3)
+          ? "RT tidak boleh lebih dari 3 digit"
           : null;
 
-      final rwVal = int.tryParse(_rwController.text);
-      _rwError = _rwController.text.isEmpty
+      final rwText = _rwController.text.trim();
+      final rwVal = int.tryParse(rwText);
+
+      _rwError = rwText.isEmpty
           ? "RW wajib diisi"
-          : (rwVal == null || rwVal <= 0)
-          ? "RW tidak boleh 0"
+          : (rwText.contains(RegExp(r'[^0-9]')))
+          ? "RW hanya boleh angka"
+          : (rwVal == null)
+          ? "RW tidak valid"
+          : (rwVal <= 0)
+          ? "RW tidak boleh 0 atau minus"
+          : (rwText.length > 3)
+          ? "RW tidak boleh lebih dari 3 digit"
           : null;
     });
 

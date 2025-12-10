@@ -164,7 +164,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
       final bbVal = double.tryParse(bbText.replaceAll(',', '.'));
 
       _bbLahirError = bbText.isEmpty
-          ? null // boleh kosong
+          ? null 
           : (bbVal == null || bbVal < 1 || bbVal > 6)
           ? "BB lahir harus 1 - 6 kg"
           : null;
@@ -173,7 +173,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
       final tbVal = double.tryParse(tbText.replaceAll(',', '.'));
 
       _tbLahirError = tbText.isEmpty
-          ? null 
+          ? null
           : (tbVal == null || tbVal < 30 || tbVal > 60)
           ? "TB lahir harus 30 - 60 cm"
           : null;
@@ -364,67 +364,53 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             const SizedBox(height: 12),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: widget.isEdit
-                  ? null
-                  : () async {
-                      FocusScope.of(context).unfocus();
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime.now(),
-                      );
+              onTap: () async {
+                FocusScope.of(context).unfocus();
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now(),
+                );
 
-                      if (pickedDate != null) {
-                        _selectedDate = pickedDate;
-                        _ttlController.text =
-                            "${pickedDate.day}-${pickedDate.month}-${pickedDate.year}";
-                        setState(() => _ttlError = null);
-                      }
-                    },
-              child: Opacity(
-                opacity: widget.isEdit ? 0.5 : 1,
-                child: CustomTextFieldBalita(
-                  label: "Tanggal Lahir",
-                  hint: "Pilih tanggal lahir",
-                  controller: _ttlController,
-                  ignorePointer: true,
-                  errorText: _ttlError,
-                ),
+                if (pickedDate != null) {
+                  _selectedDate = pickedDate;
+                  _ttlController.text =
+                      "${pickedDate.day}-${pickedDate.month}-${pickedDate.year}";
+                  setState(() => _ttlError = null);
+                }
+              },
+              child: CustomTextFieldBalita(
+                label: "Tanggal Lahir",
+                hint: "Pilih tanggal lahir",
+                controller: _ttlController,
+                ignorePointer: true,
+                errorText: _ttlError,
               ),
             ),
 
             const SizedBox(height: 12),
 
             IgnorePointer(
-              ignoring: widget.isEdit,
-              child: Opacity(
-                opacity: widget.isEdit ? 0.5 : 1,
-                child: CustomTextFieldBalita(
-                  label: "NIK Balita",
-                  hint: "Masukkan NIK balita",
-                  controller: _nikBalitaController,
-                  keyboardType: TextInputType.number,
-                  errorText: _nikBalitaError,
-                ),
+              ignoring: false,
+              child: DigitCounterTextField(
+                label: "NIK Balita",
+                hint: "Masukkan NIK balita",
+                controller: _nikBalitaController,
+                errorText: _nikBalitaError,
               ),
             ),
 
             const SizedBox(height: 12),
 
-            Opacity(
-              opacity: widget.isEdit ? 0.5 : 1,
-              child: CustomRadioBalita(
-                groupValue: _jenisKelamin,
-                onChanged: widget.isEdit
-                    ? null
-                    : (value) {
-                        setState(() {
-                          _jenisKelamin = value;
-                          _jenisKelaminError = null;
-                        });
-                      },
-              ),
+            CustomRadioBalita(
+              groupValue: _jenisKelamin,
+              onChanged: (value) {
+                setState(() {
+                  _jenisKelamin = value;
+                  _jenisKelaminError = null;
+                });
+              },
             ),
 
             if (_jenisKelaminError != null)
@@ -465,12 +451,11 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
               errorText: _tbLahirError,
             ),
             const SizedBox(height: 12),
-            CustomTextFieldBalita(
+            DigitCounterTextField(
               label: "Nomor KK",
-              controller: _nomorKkController,
-              keyboardType: TextInputType.number,
-              errorText: _nomorKkError,
               hint: "Masukkan nomor KK",
+              controller: _nomorKkController,
+              errorText: _nomorKkError,
             ),
             const SizedBox(height: 12),
             CustomTextFieldBalita(
@@ -480,12 +465,11 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
               hint: "Masukkan nama orang tua",
             ),
             const SizedBox(height: 12),
-            CustomTextFieldBalita(
+            DigitCounterTextField(
               label: "NIK Ortu",
-              controller: _nikOrtuController,
-              keyboardType: TextInputType.number,
-              errorText: _nikOrtuError,
               hint: "Masukkan NIK orang tua",
+              controller: _nikOrtuController,
+              errorText: _nikOrtuError,
             ),
             const SizedBox(height: 12),
             CustomTextFieldBalita(
@@ -547,6 +531,57 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class DigitCounterTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final String? errorText;
+
+  const DigitCounterTextField({
+    super.key,
+    required this.controller,
+    required this.label,
+    required this.hint,
+    this.errorText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.centerRight,
+      children: [
+        CustomTextFieldBalita(
+          label: label,
+          hint: hint,
+          controller: controller,
+          keyboardType: TextInputType.number,
+          errorText: errorText,
+        ),
+
+        Positioned(
+          right: 12,
+          bottom: 14,
+          child: ValueListenableBuilder(
+            valueListenable: controller,
+            builder: (context, value, _) {
+              return Text(
+                "${controller.text.length}/16",
+                style: TextStyle(
+                  color: controller.text.length == 16
+                      ? Colors.green.withOpacity(0.8)
+                      : Colors.red.withOpacity(0.8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -75,6 +75,7 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
   Future<void> _refreshData() async {
     setState(() => _refreshing = true);
     await _loadData();
+    _applyFilter(); 
     setState(() => _refreshing = false);
   }
 

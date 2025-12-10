@@ -1,13 +1,15 @@
 class KelulusanDetailResponse {
   final String status;
-  final String? tanggalLulus;
-  final ProgressVaksin vaksin;
-  final ProgressUmur umur;
+  final String? keterangan;
+  final String? tanggalLulus; 
+  final KelulusanVaksinModel vaksin;
+  final KelulusanUmurModel umur;
   final bool siapLulus;
 
   KelulusanDetailResponse({
     required this.status,
-    required this.tanggalLulus,
+    this.keterangan,
+    this.tanggalLulus,
     required this.vaksin,
     required this.umur,
     required this.siapLulus,
@@ -15,102 +17,88 @@ class KelulusanDetailResponse {
 
   factory KelulusanDetailResponse.fromJson(Map<String, dynamic> json) {
     return KelulusanDetailResponse(
-      status: json["status"] ?? "BELUM LULUS",
-      tanggalLulus: json["tanggal_lulus"],
-      vaksin: ProgressVaksin.fromJson(json["vaksin"]),
-      umur: ProgressUmur.fromJson(json["umur"]),
-      siapLulus: json["siap_lulus"] ?? false,
+      status: json['status'] ?? "BELUM LULUS",
+      keterangan: json['keterangan'],
+      tanggalLulus: json['tanggal_lulus'],
+      vaksin: KelulusanVaksinModel.fromJson(json['vaksin']),
+      umur: KelulusanUmurModel.fromJson(json['umur']),
+      siapLulus: json['siap_lulus'] ?? false,
     );
   }
 }
 
-class ProgressVaksin {
+class KelulusanVaksinModel {
   final int totalVaksin;
   final int sudahDiambil;
   final double progressVaksin;
 
-  ProgressVaksin({
+  KelulusanVaksinModel({
     required this.totalVaksin,
     required this.sudahDiambil,
     required this.progressVaksin,
   });
 
-  factory ProgressVaksin.fromJson(Map<String, dynamic> json) {
-    return ProgressVaksin(
-      totalVaksin: json["total_vaksin"] ?? 0,
-      sudahDiambil: json["sudah_diambil"] ?? 0,
-      progressVaksin:
-          (json["progress_vaksin"] ?? 0).toDouble(),
+  factory KelulusanVaksinModel.fromJson(Map<String, dynamic> json) {
+    return KelulusanVaksinModel(
+      totalVaksin: json['total_vaksin'] ?? 0,
+      sudahDiambil: json['sudah_diambil'] ?? 0,
+      progressVaksin: (json['progress_vaksin'] ?? 0).toDouble(),
     );
   }
 }
 
-class ProgressUmur {
+class KelulusanUmurModel {
   final int umurBulan;
   final double progressUmur;
 
-  ProgressUmur({
-    required this.umurBulan,
-    required this.progressUmur,
-  });
+  KelulusanUmurModel({required this.umurBulan, required this.progressUmur});
 
-  factory ProgressUmur.fromJson(Map<String, dynamic> json) {
-    return ProgressUmur(
-      umurBulan: json["umur_bulan"] ?? 0,
-      progressUmur: (json["progress_umur"] ?? 0).toDouble(),
+  factory KelulusanUmurModel.fromJson(Map<String, dynamic> json) {
+    return KelulusanUmurModel(
+      umurBulan: json['umur_bulan'] ?? 0,
+      progressUmur: (json['progress_umur'] ?? 0).toDouble(),
     );
   }
 }
 
-
-// List Semua Balita + Status
 class KelulusanListResponse {
   final int total;
-  final List<KelulusanItem> data;
+  final List<KelulusanListItem> data;
 
-  KelulusanListResponse({
-    required this.total,
-    required this.data,
-  });
+  KelulusanListResponse({required this.total, required this.data});
 
   factory KelulusanListResponse.fromJson(Map<String, dynamic> json) {
-    return KelulusanListResponse(
-      total: json["total"] ?? 0,
-      data: (json["data"] as List<dynamic>)
-          .map((e) => KelulusanItem.fromJson(e))
-          .toList(),
-    );
+    var list = json['data'] as List;
+    List<KelulusanListItem> dataList = list
+        .map((i) => KelulusanListItem.fromJson(i))
+        .toList();
+
+    return KelulusanListResponse(total: json['total'] ?? 0, data: dataList);
   }
 }
 
-class KelulusanItem {
+class KelulusanListItem {
   final String nikBalita;
   final String namaBalita;
-  final String tanggalLahir;
+  final String status;
   final int umurBulan;
   final double progressVaksin;
-  final double progressUmur;
-  final String status;
 
-  KelulusanItem({
+  KelulusanListItem({
     required this.nikBalita,
     required this.namaBalita,
-    required this.tanggalLahir,
+    required this.status,
     required this.umurBulan,
     required this.progressVaksin,
-    required this.progressUmur,
-    required this.status,
   });
 
-  factory KelulusanItem.fromJson(Map<String, dynamic> json) {
-    return KelulusanItem(
-      nikBalita: json["nik_balita"] ?? "",
-      namaBalita: json["nama_balita"] ?? "",
-      tanggalLahir: json["tanggal_lahir"] ?? "",
-      umurBulan: json["umur_bulan"] ?? 0,
-      progressVaksin: (json["progress_vaksin"] ?? 0).toDouble(),
-      progressUmur: (json["progress_umur"] ?? 0).toDouble(),
-      status: json["status"] ?? "BELUM LULUS",
+  factory KelulusanListItem.fromJson(Map<String, dynamic> json) {
+    return KelulusanListItem(
+      nikBalita: json['nik_balita'] ?? "",
+      namaBalita: json['nama_balita'] ?? "",
+      status: json['status'] ?? "BELUM LULUS",
+      umurBulan: json['umur_bulan'] ?? 0,
+      progressVaksin: (json['progress_vaksin'] ?? 0).toDouble(),
     );
   }
 }

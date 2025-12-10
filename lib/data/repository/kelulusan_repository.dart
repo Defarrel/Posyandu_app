@@ -101,4 +101,20 @@ class KelulusanRepository {
       return Left("Kesalahan: $e");
     }
   }
+
+  // DELETE batalkan kelulusan
+  Future<Either<String, String>> deleteKelulusan(String nik) async {
+    try {
+      final response = await _service.delete("kelulusan/$nik");
+      final jsonResponse = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && jsonResponse["success"] == true) {
+        return Right(jsonResponse["message"]);
+      } else {
+        return Left(jsonResponse["message"] ?? "Gagal membatalkan kelulusan");
+      }
+    } catch (e) {
+      return Left("Kesalahan: $e");
+    }
+  }
 }

@@ -21,8 +21,8 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
     false,
   );
 
-  List<KelulusanItem> _all = [];
-  List<KelulusanItem> _filtered = [];
+  List<KelulusanListItem> _all = [];
+  List<KelulusanListItem> _filtered = [];
   String _filterValue = "Semua";
   bool _loading = true;
   bool _refreshing = false;
@@ -79,7 +79,7 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
   }
 
   void _applyFilter() {
-    List<KelulusanItem> result = _all;
+    List<KelulusanListItem> result = _all;
 
     if (_filterValue != "Semua") {
       result = result.where((x) => x.status == _filterValue).toList();
@@ -492,7 +492,7 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
     );
   }
 
-  Widget _buildBalitaItem(KelulusanItem item) {
+  Widget _buildBalitaItem(KelulusanListItem item) {
     final statusColor = _getStatusColor(item.status);
     final statusIcon = _getStatusIcon(item.status);
     final shortStatus = _getShortStatus(item.status);

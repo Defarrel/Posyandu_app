@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:posyandu_app/core/components/custom_snackbar.dart';
 import 'package:posyandu_app/core/constant/colors.dart';
 import 'package:posyandu_app/data/models/request/kelulusan/kelulusan_request_model.dart';
@@ -37,6 +39,8 @@ class _DetailKelulusanBalitaScreenState
   @override
   void initState() {
     super.initState();
+    initializeDateFormatting('id_ID', null);
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -122,6 +126,24 @@ class _DetailKelulusanBalitaScreenState
     );
   }
 
+  Future<void> _cancelKelulusan() async {
+    setState(() => _updating = true);
+
+    final result = await _repo.deleteKelulusan(widget.nikBalita);
+
+    result.fold(
+      (error) {
+        _showErrorSnackbar(error);
+        setState(() => _updating = false);
+      },
+      (message) {
+        _showSuccessSnackbar("Status berhasil dibatalkan");
+        _loadDetail(); 
+        setState(() => _updating = false);
+      },
+    );
+  }
+
   Future<void> _downloadSertifikat() async {
     setState(() => _downloading = true);
     _buttonAnimationController.forward();
@@ -140,6 +162,46 @@ class _DetailKelulusanBalitaScreenState
     }
   }
 
+  void _showConfirmCancelDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            Text("Batalkan Status?"),
+          ],
+        ),
+        content: Text(
+          "Apakah Anda yakin ingin membatalkan status '${_data?.status}'? \n\nData kelulusan akan dihapus dan balita akan kembali berstatus aktif (Belum Lulus).",
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Tutup"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _cancelKelulusan();
+            },
+            child: const Text("Ya, Batalkan"),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showConfirmLulusDialog() {
     showDialog(
       context: context,
@@ -150,10 +212,7 @@ class _DetailKelulusanBalitaScreenState
             SizedBox(width: 8),
             Text(
               "Konfirmasi Lulus",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -212,10 +271,7 @@ class _DetailKelulusanBalitaScreenState
             SizedBox(width: 8),
             Text(
               "Konfirmasi Pindah",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -495,7 +551,10 @@ class _DetailKelulusanBalitaScreenState
   Widget _buildStatusCard() {
     final statusColor = _getStatusColor(_data!.status);
     final statusIcon = _getStatusIcon(_data!.status);
-    final statusDescription = _getStatusDescription(_data!.status);
+    final statusDescription = _getStatusDescription(_data!);
+
+    final bool canCancel =
+        _data!.status == "LULUS" || _data!.status == "PINDAH";
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -527,7 +586,7 @@ class _DetailKelulusanBalitaScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       "Status Kelulusan: ",
                       style: TextStyle(
                         fontSize: 14,
@@ -571,7 +630,9 @@ class _DetailKelulusanBalitaScreenState
               ),
             ],
           ),
+
           const SizedBox(height: 12),
+
           Text(
             statusDescription,
             style: TextStyle(
@@ -581,6 +642,43 @@ class _DetailKelulusanBalitaScreenState
             ),
             textAlign: TextAlign.center,
           ),
+
+          if (canCancel) ...[
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 10),
+
+            InkWell(
+              onTap: _updating ? null : _showConfirmCancelDialog,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.withOpacity(0.1)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.restore, size: 16, color: Colors.red.shade700),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Batalkan status ini?",
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -628,18 +726,16 @@ class _DetailKelulusanBalitaScreenState
                     color: Colors.white,
                   ),
                 )
-              : Row(
+              : const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.download, size: 22),
-                    const SizedBox(width: 12),
-
-                    // ⬇️ Di-fix agar tidak overflow
+                    Icon(Icons.download, size: 22),
+                    SizedBox(width: 12),
                     Flexible(
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
-                        child: const Text(
+                        child: Text(
                           "Download Sertifikat Kelulusan",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -792,16 +888,34 @@ class _DetailKelulusanBalitaScreenState
     }
   }
 
-  String _getStatusDescription(String status) {
-    switch (status) {
+  String _getStatusDescription(KelulusanDetailResponse data) {
+    String dateStr = "-";
+    if (data.tanggalLulus != null && data.tanggalLulus!.isNotEmpty) {
+      try {
+        final date = DateTime.parse(data.tanggalLulus!).toLocal();
+        dateStr = DateFormat('dd MMMM yyyy', 'id_ID').format(date);
+      } catch (e) {
+        dateStr = data.tanggalLulus!;
+      }
+    }
+
+    final bool isManual = (data.keterangan ?? "").toLowerCase().contains(
+      "manual",
+    );
+
+    switch (data.status) {
       case "LULUS":
-        return "Balita telah memenuhi semua syarat kelulusan dan dapat mengunduh sertifikat";
+        if (isManual) {
+          return "Balita telah diluluskan pada $dateStr (Secara Manual). Anda dapat mengunduh sertifikat.";
+        } else {
+          return "Balita telah lulus pada $dateStr. Syarat terpenuhi dan dapat mengunduh sertifikat.";
+        }
       case "BELUM LULUS":
-        return "Balita belum memenuhi semua syarat kelulusan. Periksa progress di atas";
+        return "Balita belum memenuhi semua syarat kelulusan. Periksa progress di atas.";
       case "PINDAH":
-        return "Balita telah pindah ke lokasi posyandu lain";
+        return "Balita tercatat pindah pada $dateStr ke lokasi posyandu lain.";
       default:
-        return "Status tidak diketahui";
+        return "Status tidak diketahui.";
     }
   }
 }

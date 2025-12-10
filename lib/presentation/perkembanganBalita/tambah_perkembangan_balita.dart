@@ -360,15 +360,29 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
               if (await _konfirmasiKeluar()) Navigator.pop(context);
             },
           ),
-          title: Text(
-            isUpdate
-                ? "Perbarui Data Perkembangan"
-                : "Tambah Data Perkembangan",
-            style: const TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isUpdate
+                    ? "Perbarui Data Perkembangan"
+                    : "Tambah Data Perkembangan",
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                isUpdate
+                    ? "Perbarui data ${widget.namaBalita}"
+                    : "Halo, ${widget.namaBalita}! Gimana perkembangannya?",
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
           centerTitle: true,
         ),

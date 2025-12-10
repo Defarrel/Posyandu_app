@@ -7,7 +7,7 @@ import 'package:posyandu_app/main.dart';
 import 'package:posyandu_app/presentation/auth/login_screen.dart';
 
 class ServiceHttpClient {
-  final String baseUrl = 'http://10.112.191.167:5000/api/';
+  final String baseUrl = 'https://capstoneposyandu.cloud/api/';
   final secureStorage = FlutterSecureStorage();
   static bool _isLoggingOut = false;
 

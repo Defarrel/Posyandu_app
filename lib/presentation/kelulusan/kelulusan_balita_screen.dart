@@ -75,7 +75,7 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
   Future<void> _refreshData() async {
     setState(() => _refreshing = true);
     await _loadData();
-    _applyFilter(); 
+    _applyFilter();
     setState(() => _refreshing = false);
   }
 
@@ -508,8 +508,8 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
         shadowColor: Colors.black.withOpacity(0.1),
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) => DetailKelulusanBalitaScreen(
@@ -518,7 +518,11 @@ class _KelulusanBalitaScreenState extends State<KelulusanBalitaScreen> {
                 ),
               ),
             );
+
+            await _loadData();
+            _applyFilter();
           },
+
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),

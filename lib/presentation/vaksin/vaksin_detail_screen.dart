@@ -29,6 +29,24 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
   bool _loadingRekomendasi = false;
   bool _addingVaksin = false;
 
+  DateTime _parseDateSafe(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) {
+      return DateTime.now();
+    }
+    try {
+      final datePart = dateStr.split('T')[0].split(' ')[0];
+      final parts = datePart.split('-');
+
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final day = int.parse(parts[2]);
+
+      return DateTime(year, month, day);
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -215,7 +233,6 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
                     ],
                   ),
 
-                  // Spacer Bawah
                   const SliverToBoxAdapter(child: SizedBox(height: 80)),
                 ],
               ),
@@ -939,10 +956,12 @@ class _VaksinDetailScreenState extends State<VaksinDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
+
                 Text(
-                  "Diberikan: ${DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.parse(vaksin.tanggal))}",
+                  "Diberikan: ${DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(_parseDateSafe(vaksin.tanggal))}",
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
+
                 if (vaksin.catatan.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Container(

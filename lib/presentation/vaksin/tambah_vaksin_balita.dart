@@ -42,6 +42,19 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
 
   List<VaksinRiwayatModel> _riwayatVaksin = [];
 
+  DateTime _parseDateSafe(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) {
+      return DateTime.now();
+    }
+    try {
+      final DateTime parsed = DateTime.parse(dateStr).toLocal();
+
+      return DateTime(parsed.year, parsed.month, parsed.day);
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -59,11 +72,7 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
     _lokasiController.text = vaksinData.lokasi ?? '';
     _petugasController.text = vaksinData.petugas ?? '';
 
-    try {
-      _selectedDate = DateTime.parse(vaksinData.tanggal);
-    } catch (e) {
-      _selectedDate = DateTime.now();
-    }
+    _selectedDate = _parseDateSafe(vaksinData.tanggal);
   }
 
   Future<void> _loadRiwayatVaksin() async {
@@ -73,9 +82,11 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
         print("Gagal load riwayat vaksin: $error");
       },
       (data) {
-        setState(() {
-          _riwayatVaksin = data.data ?? [];
-        });
+        if (mounted) {
+          setState(() {
+            _riwayatVaksin = data.data ?? [];
+          });
+        }
       },
     );
   }
@@ -172,12 +183,16 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
 
     setState(() => _loading = true);
 
+    final baseDate = _selectedDate!;
+    final compensatedDate = baseDate.add(const Duration(hours: 12));
+    final tanggalKirim = compensatedDate.toIso8601String();
+
     final request = VaksinRequestModel(
       nik_balita: widget.balita.nikBalita,
       vaksin_id: widget.isEdit
           ? (_selectedVaksin?.id ?? widget.vaksinData!.vaksinId)
           : _selectedVaksin!.id,
-      tanggal: DateFormat('yyyy-MM-dd').format(_selectedDate!),
+      tanggal: tanggalKirim,
       petugas: _petugasController.text.isEmpty ? null : _petugasController.text,
       batch_no: _batchNoController.text.isEmpty
           ? null
@@ -257,7 +272,11 @@ class _TambahVaksinBalitaState extends State<TambahVaksinBalita> {
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.primary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),

@@ -160,20 +160,20 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
           ? "Alamat hanya boleh huruf, angka, spasi, . , / dan -"
           : null;
 
-      final bbVal = double.tryParse(
-        _bbLahirController.text.replaceAll(',', '.'),
-      );
-      _bbLahirError = _bbLahirController.text.isEmpty
-          ? "BB lahir wajib diisi"
+      final bbText = _bbLahirController.text.trim();
+      final bbVal = double.tryParse(bbText.replaceAll(',', '.'));
+
+      _bbLahirError = bbText.isEmpty
+          ? null // boleh kosong
           : (bbVal == null || bbVal < 1 || bbVal > 6)
           ? "BB lahir harus 1 - 6 kg"
           : null;
 
-      final tbVal = double.tryParse(
-        _tbLahirController.text.replaceAll(',', '.'),
-      );
-      _tbLahirError = _tbLahirController.text.isEmpty
-          ? "TB lahir wajib diisi"
+      final tbText = _tbLahirController.text.trim();
+      final tbVal = double.tryParse(tbText.replaceAll(',', '.'));
+
+      _tbLahirError = tbText.isEmpty
+          ? null 
           : (tbVal == null || tbVal < 30 || tbVal > 60)
           ? "TB lahir harus 30 - 60 cm"
           : null;
@@ -450,7 +450,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             const SizedBox(height: 12),
             CustomTextFieldBalita(
               label: "BB Lahir (kg)",
-              hint: "Contoh: 3.2",
+              hint: "Contoh: 3.2 (opsional)",
               controller: _bbLahirController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),
               errorText: _bbLahirError,
@@ -459,7 +459,7 @@ class _TambahBalitaScreenState extends State<TambahBalitaScreen> {
             const SizedBox(height: 12),
             CustomTextFieldBalita(
               label: "TB Lahir (cm)",
-              hint: "Contoh: 49.5",
+              hint: "Contoh: 49.5 (opsional)",
               controller: _tbLahirController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),
               errorText: _tbLahirError,

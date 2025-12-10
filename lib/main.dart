@@ -76,6 +76,15 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: _RightToLeftPageTransitionsBuilder(),
+            TargetPlatform.iOS: _RightToLeftPageTransitionsBuilder(),
+            TargetPlatform.windows: _RightToLeftPageTransitionsBuilder(),
+            TargetPlatform.linux: _RightToLeftPageTransitionsBuilder(),
+            TargetPlatform.macOS: _RightToLeftPageTransitionsBuilder(),
+          },
+        ),
       ),
       locale: const Locale('id', 'ID'),
       supportedLocales: const [Locale('en', 'US'), Locale('id', 'ID')],
@@ -85,6 +94,37 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       home: const SplashScreen(),
+    );
+  }
+}
+
+class _RightToLeftPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _RightToLeftPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.fastOutSlowIn,
+    );
+    final slideTween = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).chain(CurveTween(curve: Curves.fastOutSlowIn));
+    final fadeTween = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).chain(CurveTween(curve: Curves.easeIn));
+
+    return SlideTransition(
+      position: animation.drive(slideTween),
+      child: FadeTransition(opacity: curved.drive(fadeTween), child: child),
     );
   }
 }

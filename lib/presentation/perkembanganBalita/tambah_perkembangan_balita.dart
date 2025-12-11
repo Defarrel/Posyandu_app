@@ -276,7 +276,41 @@ class _TambahPerkembanganBalitaState extends State<TambahPerkembanganBalita> {
       _selectedDate.day,
     );
 
-    if (selected.isAfter(today)) {
+    DateTime selectedMonthToCheck;
+    if (widget.existingData != null && !_userPickedDate) {
+      selectedMonthToCheck = _parseDateSafe(
+        widget.existingData!.tanggalPerubahan,
+      );
+    } else {
+      selectedMonthToCheck = selected;
+    }
+
+    bool isDuplicate = false;
+    for (var item in _existingHistory) {
+      final itemDate = _parseDateSafe(item.tanggalPerubahan);
+      if (itemDate.year == selectedMonthToCheck.year &&
+          itemDate.month == selectedMonthToCheck.month) {
+        if (widget.existingData != null && widget.existingData!.id == item.id) {
+          continue;
+        }
+        isDuplicate = true;
+        break;
+      }
+    }
+
+    if (isDuplicate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        CustomSnackBar.show(
+          message:
+              "Data bulan ${_bulanIndo(selectedMonthToCheck.month)} ${selectedMonthToCheck.year} sudah ada. Silahkan cek detail balita.",
+          type: SnackBarType.error,
+        ),
+      );
+      return;
+    }
+
+    if (selected.isAfter(today) &&
+        !(widget.existingData != null && !_userPickedDate)) {
       ScaffoldMessenger.of(context).showSnackBar(
         CustomSnackBar.show(
           message: "Tidak dapat input data masa depan.",

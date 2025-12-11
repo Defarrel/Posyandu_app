@@ -118,12 +118,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                         _InfoItem(
                           Icons.code_rounded,
                           "Versi Aplikasi",
-                          "v1.0.0",
+                          "v1.1.0",
                         ),
                         _InfoItem(
                           Icons.update_rounded,
                           "Update Terakhir",
-                          "Oktober 2025",
+                          "Desember 2025",
                         ),
                       ]),
 

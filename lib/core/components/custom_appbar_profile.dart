@@ -61,7 +61,9 @@ class _CustomAppBarProfileState extends State<CustomAppBarProfile> {
 
     if (confirm == true) {
       const storage = FlutterSecureStorage();
-      await storage.deleteAll();
+
+      await storage.delete(key: 'token');
+      await storage.delete(key: 'email');
 
       UserNotifier.update(null);
 

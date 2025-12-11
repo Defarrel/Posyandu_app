@@ -119,127 +119,108 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
 
   Map<String, String> _getDeskripsiDanRekomendasi(
     String status,
-    String indikator,
-  ) {
-    final clean = status
-        .replaceAll("(Merah)", "")
-        .replaceAll("(Kuning)", "")
-        .trim();
+    String indikator, {
+    String? statusBBU,
+    String? statusTBU,
+  }) {
+    String clean = status.replaceAll(RegExp(r'\(.*?\)'), '').trim();
+    String cleanBBU =
+        statusBBU?.replaceAll(RegExp(r'\(.*?\)'), '').trim() ?? "";
+    String cleanTBU =
+        statusTBU?.replaceAll(RegExp(r'\(.*?\)'), '').trim() ?? "";
 
     String deskripsi = "";
     String rekomendasi = "";
+    String catatanPenting = "";
 
-    if (indikator == "BB/U") {
-      switch (clean) {
-        case "Gizi Buruk":
-          deskripsi =
-              "Berat badan jauh di bawah standar usia. Kondisi ini menunjukkan kekurangan gizi berat dan berisiko komplikasi kesehatan jika tidak ditangani segera.";
-          rekomendasi =
-              "Segera rujuk ke fasilitas kesehatan. Tingkatkan asupan gizi padat energi dan protein setiap hari, pantau BB mingguan, dan evaluasi oleh tenaga kesehatan.";
-          break;
+    const bbU = {
+      "Gizi Buruk": [
+        "Berat badan jauh di bawah standar usia dan menunjukkan kekurangan gizi berat.",
+        "Segera rujuk ke fasilitas kesehatan dan tingkatkan asupan energi serta protein.",
+      ],
+      "Gizi Kurang": [
+        "Berat badan sedikit di bawah standar dan mengarah pada kecenderungan kurang gizi.",
+        "Berikan makanan tinggi protein hewani dan pantau perkembangan 2–4 minggu.",
+      ],
+      "Gizi Normal": [
+        "Berat badan sesuai standar usia dan menunjukkan pertumbuhan baik.",
+        "Pertahankan pola makan seimbang dan lakukan penimbangan rutin.",
+      ],
+      "Risiko Gizi Lebih": [
+        "Berat badan mulai melebihi batas normal usia, perlu konfirmasi melalui BB/TB.",
+        "Kurangi makanan manis/berlemak dan atur porsi makan.",
+      ],
+      "Obesitas": [
+        "Berat badan berada jauh di atas standar usia dan perlu evaluasi proporsi tubuh.",
+        "Terapkan pola makan sehat dan tingkatkan aktivitas fisik.",
+      ],
+    };
 
-        case "Gizi Kurang":
-          deskripsi =
-              "Berat badan sedikit di bawah standar dan menunjukkan kecenderungan kurang gizi. Jika tidak ditangani, anak berisiko stagnan atau turun lagi.";
-          rekomendasi =
-              "Tambahkan makanan tinggi protein hewani (telur, ikan, ayam), tingkatkan frekuensi makan, dan lakukan pemantauan ulang dalam 2–4 minggu.";
-          break;
+    const tbU = {
+      "Sangat Pendek": [
+        "Tinggi badan sangat rendah dan mengindikasikan stunting berat.",
+        "Tingkatkan konsumsi protein hewani dan lakukan pemeriksaan ke fasilitas kesehatan.",
+      ],
+      "Pendek": [
+        "Tinggi badan di bawah standar dan menunjukkan stunting ringan.",
+        "Optimalkan gizi harian dan perbaiki pola tidur.",
+      ],
+      "Normal": [
+        "Tinggi badan sesuai standar usia dan tidak menunjukkan tanda stunting.",
+        "Pertahankan pola makan sehat dan stimulasi fisik.",
+      ],
+      "Tinggi": [
+        "Tinggi badan di atas rata-rata seusianya.",
+        "Tidak memerlukan tindakan khusus, cukup pantau perkembangan rutin.",
+      ],
+    };
 
-        case "Gizi Normal":
-          deskripsi =
-              "Berat badan berada dalam rentang normal untuk usia anak. Pertumbuhan sejauh ini sesuai standar WHO.";
-          rekomendasi =
-              "Pertahankan pola makan seimbang, jadwal makan teratur, dan lakukan penimbangan rutin setiap bulan.";
-          break;
+    const bbTb = {
+      "Sangat Kurus": [
+        "Berat badan sangat kurang dibanding tinggi badan (wasting berat).",
+        "Berikan makanan tinggi energi dan protein, konsultasikan ke tenaga kesehatan.",
+      ],
+      "Kurus": [
+        "Berat badan kurang dibanding tinggi badan (wasting ringan).",
+        "Tingkatkan konsumsi protein hewani dan pantau ulang perkembangan.",
+      ],
+      "Normal": [
+        "Berat badan proporsional terhadap tinggi badan.",
+        "Pertahankan pola makan sehat dan pemantauan rutin.",
+      ],
+      "Risiko Gizi Lebih": [
+        "Berat badan mulai melebihi batas ideal terhadap tinggi badan.",
+        "Kurangi makanan tinggi gula/lemak dan tingkatkan aktivitas fisik.",
+      ],
+      "Gizi Lebih": [
+        "Berat badan berlebih dibanding tinggi badan.",
+        "Atur kembali pola makan dan perbanyak aktivitas fisik.",
+      ],
+      "Obesitas": [
+        "Berat badan sangat berlebih dibanding tinggi badan.",
+        "Perbaiki pola makan dan konsultasikan ke fasilitas kesehatan.",
+      ],
+    };
 
-        case "Risiko Gizi Lebih":
-          deskripsi =
-              "Berat badan mulai melebihi batas normal untuk usia. Perlu dikonfirmasi dengan indikator BB/TB. Kondisi ini bisa menjadi risiko gizi berlebih atau tanda awal anak memiliki postur tubuh tinggi.";
-          rekomendasi =
-              "Atur porsi makan, kurangi makanan manis/berlemak, dan tingkatkan aktivitas fisik ringan setiap hari. Periksa hasil BB/TB untuk konfirmasi status gizi akut.";
-          break;
+    Map<String, List<String>>? group;
 
-        case "Obesitas":
-          deskripsi =
-              "Berat badan sudah berada jauh di atas standar usia. Jika indikator BB/TB menunjukkan 'Normal', ini mungkin karena anak memiliki postur tubuh tinggi besar. Namun, jika BB/TB juga Gizi Lebih/Obesitas, kondisi ini memerlukan perhatian dan tindakan segera.";
-          rekomendasi =
-              "Evaluasi pola makan, hindari makanan cepat saji, kurangi gula, dan tingkatkan aktivitas fisik teratur. **Wajib konfirmasi dengan hasil BB/TB.** Konsultasi ke tenaga kesehatan dianjurkan.";
-          break;
-      }
-    } else if (indikator == "TB/U") {
-      switch (clean) {
-        case "Sangat Pendek":
-          deskripsi =
-              "Tinggi badan sangat rendah dibanding standar WHO. Ini mengindikasikan stunting berat yang sudah terjadi dalam jangka lama.";
-          rekomendasi =
-              "Segera evaluasi kondisi gizi dan riwayat kesehatan anak. Tingkatkan makanan sumber protein hewani, dan lakukan pemeriksaan ke fasilitas kesehatan.";
-          break;
+    if (indikator == "BB/U") group = bbU;
+    if (indikator == "TB/U") group = tbU;
+    if (indikator == "BB/TB") group = bbTb;
 
-        case "Pendek":
-          deskripsi =
-              "Anak mengalami stunting ringan dan berada di bawah standar tinggi badan menurut usia.";
-          rekomendasi =
-              "Perbanyak makanan sumber protein hewani, susu, serta perbaiki pola tidur. Pantau tinggi badan setiap bulan.";
-          break;
+    if (group != null && group.containsKey(clean)) {
+      deskripsi = group[clean]![0];
+      rekomendasi = group[clean]![1];
+    }
 
-        case "Normal":
-          deskripsi =
-              "Tinggi badan sesuai standar usia dan tidak menunjukkan tanda stunting.";
-          rekomendasi =
-              "Pertahankan pola makan bergizi seimbang dan stimulasi fisik seperti merangkak, berjalan, atau bermain aktif.";
-          break;
-
-        case "Tinggi":
-          deskripsi =
-              "Tinggi badan di atas rata-rata anak seusianya (anak tinggi besar). Jika BB/TB anak 'Normal', ini bukan masalah dan menunjukkan potensi pertumbuhan yang baik.";
-          rekomendasi =
-              "Tidak ada tindakan khusus. Pastikan nutrisi tetap seimbang dan pantau pertumbuhan secara rutin, terutama menjaga BB/TB tetap Normal.";
-          break;
-      }
-    } else if (indikator == "BB/TB") {
-      switch (clean) {
-        case "Sangat Kurus":
-          deskripsi =
-              "Berat badan sangat kurang dibanding tinggi badan. Ini merupakan tanda wasting berat dan perlu penanganan segera.";
-          rekomendasi =
-              "Berikan makanan tinggi energi dan protein beberapa kali sehari, tambah camilan sehat, dan segera konsultasikan ke tenaga kesehatan.";
-          break;
-
-        case "Kurus":
-          deskripsi =
-              "Berat badan kurang dibanding tinggi badan, menunjukkan wasting ringan.";
-          rekomendasi =
-              "Tingkatkan kualitas gizi harian, termasuk protein hewani dan lemak baik. Lakukan pemantauan ulang dalam 14–30 hari.";
-          break;
-
-        case "Normal":
-          deskripsi =
-              "Berat badan proporsional terhadap tinggi badan sesuai standar WHO. Ini adalah indikator status gizi akut yang paling akurat.";
-          rekomendasi =
-              "Pertahankan makan sehat dan pemantauan rutin. Tidak memerlukan intervensi khusus.";
-          break;
-
-        case "Risiko Gizi Lebih":
-          deskripsi =
-              "Berat badan mulai melebihi batas ideal untuk tinggi badan, menandakan awal kecenderungan gizi lebih.";
-          rekomendasi =
-              "Kurangi makanan manis/berlemak, perbanyak buah dan sayur, dan dorong anak bergerak aktif setiap hari.";
-          break;
-
-        case "Gizi Lebih":
-          deskripsi =
-              "Berat badan jelas berlebih dibanding tinggi badan. Jika dibiarkan, risiko obesitas meningkat.";
-          rekomendasi =
-              "Atur porsi makan, batasi cemilan tinggi gula/garam, dan tingkatkan aktivitas fisik. Konsultasi ke Posyandu dianjurkan.";
-          break;
-
-        case "Obesitas":
-          deskripsi =
-              "Berat badan sangat berlebih dibanding tinggi badan. Kondisi ini memerlukan pemantauan dan perubahan pola makan segera.";
-          rekomendasi =
-              "Kendalikan pola makan ketat, hindari makanan cepat saji dan minuman manis, tingkatkan aktivitas fisik, dan konsultasikan ke fasilitas kesehatan.";
-          break;
-      }
+    if (indikator == "BB/TB" &&
+        cleanBBU == "Gizi Normal" &&
+        cleanTBU == "Normal" &&
+        clean != "Normal") {
+      catatanPenting =
+          "Meskipun BB/U dan TB/U Normal, indikator BB/TB tidak Normal. "
+          "Ini menunjukkan ketidakseimbangan proporsi berat terhadap tinggi saat ini. "
+          "Gunakan BB/TB sebagai acuan utama untuk menilai status gizi akut.";
     }
 
     return {
@@ -247,6 +228,7 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       "rekomendasi": rekomendasi.isEmpty
           ? "Tidak ada rekomendasi khusus."
           : rekomendasi,
+      if (catatanPenting.isNotEmpty) "catatan": catatanPenting,
     };
   }
 
@@ -1022,7 +1004,12 @@ class _DetailBalitaScreenState extends State<DetailBalitaScreen> {
       umurSaatUkur,
     );
     Color warnaStatusBBTB = getColorStatusGizi(statusGiziBBTB);
-    final descBBTB = _getDeskripsiDanRekomendasi(statusGiziBBTB, "BB/TB");
+    final descBBTB = _getDeskripsiDanRekomendasi(
+      statusGiziBBTB,
+      "BB/TB",
+      statusBBU: statusGiziBBU,
+      statusTBU: statusGiziTBU,
+    );
 
     String rekomendasiBB = getRekomendasiBerat(
       umurSaatUkur,
@@ -1605,6 +1592,7 @@ class _GiziIndicatorCardExpandableState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Divider(height: 20),
+
         if (widget.isBBTB)
           Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
@@ -1617,19 +1605,32 @@ class _GiziIndicatorCardExpandableState
               ),
             ),
           ),
+
         _buildInfoRowWithIcon(
           Icons.info_outline,
           "Kesimpulan:",
           widget.deskripsiRekomendasi['deskripsi']!,
           Colors.black54,
         ),
+
         const SizedBox(height: 12),
+
         _buildInfoRowWithIcon(
           Icons.lightbulb_outline,
           "Rekomendasi:",
           widget.deskripsiRekomendasi['rekomendasi']!,
           AppColors.primary,
         ),
+
+        if (widget.deskripsiRekomendasi.containsKey('catatan')) ...[
+          const SizedBox(height: 12),
+          _buildInfoRowWithIcon(
+            Icons.warning_amber_rounded,
+            "Catatan Penting:",
+            widget.deskripsiRekomendasi['catatan']!,
+            AppColors.accent,
+          ),
+        ],
       ],
     );
   }

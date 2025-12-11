@@ -7,16 +7,21 @@ Color getColorStatusGizi(String status) {
       status.contains("Sangat Kurus")) {
     return Colors.red;
   }
+
   if (status.contains("Kurang") ||
       status.contains("Risiko") ||
       status.contains("Pendek") ||
-      status.contains("Kurus")) {
+      status.contains("Kurus") ||
+      status.contains("Gizi Lebih")) {
     return Colors.orange;
   }
+
   if (status.contains("Normal") || status.contains("Baik")) {
     return Colors.green;
   }
+
   if (status.contains("Tinggi")) return Colors.blue;
+
   return Colors.grey;
 }
 
